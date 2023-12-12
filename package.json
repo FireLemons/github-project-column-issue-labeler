@@ -2,7 +2,7 @@
   "name": "github-project-column-issue-labeler",
   "version": "1.0.0",
   "description": "Manages labels for issues based on what column they're in in a kanban style github version 2 project",
-  "main": "index.js",
+  "main": "labeler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,5 +23,12 @@
   "bugs": {
     "url": "https://github.com/FireLemons/github-project-column-issue-labeler/issues"
   },
-  "homepage": "https://github.com/FireLemons/github-project-column-issue-labeler#readme"
+  "homepage": "https://github.com/FireLemons/github-project-column-issue-labeler#readme",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0"
+  }
 }
