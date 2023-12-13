@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/FireLemons/github-project-column-issue-labeler#readme",
   "devDependencies": {
+    "@types/node": "^20.10.4",
     "typescript": "^5.3.3"
   },
   "dependencies": {
