@@ -1,6 +1,7 @@
 "use strict";
 const core = require('@actions/core');
 const github = require('@actions/github');
+const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
 // Javascript destructuring assignment
@@ -13,47 +14,92 @@ var LabelingAction;
     LabelingAction["SET"] = "SET";
 })(LabelingAction || (LabelingAction = {}));
 function isLabelingAction(str) {
-    return Object.keys(LabelingAction).includes(str === null || str === void 0 ? void 0 : str.toUpperCase());
-}
-function isObject(obj) {
-    return typeof obj === 'object' && !Array.isArray(obj) && obj !== null;
+    return Object.keys(LabelingAction).includes(str);
 }
 function formatLabelingRule(unFormattedRule) {
     unFormattedRule.action = unFormattedRule.action.toUpperCase();
 }
-function validateColumnConfiguration(object) {
-    if (!isObject(object)) {
+function getValidatedColumnConfiguration(object) {
+    console.log('getValidatedColumnConfiguration stack', new Error().stack);
+    if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
+    typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string);
+    if (!object['columnName'].length) {
+        throw new ReferenceError('Column name cannot be empty string');
+    }
+    typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array);
+    const validatedLabelingRules = [];
+    object['labelingRules'].forEach((labelingRule, index) => {
+        let validatedLabelingRule;
+        try {
+            validatedLabelingRule = getValidatedLabelingRule(labelingRule);
+            if (validatedLabelingRule.labels.length) {
+                validatedLabelingRules.push(validatedLabelingRule);
+            }
+            else {
+                console.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
+            }
+        }
+        catch (error) {
+            console.warn(`  Could not make valid labeling rule from value at index: ${index}`);
+            console.error(error);
+        }
+    });
+    return {
+        columnName: object['columnName'],
+        labelingRules: validatedLabelingRules
+    };
 }
-function validateConfig(config) {
+function getValidatedConfig(config) {
+    console.log('getValidatedConfig stack', new Error().stack);
     console.log('Validating Config');
+    if (!typeChecker.isObject(config)) {
+        throw new TypeError('column_label_config must be an object');
+    }
+    typeChecker.validateObjectMember(config, 'columnConfigurations', typeChecker.types.array);
+    const validatedColumnConfigurations = [];
+    config['columnConfigurations'].forEach((columnConfiguration, index) => {
+        let validatedColumnConfiguration;
+        try {
+            validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
+            if (columnConfiguration.labelingRules.length) {
+                validatedColumnConfigurations.push(validatedColumnConfiguration);
+            }
+            else {
+                console.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`);
+            }
+        }
+        catch (error) {
+            console.warn(`  Could not make valid column configuration from value at index: ${index}`);
+            console.error(error);
+        }
+    });
+    return {
+        columnConfigurations: validatedColumnConfigurations
+    };
 }
-function validateLabelingRule(object) {
-    if (!isObject(object)) {
+function getValidatedLabelingRule(object) {
+    console.log('getValidatedLabelingRule stack', new Error().stack);
+    if (!typeChecker.isObject(object)) {
         throw new TypeError('Labeling rule must be an object');
     }
-    const { action, labels } = object;
-    if (!action) {
-        throw new ReferenceError('Labeling rule must contain key "action"');
+    typeChecker.validateObjectMember(object, 'action', typeChecker.types.string);
+    const formattedAction = object['action'].toUpperCase();
+    if (!isLabelingAction(formattedAction)) {
+        throw new RangeError(`Labeling action "${formattedAction}" is not supported.\n Please select from the following: ${JSON.stringify(Object.keys(LabelingAction))}`);
     }
-    if (!isLabelingAction(action)) {
-        throw new RangeError(`Labeling action ${action} is not supported.\n Please select from the following: ${JSON.stringify(Object.keys(LabelingAction))}`);
-    }
-    if (!(Array.isArray(labels))) {
-        if (labels === undefined) {
-            throw new ReferenceError('Labeling rule must contain key "labels"');
-        }
-        else {
-            throw new TypeError('Labeling rule must be an array');
-        }
-    }
-    object['labels'] = labels.filter((label, index) => {
-        const isLabelAString = typeof label === 'string';
+    typeChecker.validateObjectMember(object, 'labels', typeChecker.types.array);
+    const validatedLabels = object['labels'].filter((label, index) => {
+        const isLabelAString = typeChecker.isString(label);
         if (!isLabelAString) {
-            console.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
+            console.warn(`    Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
         }
         return isLabelAString;
     });
-    return object;
+    return {
+        action: formattedAction,
+        labels: validatedLabels
+    };
 }
+console.log('validatedConfig', getValidatedColumnConfiguration(columns_label_config));
