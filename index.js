@@ -1,2 +1,3 @@
-console.log('Attempting to require build labeler')
-require('./build/labeler')
+const main = require('./build/labeler')
+
+main()

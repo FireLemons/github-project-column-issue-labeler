@@ -141,4 +141,6 @@ function getValidatedLabelingRule (object: any): LabelingRule {
   }
 }
 
-console.log('validatedConfig', getValidatedColumnConfiguration(columns_label_config))
+module.exports = () => {
+  console.log('validatedConfig', getValidatedColumnConfiguration(columns_label_config))
+}
