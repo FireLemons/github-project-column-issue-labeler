@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/FireLemons/github-project-column-issue-labeler#readme",
   "devDependencies": {
+    "@tsconfig/node-lts": "^20.1.0",
     "@types/node": "^20.10.4",
     "ts-standard": "^12.0.2",
     "typescript": "^5.3.3"
