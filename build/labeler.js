@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const core = require('@actions/core');
 const github = require('@actions/github');
 const typeChecker = require('./typeChecker');
