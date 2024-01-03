@@ -4,6 +4,7 @@
     "outDir": "./build"
   },
   "files": [
-    "src/labeler.ts"
+    "src/labeler.ts",
+    "src/typeChecker.ts"
   ]
 }
