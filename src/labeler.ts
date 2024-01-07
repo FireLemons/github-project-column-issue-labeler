@@ -75,8 +75,12 @@ function getValidatedConfig (config: any): ColumnConfiguration[] {
   console.log('getValidatedConfig stack', new Error().stack)
   console.log('Validating Config')
 
+  if (config === '') {
+    throw new ReferenceError('Missing required input "column_label_config". See the README at https://github.com/FireLemons/github-project-column-issue-labeler for help configuring.')
+  }
+
   if (!(Array.isArray(config))) {
-    throw new TypeError('column_label_config must be an object')
+    throw new TypeError('input "column_label_config" must be an array')
   }
 
   typeChecker.validateObjectMember(config, 'columnConfigurations', typeChecker.types.array)
@@ -136,5 +140,5 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 }
 
 module.exports = () => {
-  console.log('validatedConfig', getValidatedColumnConfiguration(columns_label_config))
+  console.log('validatedConfig', getValidatedConfig(columns_label_config))
 }
