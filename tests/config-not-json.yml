@@ -1,0 +1,25 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    name: Manage Issue Labels
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: 'true'
+      - uses: ./github-project-column-issue-labeler/
+        id: manage-project-issue-labels
+        name: Manage Project Issue Labels
+        with:
+          column_label_config: string
+          token: ${{secrets.GITHUB_TOKEN}}
+
+# Result:
+# Validating Config
+# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:65
+#         throw new SyntaxError('Could not parse input "column_label_config" as JSON');
+#         ^
+
+# SyntaxError: Could not parse input "column_label_config" as JSON
