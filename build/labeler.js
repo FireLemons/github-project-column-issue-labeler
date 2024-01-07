@@ -55,12 +55,12 @@ function getValidatedColumnConfiguration(object) {
 function getValidatedConfig(config) {
     console.log('getValidatedConfig stack', new Error().stack);
     console.log('Validating Config');
-    if (!typeChecker.isObject(config)) {
+    if (!(Array.isArray(config))) {
         throw new TypeError('column_label_config must be an object');
     }
     typeChecker.validateObjectMember(config, 'columnConfigurations', typeChecker.types.array);
     const validatedColumnConfigurations = [];
-    config['columnConfigurations'].forEach((columnConfiguration, index) => {
+    config.forEach((columnConfiguration, index) => {
         let validatedColumnConfiguration;
         try {
             validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
@@ -76,9 +76,7 @@ function getValidatedConfig(config) {
             console.error(error);
         }
     });
-    return {
-        columnConfigurations: validatedColumnConfigurations
-    };
+    return validatedColumnConfigurations;
 }
 function getValidatedLabelingRule(object) {
     console.log('getValidatedLabelingRule stack', new Error().stack);

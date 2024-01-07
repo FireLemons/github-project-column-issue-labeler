@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const typeChecker = require('./typeChecker')
-let columns_label_config = core.getInput('column_label_config')
+let columns_label_config: ColumnConfiguration[] = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
@@ -21,10 +21,6 @@ enum LabelingAction {
 interface LabelingRule {
   action: LabelingAction,
   labels: string[]
-}
-
-interface WorkflowConfiguraton {
-  columnConfigurations: ColumnConfiguration[]
 }
 
 function isLabelingAction (str: string): str is LabelingAction {
@@ -75,11 +71,11 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   }
 }
 
-function getValidatedConfig (config: any): WorkflowConfiguraton {
+function getValidatedConfig (config: any): ColumnConfiguration[] {
   console.log('getValidatedConfig stack', new Error().stack)
   console.log('Validating Config')
 
-  if (!typeChecker.isObject(config)) {
+  if (!(Array.isArray(config))) {
     throw new TypeError('column_label_config must be an object')
   }
 
@@ -87,7 +83,7 @@ function getValidatedConfig (config: any): WorkflowConfiguraton {
 
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
-  config['columnConfigurations'].forEach((columnConfiguration: any, index: number) => {
+  config.forEach((columnConfiguration: any, index: number) => {
     let validatedColumnConfiguration
 
     try {
@@ -104,9 +100,7 @@ function getValidatedConfig (config: any): WorkflowConfiguraton {
     }
   })
 
-  return {
-    columnConfigurations: validatedColumnConfigurations
-  }
+  return validatedColumnConfigurations
 }
 
 function getValidatedLabelingRule (object: any): LabelingRule {
