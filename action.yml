@@ -6,7 +6,6 @@ inputs:
     required: true
   token:
     description: 'Token for api usage provided by github'
-    default: ''
     required: true
 runs:
   using: 'node20'
