@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const typeChecker = require('./typeChecker')
-let columns_label_config: ColumnConfiguration[] = core.getInput('column_label_config')
+let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
@@ -71,21 +71,23 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   }
 }
 
-function getValidatedConfig (config: any): ColumnConfiguration[] {
+function getValidatedConfig (config: string): ColumnConfiguration[] {
   console.log('getValidatedConfig stack', new Error().stack)
   console.log('Validating Config')
 
-  console.log('config', JSON.stringify(config))
-
   if (config === '') {
-    throw new ReferenceError('Missing required input "column_label_config". See the README at https://github.com/FireLemons/github-project-column-issue-labeler for help configuring.')
+    throw new ReferenceError('Missing required input "column_label_config"')
+  }
+
+  try {
+    config = JSON.parse(config)
+  } catch (error) {
+    throw new SyntaxError('Could not parse input "column_label_config" as JSON')
   }
 
   if (!(Array.isArray(config))) {
     throw new TypeError('input "column_label_config" must be an array')
   }
-
-  typeChecker.validateObjectMember(config, 'columnConfigurations', typeChecker.types.array)
 
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
