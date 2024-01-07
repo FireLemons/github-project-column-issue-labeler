@@ -55,6 +55,7 @@ function getValidatedColumnConfiguration(object) {
 function getValidatedConfig(config) {
     console.log('getValidatedConfig stack', new Error().stack);
     console.log('Validating Config');
+    console.log('config', JSON.stringify(config));
     if (config === '') {
         throw new ReferenceError('Missing required input "column_label_config". See the README at https://github.com/FireLemons/github-project-column-issue-labeler for help configuring.');
     }
