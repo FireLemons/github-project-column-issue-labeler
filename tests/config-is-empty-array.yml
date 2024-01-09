@@ -1,0 +1,27 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    name: Manage Issue Labels
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: 'true'
+      - uses: ./github-project-column-issue-labeler/
+        id: manage-project-issue-labels
+        name: Manage Project Issue Labels
+        with:
+          column_label_config: >
+            [
+
+            ]
+          token: ${{secrets.GITHUB_TOKEN}}
+
+# Result:
+
+# Validating Config
+# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114
+#     throw new ReferenceError('The list of validated configurations for columns was found to be empty');
+#     ^
