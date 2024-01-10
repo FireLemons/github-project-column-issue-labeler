@@ -109,10 +109,11 @@ function getValidatedLabelingRule(object) {
         labels: validatedLabels
     };
 }
-const validColumnConfigurations = getValidatedConfig(columns_label_config);
-if (!(validColumnConfigurations.length)) {
-    throw new ReferenceError('The list of validated configurations for columns was found to be empty');
-}
-module.exports = () => {
+function main() {
+    const validColumnConfigurations = getValidatedConfig(columns_label_config);
+    if (!(validColumnConfigurations.length)) {
+        throw new ReferenceError('The list of validated configurations for columns was found to be empty');
+    }
     console.log('validatedConfig', validColumnConfigurations);
-};
+}
+module.exports = main;
