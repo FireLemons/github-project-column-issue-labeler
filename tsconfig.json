@@ -5,6 +5,7 @@
   },
   "files": [
     "src/labeler.ts",
+    "src/logger.ts",
     "src/typeChecker.ts"
   ]
 }
