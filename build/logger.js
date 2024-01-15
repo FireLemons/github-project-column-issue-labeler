@@ -21,6 +21,7 @@ class Logger {
     }
     #getStackHeightOfFunctionsWithinSameFile() {
         const { stack } = new Error();
+        console.log('stack:', stack);
         if (!stack) {
             throw new ReferenceError('The error did not contain the stack required for computing the indentation count');
         }
