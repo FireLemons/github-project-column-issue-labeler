@@ -19,25 +19,32 @@ class Logger {
         this.mainFunctionName = mainFunctionName;
         this.showDebugOutput = showDebugOutput;
     }
-    getIndentation(error) {
+    #getIndentation(error) {
+        if (!(this.mainFunctionName)) {
+            return '';
+        }
         const { stack } = error;
+        console.error(stack);
         if (!stack) {
             throw new ReferenceError('The error did not contain the stack required for computing the indentation count');
         }
-        const fileNamePattern = /at main.*\/(.*.js):[\d]+:[\d]+\)/gm;
+        const fileNamePattern = new RegExp(`at (Object\\.)?${this.mainFunctionName}.*\\/(.*.js):[\\d]+:[\\d]+\\)`);
         const fileNameMatchResult = fileNamePattern.exec(stack);
         let fileName;
         if (!fileNameMatchResult) {
             throw new ReferenceError('Failed to compute indentation from stack');
         }
         else {
-            fileName = fileNameMatchResult[1];
+            fileName = fileNameMatchResult[2];
         }
-        const validLinesForStackHeightPattern = new RegExp(`at .+${fileName}:[\d]+:[\d]+\)`);
-        return ' '.repeat([...stack.matchAll(validLinesForStackHeightPattern)].length * this.indentationSpaceCount);
+        const validLinesForStackHeightPattern = new RegExp(`at .+${fileName}:[\\d]+:[\\d]+\\)`, 'g');
+        const stackHeightFromMain = [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
+            return fileNamePattern.test(stackLineMatch[0]);
+        }) - 1;
+        return ' '.repeat(stackHeightFromMain * this.indentationSpaceCount);
     }
     info(message) {
-        console.log(command_line_color.cyan(message));
+        console.log(command_line_color.cyan(this.#getIndentation(new Error()) + message));
     }
     error(message) {
         console.error(command_line_color.red(message));
