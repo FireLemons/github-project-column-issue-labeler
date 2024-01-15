@@ -1,5 +1,7 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
+const LoggerClass = require('./logger')
+const logger = new LoggerClass('main')
 const typeChecker = require('./typeChecker')
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
@@ -32,8 +34,6 @@ function formatLabelingRule (unFormattedRule: any): void {
 }
 
 function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
-  console.log('getValidatedColumnConfiguration stack', new Error().stack)
-
   if (!typeChecker.isObject(object)) {
     throw new TypeError('Column configuration must be an object')
   }
@@ -57,11 +57,11 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
       if (validatedLabelingRule.labels.length) {
         validatedLabelingRules.push(validatedLabelingRule)
       } else {
-        console.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
+        logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
       }
     } catch (error) {
-      console.warn(`  Could not make valid labeling rule from value at index: ${index}`)
-      console.error(error)
+      logger.warn(`Could not make valid labeling rule from value at index: ${index}`)
+      logger.error(error)
     }
   })
 
@@ -72,8 +72,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
 }
 
 function getValidatedConfig (config: string): ColumnConfiguration[] {
-  console.log('getValidatedConfig stack', new Error().stack)
-  console.log('Validating Config')
+  logger.info('Validating Config')
 
   if (config === '') {
     throw new ReferenceError('Missing required input "column_label_config"')
@@ -100,11 +99,11 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
       if (columnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        console.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
+        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
     } catch (error) {
-      console.warn(`  Could not make valid column configuration from value at index: ${index}`)
-      console.error(error)
+      logger.warn(`  Could not make valid column configuration from value at index: ${index}`)
+      logger.error(error)
     }
   })
 
@@ -112,7 +111,7 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
 }
 
 function getValidatedLabelingRule (object: any): LabelingRule {
-  console.log('getValidatedLabelingRule stack', new Error().stack)
+  logger.info('getValidatedLabelingRule stack', new Error().stack)
   if (!typeChecker.isObject(object)) {
     throw new TypeError('Labeling rule must be an object')
   }
@@ -131,7 +130,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
     const isLabelAString = typeChecker.isString(label)
 
     if (!isLabelAString) {
-      console.warn(`    Value at index: ${index} of label array was found not to be a string. Removing value from list.`)
+      logger.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`)
     }
 
     return isLabelAString
@@ -150,7 +149,7 @@ function main() {
     throw new ReferenceError('The list of validated configurations for columns was found to be empty')
   }
 
-  console.log('validatedConfig', validColumnConfigurations)
+  logger.info('validatedConfig', validColumnConfigurations)
 }
 
 module.exports = main

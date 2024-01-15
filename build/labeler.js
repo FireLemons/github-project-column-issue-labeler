@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = require('@actions/core');
 const github = require('@actions/github');
+const LoggerClass = require('./logger');
+const logger = new LoggerClass('main');
 const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
@@ -21,7 +23,6 @@ function formatLabelingRule(unFormattedRule) {
     unFormattedRule.action = unFormattedRule.action.toUpperCase();
 }
 function getValidatedColumnConfiguration(object) {
-    console.log('getValidatedColumnConfiguration stack', new Error().stack);
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
@@ -53,7 +54,6 @@ function getValidatedColumnConfiguration(object) {
     };
 }
 function getValidatedConfig(config) {
-    console.log('getValidatedConfig stack', new Error().stack);
     console.log('Validating Config');
     if (config === '') {
         throw new ReferenceError('Missing required input "column_label_config"');
