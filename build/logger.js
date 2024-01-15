@@ -19,11 +19,8 @@ class Logger {
         this.mainFunctionName = mainFunctionName;
         this.showDebugOutput = showDebugOutput;
     }
-    #getIndentation(error) {
-        if (!(this.mainFunctionName)) {
-            return '';
-        }
-        const { stack } = error;
+    #getStackHeightOfFunctionsWithinSameFile() {
+        const { stack } = new Error();
         if (!stack) {
             throw new ReferenceError('The error did not contain the stack required for computing the indentation count');
         }
@@ -37,19 +34,24 @@ class Logger {
             fileName = fileNameMatchResult[2];
         }
         const validLinesForStackHeightPattern = new RegExp(`at .+${fileName}:[\\d]+:[\\d]+\\)`, 'g');
-        const stackHeightFromMain = [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
+        return [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
             return fileNamePattern.test(stackLineMatch[0]);
         }) - 1;
-        return ' '.repeat(stackHeightFromMain * this.indentationSpaceCount);
+    }
+    #getIndentation() {
+        if (!(this.mainFunctionName)) {
+            return '';
+        }
+        return ' '.repeat(this.#getStackHeightOfFunctionsWithinSameFile() * this.indentationSpaceCount);
     }
     info(message) {
-        console.log(command_line_color.cyan(this.#getIndentation(new Error()) + message));
+        console.log(command_line_color.cyan(this.#getIndentation() + message));
     }
     error(message) {
-        console.error(command_line_color.red(message));
+        console.error(command_line_color.red(this.#getIndentation() + message));
     }
     warn(message) {
-        console.warn(command_line_color.yellow(message));
+        console.warn(command_line_color.yellow(this.#getIndentation() + message));
     }
 }
 module.exports = Logger;
