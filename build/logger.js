@@ -24,7 +24,6 @@ class Logger {
             return '';
         }
         const { stack } = error;
-        console.error(stack);
         if (!stack) {
             throw new ReferenceError('The error did not contain the stack required for computing the indentation count');
         }
