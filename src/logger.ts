@@ -39,6 +39,12 @@ class Logger {
     }
 
     const validLinesForStackHeightPattern = new RegExp(`at .+${fileName}:[\\d]+:[\\d]+\\)`, 'g')
+
+    console.log('fileName:', fileName)
+    console.log('height:', [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
+      return fileNamePattern.test(stackLineMatch[0])
+    }) - 1)
+
     return [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
       return fileNamePattern.test(stackLineMatch[0])
     }) - 1
