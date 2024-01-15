@@ -102,7 +102,7 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
         logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
     } catch (error) {
-      logger.warn(`  Could not make valid column configuration from value at index: ${index}`)
+      logger.warn(`Could not make valid column configuration from value at index: ${index}`)
       logger.error(error)
     }
   })

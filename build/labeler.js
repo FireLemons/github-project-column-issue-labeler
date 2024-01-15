@@ -40,12 +40,12 @@ function getValidatedColumnConfiguration(object) {
                 validatedLabelingRules.push(validatedLabelingRule);
             }
             else {
-                console.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
+                logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
             }
         }
         catch (error) {
-            console.warn(`  Could not make valid labeling rule from value at index: ${index}`);
-            console.error(error);
+            logger.warn(`Could not make valid labeling rule from value at index: ${index}`);
+            logger.error(error);
         }
     });
     return {
@@ -54,7 +54,7 @@ function getValidatedColumnConfiguration(object) {
     };
 }
 function getValidatedConfig(config) {
-    console.log('Validating Config');
+    logger.info('Validating Config');
     if (config === '') {
         throw new ReferenceError('Missing required input "column_label_config"');
     }
@@ -76,18 +76,18 @@ function getValidatedConfig(config) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
             else {
-                console.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`);
+                logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`);
             }
         }
         catch (error) {
-            console.warn(`  Could not make valid column configuration from value at index: ${index}`);
-            console.error(error);
+            logger.warn(`Could not make valid column configuration from value at index: ${index}`);
+            logger.error(error);
         }
     });
     return validatedColumnConfigurations;
 }
 function getValidatedLabelingRule(object) {
-    console.log('getValidatedLabelingRule stack', new Error().stack);
+    logger.info('getValidatedLabelingRule stack', new Error().stack);
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Labeling rule must be an object');
     }
@@ -100,7 +100,7 @@ function getValidatedLabelingRule(object) {
     const validatedLabels = object['labels'].filter((label, index) => {
         const isLabelAString = typeChecker.isString(label);
         if (!isLabelAString) {
-            console.warn(`    Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
+            logger.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
         }
         return isLabelAString;
     });
@@ -114,6 +114,6 @@ function main() {
     if (!(validColumnConfigurations.length)) {
         throw new ReferenceError('The list of validated configurations for columns was found to be empty');
     }
-    console.log('validatedConfig', validColumnConfigurations);
+    logger.info('validatedConfig', validColumnConfigurations);
 }
 module.exports = main;
