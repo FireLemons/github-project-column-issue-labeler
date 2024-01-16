@@ -41,89 +41,27 @@ jobs:
 
 # Validating Config
 #   Could not make valid column configuration from value at index: 0
-# ReferenceError: key "columnName" was not found in the object
-#     at Object.validateObjectMember (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/typeChecker.js:16:15)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:28:17)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
+#     key "columnName" was not found in the object
 #   Could not make valid column configuration from value at index: 1
-# ReferenceError: key "columnName" was not found in the object
-#     at Object.validateObjectMember (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/typeChecker.js:16:15)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:28:17)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
+#     key "columnName" was not found in the object
 #   Could not make valid column configuration from value at index: 2
-# TypeError: Member "columnName" was found not to be an string
-#     at Object.validateObjectMember (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/typeChecker.js:27:23)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:28:17)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
+#     Member "columnName" was found not to be a string
 #   Could not make valid column configuration from value at index: 3
-# ReferenceError: key "columnName" was not found in the object
-#     at Object.validateObjectMember (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/typeChecker.js:16:15)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:28:17)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
+#     key "columnName" was not found in the object
 #   Could not make valid column configuration from value at index: 4
-# ReferenceError: Column name cannot be empty string
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:30:15)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
+#     Column name cannot be empty string
 #   Could not make valid column configuration from value at index: 5
-# TypeError: Member "columnName" was found not to be an string
-#     at Object.validateObjectMember (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/typeChecker.js:27:23)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:28:17)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114
-#     throw new ReferenceError('The list of validated configurations for columns was found to be empty');
-#     ^
+#     Member "columnName" was found not to be a string
+# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:117
+#         throw new ReferenceError('The list of validated configurations for columns was found to be empty');
+#         ^
 
 # ReferenceError: The list of validated configurations for columns was found to be empty
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114:11)
+#     at main (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:117:15)
+#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/index.js:3:1)
 #     at Module._compile (node:internal/modules/cjs/loader:1241:14)
 #     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
 #     at Module.load (node:internal/modules/cjs/loader:1091:32)
 #     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
-#     at require (node:internal/modules/helpers:130:18)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/index.js:1:14)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
+#     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:83:12)
+#     at node:internal/main/run_main_module:23:47
