@@ -54,7 +54,6 @@ function getValidatedColumnConfiguration(object) {
     };
 }
 function getValidatedConfig(config) {
-    logger.info('Validating Config');
     if (config === '') {
         throw new ReferenceError('Missing required input "column_label_config"');
     }
@@ -81,7 +80,9 @@ function getValidatedConfig(config) {
         }
         catch (error) {
             logger.warn(`Could not make valid column configuration from value at index: ${index}`);
-            logger.error(error);
+            if (error instanceof Error && error.message) {
+                logger.error('  ' + error.message);
+            }
         }
     });
     return validatedColumnConfigurations;
@@ -110,6 +111,7 @@ function getValidatedLabelingRule(object) {
     };
 }
 function main() {
+    logger.info('Validating Config');
     const validColumnConfigurations = getValidatedConfig(columns_label_config);
     if (!(validColumnConfigurations.length)) {
         throw new ReferenceError('The list of validated configurations for columns was found to be empty');

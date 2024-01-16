@@ -72,7 +72,6 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
 }
 
 function getValidatedConfig (config: string): ColumnConfiguration[] {
-  logger.info('Validating Config')
 
   if (config === '') {
     throw new ReferenceError('Missing required input "column_label_config"')
@@ -103,7 +102,10 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
       }
     } catch (error) {
       logger.warn(`Could not make valid column configuration from value at index: ${index}`)
-      logger.error(error)
+
+      if (error instanceof Error && error.message) {
+        logger.error('  ' + error.message)
+      }
     }
   })
 
@@ -143,6 +145,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 }
 
 function main() {
+  logger.info('Validating Config')
   const validColumnConfigurations = getValidatedConfig(columns_label_config)
 
   if (!(validColumnConfigurations.length)) {
