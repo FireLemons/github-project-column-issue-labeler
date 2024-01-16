@@ -114,7 +114,8 @@ function main() {
     logger.info('Validating Config');
     const validColumnConfigurations = getValidatedConfig(columns_label_config);
     if (!(validColumnConfigurations.length)) {
-        throw new ReferenceError('The list of validated configurations for columns was found to be empty');
+        logger.error('The list of validated configurations for columns was found to be empty');
+        return;
     }
     logger.info('validatedConfig', validColumnConfigurations);
 }
