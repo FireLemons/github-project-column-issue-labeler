@@ -22,6 +22,7 @@ class Logger {
 
   #getStackHeightOfFunctionsWithinSameFile(): number {
     const { stack } = new Error()
+    console.log('stack', stack)
 
     if (!stack) {
       throw new ReferenceError('The error did not contain the stack required for computing the indentation count')
@@ -38,6 +39,10 @@ class Logger {
     }
 
     const validLinesForStackHeightPattern = new RegExp(`at .+${fileName}:[\\d]+:[\\d]+\\)`, 'g')
+
+    console.log('height', [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
+      return fileNamePattern.test(stackLineMatch[0])
+    }))
 
     return [...stack.matchAll(validLinesForStackHeightPattern)].findIndex((stackLineMatch) => {
       return fileNamePattern.test(stackLineMatch[0])
