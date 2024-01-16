@@ -24,58 +24,10 @@ jobs:
 # Result:
 
 # Validating Config
-# TypeError: Column configuration must be an object
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:26:15)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
-# getValidatedColumnConfiguration stack Error
+#   Could not make valid column configuration from value at index: 0
+#     Column configuration must be an object
 #   Could not make valid column configuration from value at index: 1
-# TypeError: Column configuration must be an object
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:26:15)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
+#     Column configuration must be an object
 #   Could not make valid column configuration from value at index: 2
-# TypeError: Column configuration must be an object
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:26:15)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114
-#     throw new ReferenceError('The list of validated configurations for columns was found to be empty');
-#     ^
-
-# ReferenceError: The list of validated configurations for columns was found to be empty
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114:11)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at getValidatedColumnConfiguration (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:24:58)
-#     at /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:74:44
-#     at Array.forEach (<anonymous>)
-#     at getValidatedConfig (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:71:12)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:112:35)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Module.require (node:internal/modules/cjs/loader:1115:19)
+#     Column configuration must be an object
+# The list of validated configurations for columns was found to be empty
