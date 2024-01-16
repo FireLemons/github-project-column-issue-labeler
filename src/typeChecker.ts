@@ -31,7 +31,7 @@ function validateObjectMember(obj: objectWithKeys, key: string, type: Type): voi
       break;
     case Type.string:
       if (isString(member)) {
-        throw new TypeError(`Member "${key}" was found not to be an string`)
+        throw new TypeError(`Member "${key}" was found not to be a string`)
       }
 
       break;
