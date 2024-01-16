@@ -22,6 +22,4 @@ jobs:
 # Result:
 
 # Validating Config
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:114
-#     throw new ReferenceError('The list of validated configurations for columns was found to be empty');
-#     ^
+# Could not find any valid actions to perform from the configuration
