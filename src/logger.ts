@@ -32,6 +32,7 @@ class Logger {
     let fileName
 
     if (!fileNameMatchResult) {
+      console.log('stack', stack)
       throw new ReferenceError('Failed to compute indentation from stack')
     } else {
       fileName = fileNameMatchResult[2]
