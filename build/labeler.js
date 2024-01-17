@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = require('@actions/core');
 const github = require('@actions/github');
 const LoggerClass = require('./logger');
-const logger = new LoggerClass('main');
+const logger = new LoggerClass('main', 2, true);
 const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
@@ -88,7 +88,6 @@ function getValidatedConfig(config) {
     return validatedColumnConfigurations;
 }
 function getValidatedLabelingRule(object) {
-    logger.info('getValidatedLabelingRule stack', new Error().stack);
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Labeling rule must be an object');
     }

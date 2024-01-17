@@ -29,6 +29,7 @@ class Logger {
         const fileNameMatchResult = fileNamePattern.exec(stack);
         let fileName;
         if (!fileNameMatchResult) {
+            console.log('fileNameMatchResult', fileNameMatchResult);
             throw new ReferenceError('Failed to compute indentation from stack');
         }
         else {

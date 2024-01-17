@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const LoggerClass = require('./logger')
-const logger = new LoggerClass('main')
+const logger = new LoggerClass('main', 2, true)
 const typeChecker = require('./typeChecker')
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
@@ -113,7 +113,6 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
 }
 
 function getValidatedLabelingRule (object: any): LabelingRule {
-  logger.info('getValidatedLabelingRule stack', new Error().stack)
   if (!typeChecker.isObject(object)) {
     throw new TypeError('Labeling rule must be an object')
   }
