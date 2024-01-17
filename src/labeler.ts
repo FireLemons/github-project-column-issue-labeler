@@ -1,7 +1,8 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const LoggerClass = require('./logger')
-const logger = new LoggerClass('main', 2, true)
+const logger = new LoggerClass()
+const indentation = '  '
 const typeChecker = require('./typeChecker')
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
@@ -47,6 +48,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   const validatedLabelingRules: LabelingRule[] = []
   
   object['labelingRules'].forEach((labelingRule: any, index: number) => {
+    logger.info(`${indentation.repeat(2)}Checking labeling rule at index ${index}`)
     let validatedLabelingRule
 
     try {
@@ -55,13 +57,13 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
       if (validatedLabelingRule.labels.length) {
         validatedLabelingRules.push(validatedLabelingRule)
       } else {
-        logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
+        logger.warn(`${indentation.repeat(3)}Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
       }
     } catch (error) {
-      logger.warn(`Could not make valid labeling rule from value at index: ${index}`)
+      logger.warn(`${indentation.repeat(3)}Could not make valid labeling rule from value at index: ${index}`)
 
       if (error instanceof Error && error.message) {
-        logger.error('  ' + error.message)
+        logger.error(indentation.repeat(4) + error.message)
       }
     }
   })
@@ -73,7 +75,6 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
 }
 
 function getValidatedConfig (config: string): ColumnConfiguration[] {
-
   if (config === '') {
     throw new ReferenceError('Missing required input "column_label_config"')
   }
@@ -91,7 +92,7 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
   config.forEach((columnConfiguration: any, index: number) => {
-    logger.info(`Checking column at index ${index}`)
+    logger.info(`${indentation}Checking column at index ${index}`)
     let validatedColumnConfiguration
 
     try {
@@ -100,13 +101,13 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
       if (validatedColumnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        logger.warn(`  Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
+        logger.warn(`${indentation.repeat(2)}Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
     } catch (error) {
-      logger.warn(`  Could not make valid column configuration from value at index: ${index}. Skipping column.`)
+      logger.warn(`${indentation.repeat(2)}Could not make valid column configuration from value at index: ${index}. Skipping column.`)
 
       if (error instanceof Error && error.message) {
-        logger.error('    ' + error.message)
+        logger.error(indentation.repeat(3) + error.message)
       }
     }
   })

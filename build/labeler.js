@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = require('@actions/core');
 const github = require('@actions/github');
 const LoggerClass = require('./logger');
-const logger = new LoggerClass('main', 2, true);
+const logger = new LoggerClass();
+const indentation = '  ';
 const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
@@ -31,6 +32,7 @@ function getValidatedColumnConfiguration(object) {
     typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array);
     const validatedLabelingRules = [];
     object['labelingRules'].forEach((labelingRule, index) => {
+        logger.info(`${indentation.repeat(2)}Checking labeling rule at index ${index}`);
         let validatedLabelingRule;
         try {
             validatedLabelingRule = getValidatedLabelingRule(labelingRule);
@@ -38,13 +40,13 @@ function getValidatedColumnConfiguration(object) {
                 validatedLabelingRules.push(validatedLabelingRule);
             }
             else {
-                logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
+                logger.warn(`${indentation.repeat(3)}Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
             }
         }
         catch (error) {
-            logger.warn(`Could not make valid labeling rule from value at index: ${index}`);
+            logger.warn(`${indentation.repeat(3)}Could not make valid labeling rule from value at index: ${index}`);
             if (error instanceof Error && error.message) {
-                logger.error('  ' + error.message);
+                logger.error(indentation.repeat(4) + error.message);
             }
         }
     });
@@ -68,7 +70,7 @@ function getValidatedConfig(config) {
     }
     const validatedColumnConfigurations = [];
     config.forEach((columnConfiguration, index) => {
-        logger.info(`Checking column at index ${index}`);
+        logger.info(`${indentation}Checking column at index ${index}`);
         let validatedColumnConfiguration;
         try {
             validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
@@ -76,13 +78,13 @@ function getValidatedConfig(config) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
             else {
-                logger.warn(`  Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`);
+                logger.warn(`${indentation.repeat(2)}Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`);
             }
         }
         catch (error) {
-            logger.warn(`  Could not make valid column configuration from value at index: ${index}. Skipping column.`);
+            logger.warn(`${indentation.repeat(2)}Could not make valid column configuration from value at index: ${index}. Skipping column.`);
             if (error instanceof Error && error.message) {
-                logger.error('    ' + error.message);
+                logger.error(indentation.repeat(3) + error.message);
             }
         }
     });
