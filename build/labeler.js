@@ -101,14 +101,16 @@ function getValidatedLabelingRule(object) {
     }
     typeChecker.validateObjectMember(object, 'labels', typeChecker.types.array);
     const validatedLabels = object['labels'].filter((label, index) => {
-        const isLabelAString = typeChecker.isString(label);
-        if (!isLabelAString) {
+        let isValidLabel = true;
+        if (!(typeChecker.isString(label))) {
+            isValidLabel = false;
             logger.warn(`${indentation.repeat(3)}Label at index: ${index} was found not to be a string. Removing value.`);
         }
         else if (!(label.trim().length)) {
+            isValidLabel = false;
             logger.warn(`${indentation.repeat(3)}Label at index: ${index} must contain at least one non whitespace character. Removing value.`);
         }
-        return isLabelAString;
+        return isValidLabel;
     });
     return {
         action: formattedAction,
