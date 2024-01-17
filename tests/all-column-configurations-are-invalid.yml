@@ -37,29 +37,39 @@ jobs:
               {
                 "columnName": "                 ",
                 "labelingRules": []
+              },
+              {
+                "columnName": "",
+                "labelingRules": []
               }
             ]
           token: ${{secrets.GITHUB_TOKEN}}
 
-# Result:
+# Result: 
 
 # Validating Config
 #   Checking column at index 0
-#     Could not make valid column configuration from value at index: 0
+#     Could not make valid column configuration from value at index: 0. Skipping column.
 #       key "columnName" was not found in the object
 #   Checking column at index 1
-#     Could not make valid column configuration from value at index: 1
+#     Could not make valid column configuration from value at index: 1. Skipping column.
 #       key "columnName" was not found in the object
 #   Checking column at index 2
-#     Could not make valid column configuration from value at index: 2
+#     Could not make valid column configuration from value at index: 2. Skipping column.
 #       key "labelingRules" was not found in the object
 #   Checking column at index 3
-#     Could not make valid column configuration from value at index: 3
+#     Could not make valid column configuration from value at index: 3. Skipping column.
 #       key "columnName" was not found in the object
 #   Checking column at index 4
-#     Could not make valid column configuration from value at index: 4
+#     Could not make valid column configuration from value at index: 4. Skipping column.
 #       Member "columnName" was found not to be a string
 #   Checking column at index 5
-#     Could not make valid column configuration from value at index: 5
+#     Could not make valid column configuration from value at index: 5. Skipping column.
 #       Member "labelingRules" was found not to be an array
+#   Checking column at index 6
+#     Could not make valid column configuration from value at index: 6. Skipping column.
+#       columnName must contain at least one non whitespace character
+#   Checking column at index 7
+#     Could not make valid column configuration from value at index: 7. Skipping column.
+#       columnName must contain at least one non whitespace character
 # Could not find any valid actions to perform from the configuration
