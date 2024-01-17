@@ -111,13 +111,21 @@ function getValidatedLabelingRule(object) {
     };
 }
 function main() {
-    logger.info('Validating Config');
-    const validColumnConfigurations = getValidatedConfig(columns_label_config);
-    if (!(validColumnConfigurations.length)) {
-        logger.error('Could not find any valid actions to perform from the configuration');
-        process.exitCode = 1;
-        return;
+    try {
+        logger.info('Validating Config');
+        const validColumnConfigurations = getValidatedConfig(columns_label_config);
+        if (!(validColumnConfigurations.length)) {
+            logger.error('Could not find any valid actions to perform from the configuration');
+            process.exitCode = 1;
+            return;
+        }
+        logger.info('validatedConfig:');
+        logger.info(JSON.stringify(validColumnConfigurations, null, 2));
     }
-    logger.info('validatedConfig', validColumnConfigurations);
+    catch (error) {
+        if (error instanceof Error && error.message) {
+            logger.error(error.message);
+        }
+    }
 }
 module.exports = main;
