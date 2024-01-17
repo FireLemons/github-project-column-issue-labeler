@@ -160,6 +160,7 @@ function main() {
   } catch (error) {
     if (error instanceof Error && error.message) {
       logger.error(error.message)
+      process.exitCode = 1
     }
   }
 }
