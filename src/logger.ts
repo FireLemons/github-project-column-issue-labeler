@@ -22,6 +22,7 @@ class Logger {
 
   #getStackHeightOfFunctionsWithinSameFile(): number {
     const { stack } = new Error()
+    console.error(stack)
 
     if (!stack) {
       throw new ReferenceError('The error did not contain the stack required for computing the indentation count')
@@ -53,15 +54,45 @@ class Logger {
   }
   
   info (message: string) {
-    console.log(command_line_color.cyan(this.#getIndentation() + message))
+    let indentation = ''
+
+    try {
+      indentation = this.#getIndentation()
+    } catch (error) {
+      if (this.showDebugOutput) {
+        console.error(error)
+      }
+    }
+
+    console.log(command_line_color.cyan(indentation + message))
   }
 
   error (message: string) {
-    console.error(command_line_color.red(this.#getIndentation() + message))
+    let indentation = ''
+
+    try {
+      indentation = this.#getIndentation()
+    } catch (error) {
+      if (this.showDebugOutput) {
+        console.error(error)
+      }
+    }
+
+    console.error(command_line_color.red(indentation + message))
   }
 
   warn (message: string) {
-    console.warn(command_line_color.yellow(this.#getIndentation() + message))
+    let indentation = ''
+
+    try {
+      indentation = this.#getIndentation()
+    } catch (error) {
+      if (this.showDebugOutput) {
+        console.error(error)
+      }
+    }
+
+    console.warn(command_line_color.yellow(indentation + message))
   }
 }
 
