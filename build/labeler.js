@@ -4,25 +4,13 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const LoggerClass = require('./logger');
 const indentation = '  ';
+const logger = new LoggerClass();
 const typeChecker = require('./typeChecker');
-let logger;
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
 // Javascript destructuring assignment
 const { owner, repo } = github.context.repo;
 const octokit = github.getOctokit(token);
-try {
-    logger = new LoggerClass(core);
-}
-catch (error) {
-    console.warn('Could not initialize logger. Using fallback.');
-    console.error(error);
-    logger = {
-        info: console.log,
-        error: console.log,
-        warn: console.log
-    };
-}
 var LabelingAction;
 (function (LabelingAction) {
     LabelingAction["ADD"] = "ADD";
@@ -131,10 +119,10 @@ function getValidatedLabelingRule(object) {
 }
 function main() {
     try {
-        core.info('Validating Config');
+        logger.info('Validating Config');
         const validColumnConfigurations = getValidatedConfig(columns_label_config);
         if (!(validColumnConfigurations.length)) {
-            core.error('Could not find any valid actions to perform from the configuration');
+            logger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;
             return;
         }

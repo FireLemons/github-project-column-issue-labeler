@@ -1,23 +1,19 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_line_color = require('cli-color');
-const typeChecker = require('./typeChecker');
+const core_1 = __importDefault(require("@actions/core"));
 class Logger {
-    githubActionsCore;
-    constructor(githubActionsCore) {
-        if (!(typeChecker.isObject(githubActionsCore))) {
-            throw new TypeError('Param githubActionsCore must be an object');
-        }
-        this.githubActionsCore = githubActionsCore;
-    }
     info(message) {
-        this.githubActionsCore.info(command_line_color.cyan(message));
+        core_1.default.info('        ' + command_line_color.cyan(message));
     }
     error(message) {
-        this.githubActionsCore.error(command_line_color.red(message));
+        core_1.default.error('  ' + command_line_color.red(message));
     }
     warn(message) {
-        this.githubActionsCore.warning(command_line_color.yellow(message));
+        core_1.default.warning(command_line_color.yellow(message));
     }
 }
 module.exports = Logger;
