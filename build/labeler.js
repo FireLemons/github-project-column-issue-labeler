@@ -28,7 +28,7 @@ function getValidatedColumnConfiguration(object) {
     }
     typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string);
     if (!object['columnName'].length) {
-        throw new ReferenceError('Column name cannot be empty string');
+        throw new ReferenceError('columnName cannot be empty string');
     }
     typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array);
     const validatedLabelingRules = [];
