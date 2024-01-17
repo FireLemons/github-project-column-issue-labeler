@@ -103,10 +103,10 @@ function getValidatedLabelingRule(object) {
     const validatedLabels = object['labels'].filter((label, index) => {
         const isLabelAString = typeChecker.isString(label);
         if (!isLabelAString) {
-            logger.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
+            logger.warn(`${indentation.repeat(3)}Label at index: ${index} was found not to be a string. Removing value.`);
         }
         else if (!(label.trim().length)) {
-            logger.warn(`Value at index: ${index} of label must contain at least one non whitespace character. Removing value from list.`);
+            logger.warn(`${indentation.repeat(3)}Label at index: ${index} must contain at least one non whitespace character. Removing value.`);
         }
         return isLabelAString;
     });
