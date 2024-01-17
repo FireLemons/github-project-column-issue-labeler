@@ -1,26 +1,17 @@
 const command_line_color = require('cli-color')
-const typeChecker = require('./typeChecker')
+const core = require('@actions/core')
 
 class Logger {
-  githubActionsCore: any
-  constructor (githubActionsCore: any) {
-    if (!(typeChecker.isObject(githubActionsCore))) {
-      throw new TypeError('Param githubActionsCore must be an object')
-    }
-
-    this.githubActionsCore = githubActionsCore
-  }
-
   info (message: string) {
-    this.githubActionsCore.info(command_line_color.cyan(message))
+    core.info('        ' + command_line_color.cyan(message))
   }
 
   error (message: string) {
-    this.githubActionsCore.error(command_line_color.red(message))
+    core.error('  ' + command_line_color.red(message))
   }
 
   warn (message: string) {
-    this.githubActionsCore.warning(command_line_color.yellow(message))
+    core.warning(command_line_color.yellow(message))
   }
 }
 
