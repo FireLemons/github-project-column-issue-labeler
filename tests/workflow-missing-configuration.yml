@@ -16,8 +16,5 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
 
 # Result: 
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:63
-#         throw new TypeError('input "column_label_config" must be an array');
-#         ^
-
-# TypeError: input "column_label_config" must be an array
+# Validating Config
+# Missing required input "column_label_config"
