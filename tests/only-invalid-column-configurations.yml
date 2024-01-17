@@ -52,16 +52,4 @@ jobs:
 #     Column name cannot be empty string
 #   Could not make valid column configuration from value at index: 5
 #     Member "columnName" was found not to be a string
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:117
-#         throw new ReferenceError('The list of validated configurations for columns was found to be empty');
-#         ^
-
-# ReferenceError: The list of validated configurations for columns was found to be empty
-#     at main (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:117:15)
-#     at Object.<anonymous> (/home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/index.js:3:1)
-#     at Module._compile (node:internal/modules/cjs/loader:1241:14)
-#     at Module._extensions..js (node:internal/modules/cjs/loader:1295:10)
-#     at Module.load (node:internal/modules/cjs/loader:1091:32)
-#     at Module._load (node:internal/modules/cjs/loader:938:12)
-#     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:83:12)
-#     at node:internal/main/run_main_module:23:47
+# Could not find any valid actions to perform from the configuration
