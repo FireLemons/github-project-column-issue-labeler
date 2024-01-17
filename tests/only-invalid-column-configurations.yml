@@ -45,11 +45,11 @@ jobs:
 #   Could not make valid column configuration from value at index: 1
 #     key "columnName" was not found in the object
 #   Could not make valid column configuration from value at index: 2
-#     Member "columnName" was found not to be a string
+#     key "labelingRules" was not found in the object
 #   Could not make valid column configuration from value at index: 3
 #     key "columnName" was not found in the object
 #   Could not make valid column configuration from value at index: 4
-#     Column name cannot be empty string
-#   Could not make valid column configuration from value at index: 5
 #     Member "columnName" was found not to be a string
+#   Could not make valid column configuration from value at index: 5
+#     Member "labelingRules" was found not to be an array
 # Could not find any valid actions to perform from the configuration
