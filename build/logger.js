@@ -17,7 +17,7 @@ class Logger {
         this.githubActionsCore.error(command_line_color.red(message));
     }
     warn(message) {
-        this.githubActionsCore.warn(command_line_color.yellow(message));
+        this.githubActionsCore.warning(command_line_color.yellow(message));
     }
 }
 module.exports = Logger;

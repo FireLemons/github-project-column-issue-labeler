@@ -20,7 +20,7 @@ class Logger {
   }
 
   warn (message: string) {
-    this.githubActionsCore.warn(command_line_color.yellow(message))
+    this.githubActionsCore.warning(command_line_color.yellow(message))
   }
 }
 
