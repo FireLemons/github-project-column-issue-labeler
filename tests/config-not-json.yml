@@ -17,9 +17,6 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
 
 # Result:
-# Validating Config
-# /home/runner/work/gh-actions-sandbox/gh-actions-sandbox/github-project-column-issue-labeler/build/labeler.js:65
-#         throw new SyntaxError('Could not parse input "column_label_config" as JSON');
-#         ^
 
-# SyntaxError: Could not parse input "column_label_config" as JSON
+# Validating Config
+# Could not parse input "column_label_config" as JSON
