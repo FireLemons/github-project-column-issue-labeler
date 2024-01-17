@@ -40,16 +40,22 @@ jobs:
 # Result:
 
 # Validating Config
-#   Could not make valid column configuration from value at index: 0
-#     key "columnName" was not found in the object
-#   Could not make valid column configuration from value at index: 1
-#     key "columnName" was not found in the object
-#   Could not make valid column configuration from value at index: 2
-#     key "labelingRules" was not found in the object
-#   Could not make valid column configuration from value at index: 3
-#     key "columnName" was not found in the object
-#   Could not make valid column configuration from value at index: 4
-#     Member "columnName" was found not to be a string
-#   Could not make valid column configuration from value at index: 5
-#     Member "labelingRules" was found not to be an array
+#   Checking column at index 0
+#     Could not make valid column configuration from value at index: 0
+#       key "columnName" was not found in the object
+#   Checking column at index 1
+#     Could not make valid column configuration from value at index: 1
+#       key "columnName" was not found in the object
+#   Checking column at index 2
+#     Could not make valid column configuration from value at index: 2
+#       key "labelingRules" was not found in the object
+#   Checking column at index 3
+#     Could not make valid column configuration from value at index: 3
+#       key "columnName" was not found in the object
+#   Checking column at index 4
+#     Could not make valid column configuration from value at index: 4
+#       Member "columnName" was found not to be a string
+#   Checking column at index 5
+#     Could not make valid column configuration from value at index: 5
+#       Member "labelingRules" was found not to be an array
 # Could not find any valid actions to perform from the configuration
