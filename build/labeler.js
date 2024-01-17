@@ -19,16 +19,14 @@ var LabelingAction;
 function isLabelingAction(str) {
     return Object.keys(LabelingAction).includes(str);
 }
-function formatLabelingRule(unFormattedRule) {
-    unFormattedRule.action = unFormattedRule.action.toUpperCase();
-}
 function getValidatedColumnConfiguration(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
     typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string);
-    if (!object['columnName'].length) {
-        throw new ReferenceError('columnName cannot be empty string');
+    const validatedColumnName = object['columnName'].trim();
+    if (!(validatedColumnName.length)) {
+        throw new ReferenceError('columnName must contain at least one non whitespace character');
     }
     typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array);
     const validatedLabelingRules = [];
@@ -51,7 +49,7 @@ function getValidatedColumnConfiguration(object) {
         }
     });
     return {
-        columnName: object['columnName'],
+        columnName: validatedColumnName,
         labelingRules: validatedLabelingRules
     };
 }
@@ -95,7 +93,7 @@ function getValidatedLabelingRule(object) {
         throw new TypeError('Labeling rule must be an object');
     }
     typeChecker.validateObjectMember(object, 'action', typeChecker.types.string);
-    const formattedAction = object['action'].toUpperCase();
+    const formattedAction = object['action'].toUpperCase().trim();
     if (!isLabelingAction(formattedAction)) {
         throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`);
     }
@@ -104,6 +102,9 @@ function getValidatedLabelingRule(object) {
         const isLabelAString = typeChecker.isString(label);
         if (!isLabelAString) {
             logger.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`);
+        }
+        else if (!(label.trim().length)) {
+            logger.warn(`Value at index: ${index} of label must contain at least one non whitespace character. Removing value from list.`);
         }
         return isLabelAString;
     });

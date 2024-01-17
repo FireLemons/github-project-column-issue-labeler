@@ -29,10 +29,6 @@ function isLabelingAction (str: string): str is LabelingAction {
   return Object.keys(LabelingAction).includes(str)
 }
 
-function formatLabelingRule (unFormattedRule: any): void {
-  unFormattedRule.action = unFormattedRule.action.toUpperCase() as LabelingAction
-}
-
 function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   if (!typeChecker.isObject(object)) {
     throw new TypeError('Column configuration must be an object')
@@ -40,8 +36,10 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
 
   typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string)
 
-  if (!object['columnName'].length) {
-    throw new ReferenceError('columnName cannot be empty string')
+  const validatedColumnName = object['columnName'].trim()
+
+  if (!(validatedColumnName.length)) {
+    throw new ReferenceError('columnName must contain at least one non whitespace character')
   }
 
   typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array)
@@ -69,7 +67,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   })
 
   return {
-    columnName: object['columnName'],
+    columnName: validatedColumnName,
     labelingRules: validatedLabelingRules
   }
 }
@@ -123,7 +121,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 
   typeChecker.validateObjectMember(object, 'action', typeChecker.types.string)
 
-  const formattedAction = object['action'].toUpperCase()
+  const formattedAction = object['action'].toUpperCase().trim()
 
   if (!isLabelingAction(formattedAction)) {
     throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`)
@@ -136,6 +134,8 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 
     if (!isLabelAString) {
       logger.warn(`Value at index: ${index} of label array was found not to be a string. Removing value from list.`)
+    } else if (!(label.trim().length)) {
+      logger.warn(`Value at index: ${index} of label must contain at least one non whitespace character. Removing value from list.`)
     }
 
     return isLabelAString
