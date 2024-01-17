@@ -93,14 +93,13 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
   config.forEach((columnConfiguration: any, index: number) => {
-    console.info(`Checking column at index ${index}`)
+    logger.info(`Checking column at index ${index}`)
     let validatedColumnConfiguration
 
     try {
       validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration)
 
-      if (columnConfiguration.labelingRules.length) {
-        console.log('columnConfiguration.labelingRules.length', columnConfiguration.labelingRules.length)
+      if (validatedColumnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
         logger.warn(`  Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)

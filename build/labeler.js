@@ -70,12 +70,11 @@ function getValidatedConfig(config) {
     }
     const validatedColumnConfigurations = [];
     config.forEach((columnConfiguration, index) => {
-        console.info(`Checking column at index ${index}`);
+        logger.info(`Checking column at index ${index}`);
         let validatedColumnConfiguration;
         try {
             validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
-            if (columnConfiguration.labelingRules.length) {
-                console.log('columnConfiguration.labelingRules.length', columnConfiguration.labelingRules.length);
+            if (validatedColumnConfiguration.labelingRules.length) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
             else {
