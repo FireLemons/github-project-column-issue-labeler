@@ -22,7 +22,6 @@ class Logger {
 
   #getStackHeightOfFunctionsWithinSameFile(): number {
     const { stack } = new Error()
-    console.error(stack)
 
     if (!stack) {
       throw new ReferenceError('The error did not contain the stack required for computing the indentation count')
@@ -33,7 +32,6 @@ class Logger {
     let fileName
 
     if (!fileNameMatchResult) {
-      console.log('fileNameMatchResult', fileNameMatchResult)
       throw new ReferenceError('Failed to compute indentation from stack')
     } else {
       fileName = fileNameMatchResult[2]
@@ -65,6 +63,8 @@ class Logger {
       }
     }
 
+    console.log('info indentation', indentation)
+
     console.log(command_line_color.cyan(indentation + message))
   }
 
@@ -79,6 +79,8 @@ class Logger {
       }
     }
 
+    console.log('error indentation', indentation)
+
     console.error(command_line_color.red(indentation + message))
   }
 
@@ -92,6 +94,8 @@ class Logger {
         console.error(error)
       }
     }
+
+    console.log('warn indentation', indentation)
 
     console.warn(command_line_color.yellow(indentation + message))
   }
