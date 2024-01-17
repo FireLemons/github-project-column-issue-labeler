@@ -2,9 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = require('@actions/core');
 const github = require('@actions/github');
-const LoggerClass = require('./logger');
 const indentation = '  ';
-const logger = new LoggerClass();
+const logger = require('./logger');
 const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
