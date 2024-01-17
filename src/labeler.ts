@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const LoggerClass = require('./logger')
-const logger = new LoggerClass('main', 2, true)
+const logger = new LoggerClass('main')
 const typeChecker = require('./typeChecker')
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
