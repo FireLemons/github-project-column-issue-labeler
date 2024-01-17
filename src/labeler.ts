@@ -61,7 +61,10 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
       }
     } catch (error) {
       logger.warn(`Could not make valid labeling rule from value at index: ${index}`)
-      logger.error(error)
+
+      if (error instanceof Error && error.message) {
+        logger.error('  ' + error.message)
+      }
     }
   })
 
@@ -90,21 +93,23 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
   config.forEach((columnConfiguration: any, index: number) => {
+    console.info(`Checking column at index ${index}`)
     let validatedColumnConfiguration
 
     try {
       validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration)
 
       if (columnConfiguration.labelingRules.length) {
+        console.log('columnConfiguration.labelingRules.length', columnConfiguration.labelingRules.length)
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
+        logger.warn(`  Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
     } catch (error) {
-      logger.warn(`Could not make valid column configuration from value at index: ${index}`)
+      logger.warn(`  Could not make valid column configuration from value at index: ${index}`)
 
       if (error instanceof Error && error.message) {
-        logger.error('  ' + error.message)
+        logger.error('    ' + error.message)
       }
     }
   })
@@ -122,7 +127,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
   const formattedAction = object['action'].toUpperCase()
 
   if (!isLabelingAction(formattedAction)) {
-    throw new RangeError(`Labeling action "${formattedAction}" is not supported.\n Please select from the following: ${JSON.stringify(Object.keys(LabelingAction))}`)
+    throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`)
   }
 
   typeChecker.validateObjectMember(object, 'labels', typeChecker.types.array)
