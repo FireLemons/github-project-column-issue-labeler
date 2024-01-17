@@ -63,8 +63,6 @@ class Logger {
       }
     }
 
-    console.log('info indentation', indentation)
-
     console.log(command_line_color.cyan(indentation + message))
   }
 
@@ -79,8 +77,6 @@ class Logger {
       }
     }
 
-    console.log('error indentation', indentation)
-
     console.error(command_line_color.red(indentation + message))
   }
 
@@ -94,8 +90,6 @@ class Logger {
         console.error(error)
       }
     }
-
-    console.log('warn indentation', indentation)
 
     console.warn(command_line_color.yellow(indentation + message))
   }
