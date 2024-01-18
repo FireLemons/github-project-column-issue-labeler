@@ -30,7 +30,7 @@ exports.warn = exports.error = exports.info = void 0;
 const cli_color_1 = __importDefault(require("cli-color"));
 const core = __importStar(require("@actions/core"));
 function info(message) {
-    core.info('        ' + cli_color_1.default.cyan(message));
+    core.info('         ' + cli_color_1.default.cyan(message));
 }
 exports.info = info;
 function error(message) {
