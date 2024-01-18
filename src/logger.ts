@@ -1,5 +1,5 @@
-const command_line_color = require('cli-color')
-const core = require('@actions/core')
+import * as command_line_color from 'cli-color'
+import * as core from '@actions/core'
 
 export function info (message: string) {
   core.info('        ' + command_line_color.cyan(message))

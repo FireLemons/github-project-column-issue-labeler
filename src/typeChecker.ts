@@ -1,21 +1,21 @@
-enum Type {
-  string = 'string',
-  array = 'array'
-}
-
 interface objectWithKeys {
   [key: string]: any
 }
 
-function isObject(obj: any):boolean {
+export enum Type {
+  string = 'string',
+  array = 'array'
+}
+
+export function isObject(obj: any):boolean {
   return typeof obj === 'object' && !Array.isArray(obj) && obj !== null
 }
 
-function isString(obj: any): obj is string {
+export function isString(obj: any): obj is string {
   return typeof obj === 'string'
 }
 
-function validateObjectMember(obj: objectWithKeys, key: string, type: Type): void {
+export function validateObjectMember(obj: objectWithKeys, key: string, type: Type): void {
   if (!(key in obj)){
     throw new ReferenceError(`key "${key}" was not found in the object`)
   }
@@ -36,11 +36,4 @@ function validateObjectMember(obj: objectWithKeys, key: string, type: Type): voi
 
       break;
   }
-}
-
-module.exports = {
-  isObject: isObject,
-  isString: isString,
-  validateObjectMember: validateObjectMember,
-  types: Type
 }

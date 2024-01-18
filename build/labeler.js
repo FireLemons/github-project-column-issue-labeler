@@ -24,10 +24,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
-const github = require('@actions/github');
+const github = __importStar(require("@actions/github"));
+const logger = __importStar(require("./logger"));
+const typeChecker = __importStar(require("./typeChecker"));
 const indentation = '  ';
-const logger = require('./logger');
-const typeChecker = require('./typeChecker');
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
 // Javascript destructuring assignment
@@ -46,12 +46,12 @@ function getValidatedColumnConfiguration(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
-    typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string);
+    typeChecker.validateObjectMember(object, 'columnName', typeChecker.Type.string);
     const validatedColumnName = object['columnName'].trim();
     if (!(validatedColumnName.length)) {
         throw new ReferenceError('columnName must contain at least one non whitespace character');
     }
-    typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array);
+    typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array);
     const validatedLabelingRules = [];
     object['labelingRules'].forEach((labelingRule, index) => {
         logger.info(`${indentation.repeat(2)}Checking labeling rule at index ${index}`);
@@ -116,12 +116,12 @@ function getValidatedLabelingRule(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Labeling rule must be an object');
     }
-    typeChecker.validateObjectMember(object, 'action', typeChecker.types.string);
+    typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
     const formattedAction = object['action'].toUpperCase().trim();
     if (!isLabelingAction(formattedAction)) {
         throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`);
     }
-    typeChecker.validateObjectMember(object, 'labels', typeChecker.types.array);
+    typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
     const validatedLabels = object['labels'].filter((label, index) => {
         let isValidLabel = true;
         if (!(typeChecker.isString(label))) {

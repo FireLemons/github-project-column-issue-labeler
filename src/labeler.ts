@@ -1,8 +1,8 @@
 import * as core from '@actions/core'
-const github = require('@actions/github')
+import * as github from '@actions/github'
+import * as logger from './logger'
+import * as typeChecker from './typeChecker'
 const indentation = '  '
-const logger = require('./logger')
-const typeChecker = require('./typeChecker')
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
@@ -34,7 +34,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
     throw new TypeError('Column configuration must be an object')
   }
 
-  typeChecker.validateObjectMember(object, 'columnName', typeChecker.types.string)
+  typeChecker.validateObjectMember(object, 'columnName', typeChecker.Type.string)
 
   const validatedColumnName = object['columnName'].trim()
 
@@ -42,7 +42,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
     throw new ReferenceError('columnName must contain at least one non whitespace character')
   }
 
-  typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.types.array)
+  typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array)
 
   const validatedLabelingRules: LabelingRule[] = []
   
@@ -119,7 +119,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
     throw new TypeError('Labeling rule must be an object')
   }
 
-  typeChecker.validateObjectMember(object, 'action', typeChecker.types.string)
+  typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string)
 
   const formattedAction = object['action'].toUpperCase().trim()
 
@@ -127,7 +127,7 @@ function getValidatedLabelingRule (object: any): LabelingRule {
     throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`)
   }
 
-  typeChecker.validateObjectMember(object, 'labels', typeChecker.types.array)
+  typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array)
 
   const validatedLabels = object['labels'].filter((label: any, index: number) => {
     let isValidLabel = true
