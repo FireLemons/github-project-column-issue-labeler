@@ -1,0 +1,54 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    name: Manage Issue Labels
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: 'true'
+      - uses: ./github-project-column-issue-labeler/
+        id: manage-project-issue-labels
+        name: Manage Project Issue Labels
+        with:
+          column_label_config: >
+            [
+              {
+                "columnName": "Name",
+                "labelingRules": [
+                  {
+                    "action": "ADD",
+                    "labels": [""]
+                  },
+                  {
+                    "action": "ReMovE",
+                    "labels": ["     ", "   "]
+                  },
+                  {
+                    "action": "set      ",
+                    "labels": [3, 4]
+                  }
+                ]
+              }
+            ]
+          token: ${{secrets.GITHUB_TOKEN}}
+
+# Result:
+
+#         Validating Config
+#           Checking column at index 0
+#             Checking labeling rule at index 0
+# Warning:       Label at index: 0 must contain at least one non whitespace character. Removing value.
+# Warning:       Labeling rule at index: 0 did not contain any valid labels. Skipping rule.
+#             Checking labeling rule at index 1
+# Warning:       Label at index: 0 must contain at least one non whitespace character. Removing value.
+# Warning:       Label at index: 1 must contain at least one non whitespace character. Removing value.
+# Warning:       Labeling rule at index: 1 did not contain any valid labels. Skipping rule.
+#             Checking labeling rule at index 2
+# Warning:       Label at index: 0 was found not to be a string. Removing value.
+# Warning:       Label at index: 1 was found not to be a string. Removing value.
+# Warning:       Labeling rule at index: 2 did not contain any valid labels. Skipping rule.
+# Warning:     Column configuration at index: 0 did not contain any valid labeling rules. Skipping column.
+# Error:   Could not find any valid actions to perform from the configuration
