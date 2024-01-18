@@ -51,21 +51,27 @@ jobs:
 
 # Result:
 
-# Validating Config
-#   Checking column at index 0
-#     Column configuration at index: 0 did not contain any valid labeling rules. Skipping column.
-#   Checking column at index 1
-#     Could not make valid labeling rule from value at index: 0
-#       key "action" was not found in the object
-#     Could not make valid labeling rule from value at index: 1
-#       key "labels" was not found in the object
-#     Could not make valid labeling rule from value at index: 2
-#       key "action" was not found in the object
-#     Could not make valid labeling rule from value at index: 3
-#       Member "action" was found not to be a string
-#     Could not make valid labeling rule from value at index: 4
-#       Member "labels" was found not to be an array
-#     Could not make valid labeling rule from value at index: 5
-#       Labeling action "UNSUPPORTED ACTION" is not supported. Supported actions are: ["ADD","REMOVE","SET"]
-#     Column configuration at index: 1 did not contain any valid labeling rules. Skipping column.
-# Could not find any valid actions to perform from the configuration
+#          Validating Config
+#            Checking column at index 0
+# Warning:     Column configuration at index: 0 did not contain any valid labeling rules. Skipping column.
+#            Checking column at index 1
+#              Checking labeling rule at index 0
+# Warning:       Could not make valid labeling rule from value at index: 0
+# Error:           key "action" was not found in the object
+#              Checking labeling rule at index 1
+# Warning:       Could not make valid labeling rule from value at index: 1
+# Error:           key "labels" was not found in the object
+#              Checking labeling rule at index 2
+# Warning:       Could not make valid labeling rule from value at index: 2
+# Error:           key "action" was not found in the object
+#              Checking labeling rule at index 3
+# Warning:       Could not make valid labeling rule from value at index: 3
+# Error:           Member "action" was found not to be a string
+#              Checking labeling rule at index 4
+# Warning:       Could not make valid labeling rule from value at index: 4
+# Error:           Member "labels" was found not to be an array
+#              Checking labeling rule at index 5
+# Warning:       Could not make valid labeling rule from value at index: 5
+# Error:           Labeling action "UNSUPPORTED ACTION" is not supported. Supported actions are: ["ADD","REMOVE","SET"]
+# Warning:     Column configuration at index: 1 did not contain any valid labeling rules. Skipping column.
+# Error:   Could not find any valid actions to perform from the configuration

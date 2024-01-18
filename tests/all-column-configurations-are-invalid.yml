@@ -47,29 +47,29 @@ jobs:
 
 # Result: 
 
-#         Validating Config
-#           Checking column at index 0
+#          Validating Config
+#            Checking column at index 0
 # Warning:     Could not make valid column configuration from value at index: 0. Skipping column.
 # Error:         key "columnName" was not found in the object
-#           Checking column at index 1
+#            Checking column at index 1
 # Warning:     Could not make valid column configuration from value at index: 1. Skipping column.
 # Error:         key "columnName" was not found in the object
-#           Checking column at index 2
+#            Checking column at index 2
 # Warning:     Could not make valid column configuration from value at index: 2. Skipping column.
 # Error:         key "labelingRules" was not found in the object
-#           Checking column at index 3
+#            Checking column at index 3
 # Warning:     Could not make valid column configuration from value at index: 3. Skipping column.
 # Error:         key "columnName" was not found in the object
-#           Checking column at index 4
+#            Checking column at index 4
 # Warning:     Could not make valid column configuration from value at index: 4. Skipping column.
 # Error:         Member "columnName" was found not to be a string
-#           Checking column at index 5
+#            Checking column at index 5
 # Warning:     Could not make valid column configuration from value at index: 5. Skipping column.
 # Error:         Member "labelingRules" was found not to be an array
-#           Checking column at index 6
+#            Checking column at index 6
 # Warning:     Could not make valid column configuration from value at index: 6. Skipping column.
 # Error:         columnName must contain at least one non whitespace character
-#           Checking column at index 7
+#            Checking column at index 7
 # Warning:     Could not make valid column configuration from value at index: 7. Skipping column.
 # Error:         columnName must contain at least one non whitespace character
 # Error:   Could not find any valid actions to perform from the configuration

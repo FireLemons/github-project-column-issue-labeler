@@ -18,5 +18,5 @@ jobs:
 
 # Result:
 
-# Validating Config
-# Could not parse input "column_label_config" as JSON
+#          Validating Config
+# Error:   Could not parse input "column_label_config" as JSON

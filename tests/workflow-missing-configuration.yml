@@ -16,5 +16,5 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
 
 # Result: 
-# Validating Config
-# Missing required input "column_label_config"
+#          Validating Config
+# Error:   Missing required input "column_label_config"
