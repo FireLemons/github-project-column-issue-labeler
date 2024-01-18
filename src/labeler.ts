@@ -1,4 +1,4 @@
-const core = require('@actions/core')
+import * as core from '@actions/core'
 const github = require('@actions/github')
 const indentation = '  '
 const logger = require('./logger')
