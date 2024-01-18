@@ -22,19 +22,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.warn = exports.error = exports.info = void 0;
-const command_line_color = __importStar(require("cli-color"));
+const cli_color_1 = __importDefault(require("cli-color"));
 const core = __importStar(require("@actions/core"));
 function info(message) {
-    core.info('        ' + command_line_color.cyan(message));
+    core.info('        ' + cli_color_1.default.cyan(message));
 }
 exports.info = info;
 function error(message) {
-    core.error('  ' + command_line_color.red(message));
+    core.error('  ' + cli_color_1.default.red(message));
 }
 exports.error = error;
 function warn(message) {
-    core.warning(command_line_color.yellow(message));
+    core.warning(cli_color_1.default.yellow(message));
 }
 exports.warn = warn;
