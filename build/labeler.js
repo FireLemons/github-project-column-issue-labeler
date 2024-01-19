@@ -122,17 +122,20 @@ function getValidatedLabelingRule(object) {
         throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`);
     }
     typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
-    const validatedLabels = object['labels'].filter((label, index) => {
-        let isValidLabel = true;
+    const validatedLabels = [];
+    object['labels'].forEach((label, index) => {
         if (!(typeChecker.isString(label))) {
-            isValidLabel = false;
             githubActionsPrettyPrintLogger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, indentation.repeat(3));
         }
-        else if (!(label.trim().length)) {
-            isValidLabel = false;
-            githubActionsPrettyPrintLogger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, indentation.repeat(3));
+        else {
+            const labelWithoutSurroundingWhitespace = label.trim();
+            if (!(labelWithoutSurroundingWhitespace.length)) {
+                githubActionsPrettyPrintLogger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, indentation.repeat(3));
+            }
+            else {
+                validatedLabels.push(labelWithoutSurroundingWhitespace);
+            }
         }
-        return isValidLabel;
     });
     return {
         action: formattedAction,
