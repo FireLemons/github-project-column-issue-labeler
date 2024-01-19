@@ -5,7 +5,7 @@
   },
   "files": [
     "src/labeler.ts",
-    "src/logger.ts",
+    "src/githubActionsPrettyPrintLogger.ts",
     "src/typeChecker.ts"
   ]
 }

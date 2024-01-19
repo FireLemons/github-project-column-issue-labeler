@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import * as logger from './logger'
+import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
 import * as typeChecker from './typeChecker'
 const indentation = '  '
 let columns_label_config: string = core.getInput('column_label_config')
@@ -47,7 +47,7 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
   const validatedLabelingRules: LabelingRule[] = []
   
   object['labelingRules'].forEach((labelingRule: any, index: number) => {
-    logger.info(`${indentation.repeat(2)}Checking labeling rule at index ${index}`)
+    githubActionsPrettyPrintLogger.info(`Checking labeling rule at index ${index}`, indentation.repeat(2))
     let validatedLabelingRule
 
     try {
@@ -56,13 +56,13 @@ function getValidatedColumnConfiguration (object: any): ColumnConfiguration {
       if (validatedLabelingRule.labels.length) {
         validatedLabelingRules.push(validatedLabelingRule)
       } else {
-        logger.warn(`${indentation.repeat(3)}Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
+        githubActionsPrettyPrintLogger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, indentation.repeat(3))
       }
     } catch (error) {
-      logger.warn(`${indentation.repeat(3)}Could not make valid labeling rule from value at index: ${index}`)
+      githubActionsPrettyPrintLogger.warn(`Could not make valid labeling rule from value at index: ${index}`, indentation.repeat(3))
 
       if (error instanceof Error && error.message) {
-        logger.error(indentation.repeat(4) + error.message)
+        githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(4))
       }
     }
   })
@@ -91,7 +91,7 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
   config.forEach((columnConfiguration: any, index: number) => {
-    logger.info(`${indentation}Checking column at index ${index}`)
+    githubActionsPrettyPrintLogger.info(`Checking column at index ${index}`, indentation)
     let validatedColumnConfiguration
 
     try {
@@ -100,13 +100,13 @@ function getValidatedConfig (config: string): ColumnConfiguration[] {
       if (validatedColumnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        logger.warn(`${indentation.repeat(2)}Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
+        githubActionsPrettyPrintLogger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, indentation.repeat(2))
       }
     } catch (error) {
-      logger.warn(`${indentation.repeat(2)}Could not make valid column configuration from value at index: ${index}. Skipping column.`)
+      githubActionsPrettyPrintLogger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, indentation.repeat(2))
 
       if (error instanceof Error && error.message) {
-        logger.error(indentation.repeat(3) + error.message)
+        githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(3))
       }
     }
   })
@@ -134,10 +134,10 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 
     if (!(typeChecker.isString(label))) {
       isValidLabel = false
-      logger.warn(`${indentation.repeat(3)}Label at index: ${index} was found not to be a string. Removing value.`)
+      githubActionsPrettyPrintLogger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, indentation.repeat(3))
     } else if (!(label.trim().length)) {
       isValidLabel = false
-      logger.warn(`${indentation.repeat(3)}Label at index: ${index} must contain at least one non whitespace character. Removing value.`)
+      githubActionsPrettyPrintLogger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, indentation.repeat(3))
     }
 
     return isValidLabel
@@ -151,20 +151,21 @@ function getValidatedLabelingRule (object: any): LabelingRule {
 
 function main() {
   try {
-    logger.info('Validating Config')
+    githubActionsPrettyPrintLogger.info('Validating Config')
     const validColumnConfigurations = getValidatedConfig(columns_label_config)
 
     if (!(validColumnConfigurations.length)) {
-      logger.error('Could not find any valid actions to perform from the configuration')
+      githubActionsPrettyPrintLogger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
       return
     }
 
-    logger.info('validatedConfig:')
-    logger.info(JSON.stringify(validColumnConfigurations, null, 2))
+    githubActionsPrettyPrintLogger.info('validatedConfig:')
+    githubActionsPrettyPrintLogger.info(JSON.stringify(validColumnConfigurations, null, 2))
   } catch (error) {
     if (error instanceof Error && error.message) {
-      logger.error(error.message)
+      githubActionsPrettyPrintLogger.error('Failed to validate config')
+      githubActionsPrettyPrintLogger.error(error.message)
       process.exitCode = 1
     }
   }
