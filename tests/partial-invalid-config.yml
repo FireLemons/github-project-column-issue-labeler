@@ -1,0 +1,76 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    name: Manage Issue Labels
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: 'true'
+      - uses: ./github-project-column-issue-labeler/
+        id: manage-project-issue-labels
+        name: Manage Project Issue Labels
+        with:
+          column_label_config: >
+            [
+              {
+                "columnName": "Name with whitespace ",
+                "labelingRules": [
+                  {
+                    "action": "ADD ",
+                    "labels": ["Help Wanted", "New"]
+                  },
+                  {
+                    "action": "ReMovE",
+                    "labels": ["Done ", "   Completed", "", 4]
+                  },
+                  {
+                    "action": "invalid action",
+                    "labels": ["a", "b"]
+                  }
+                ]
+              },
+              {
+                "columnName": "invalid column"
+              }
+            ]
+          token: ${{secrets.GITHUB_TOKEN}}
+
+# Result:
+
+#          Validating Config
+#            Checking column at index 0
+#              Checking labeling rule at index 0
+#              Checking labeling rule at index 1
+# Warning:       Label at index: 2 must contain at least one non whitespace character. Removing value.
+# Warning:       Label at index: 3 was found not to be a string. Removing value.
+#              Checking labeling rule at index 2
+# Warning:       Could not make valid labeling rule from value at index: 2
+# Error:           Labeling action "INVALID ACTION" is not supported. Supported actions are: ["ADD","REMOVE","SET"]
+#            Checking column at index 1
+# Warning:     Could not make valid column configuration from value at index: 1. Skipping column.
+# Error:         key "labelingRules" was not found in the object
+#          validatedConfig:
+#          [
+#            {
+#              "columnName": "Name with whitespace",
+#              "labelingRules": [
+#                {
+#                  "action": "ADD",
+#                  "labels": [
+#                    "Help Wanted",
+#                    "New"
+#                  ]
+#                },
+#                {
+#                  "action": "REMOVE",
+#                  "labels": [
+#                    "Done",
+#                    "Completed"
+#                  ]
+#                }
+#              ]
+#            }
+#          ]
