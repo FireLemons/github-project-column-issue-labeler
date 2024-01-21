@@ -10,7 +10,7 @@ function makePrettyString (message: string, indentation: string, applyColor: (..
 }
 
 export function info (message: string, indentation: string = '') {
-  const adjustedIndentation: string = indentation + '         '; // Used to line up with warning messages prefixed with "Warning: "
+  const adjustedIndentation = indentation + '         ' // Used to line up with warning messages prefixed with "Warning: "
 
   core.info(makePrettyString(message, adjustedIndentation, commandLineColor.cyan))
 }

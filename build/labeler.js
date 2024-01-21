@@ -22,130 +22,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
+const getValidatedConfig_1 = __importDefault(require("./getValidatedConfig"));
 const github = __importStar(require("@actions/github"));
 const githubActionsPrettyPrintLogger = __importStar(require("./githubActionsPrettyPrintLogger"));
-const typeChecker = __importStar(require("./typeChecker"));
-const indentation = '  ';
 let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
 // Javascript destructuring assignment
 const { owner, repo } = github.context.repo;
 const octokit = github.getOctokit(token);
-var LabelingAction;
-(function (LabelingAction) {
-    LabelingAction["ADD"] = "ADD";
-    LabelingAction["REMOVE"] = "REMOVE";
-    LabelingAction["SET"] = "SET";
-})(LabelingAction || (LabelingAction = {}));
-function isLabelingAction(str) {
-    return Object.keys(LabelingAction).includes(str);
-}
-function getValidatedColumnConfiguration(object) {
-    if (!typeChecker.isObject(object)) {
-        throw new TypeError('Column configuration must be an object');
-    }
-    typeChecker.validateObjectMember(object, 'columnName', typeChecker.Type.string);
-    const validatedColumnName = object['columnName'].trim();
-    if (!(validatedColumnName.length)) {
-        throw new ReferenceError('columnName must contain at least one non whitespace character');
-    }
-    typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array);
-    const validatedLabelingRules = [];
-    object['labelingRules'].forEach((labelingRule, index) => {
-        githubActionsPrettyPrintLogger.info(`Checking labeling rule at index ${index}`, indentation.repeat(2));
-        let validatedLabelingRule;
-        try {
-            validatedLabelingRule = getValidatedLabelingRule(labelingRule);
-            if (validatedLabelingRule.labels.length) {
-                validatedLabelingRules.push(validatedLabelingRule);
-            }
-            else {
-                githubActionsPrettyPrintLogger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, indentation.repeat(3));
-            }
-        }
-        catch (error) {
-            githubActionsPrettyPrintLogger.warn(`Could not make valid labeling rule from value at index: ${index}`, indentation.repeat(3));
-            if (error instanceof Error && error.message) {
-                githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(4));
-            }
-        }
-    });
-    return {
-        columnName: validatedColumnName,
-        labelingRules: validatedLabelingRules
-    };
-}
-function getValidatedConfig(config) {
-    if (config === '') {
-        throw new ReferenceError('Missing required input "column_label_config"');
-    }
-    try {
-        config = JSON.parse(config);
-    }
-    catch (error) {
-        throw new SyntaxError('Could not parse input "column_label_config" as JSON');
-    }
-    if (!(Array.isArray(config))) {
-        throw new TypeError('input "column_label_config" must be an array');
-    }
-    const validatedColumnConfigurations = [];
-    config.forEach((columnConfiguration, index) => {
-        githubActionsPrettyPrintLogger.info(`Checking column at index ${index}`, indentation);
-        let validatedColumnConfiguration;
-        try {
-            validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
-            if (validatedColumnConfiguration.labelingRules.length) {
-                validatedColumnConfigurations.push(validatedColumnConfiguration);
-            }
-            else {
-                githubActionsPrettyPrintLogger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, indentation.repeat(2));
-            }
-        }
-        catch (error) {
-            githubActionsPrettyPrintLogger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, indentation.repeat(2));
-            if (error instanceof Error && error.message) {
-                githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(3));
-            }
-        }
-    });
-    return validatedColumnConfigurations;
-}
-function getValidatedLabelingRule(object) {
-    if (!typeChecker.isObject(object)) {
-        throw new TypeError('Labeling rule must be an object');
-    }
-    typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
-    const formattedAction = object['action'].toUpperCase().trim();
-    if (!isLabelingAction(formattedAction)) {
-        throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`);
-    }
-    typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
-    const validatedLabels = [];
-    object['labels'].forEach((label, index) => {
-        if (!(typeChecker.isString(label))) {
-            githubActionsPrettyPrintLogger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, indentation.repeat(3));
-        }
-        else {
-            const labelWithoutSurroundingWhitespace = label.trim();
-            if (!(labelWithoutSurroundingWhitespace.length)) {
-                githubActionsPrettyPrintLogger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, indentation.repeat(3));
-            }
-            else {
-                validatedLabels.push(labelWithoutSurroundingWhitespace);
-            }
-        }
-    });
-    return {
-        action: formattedAction,
-        labels: validatedLabels
-    };
-}
 function main() {
     try {
         githubActionsPrettyPrintLogger.info('Validating Config');
-        const validColumnConfigurations = getValidatedConfig(columns_label_config);
+        const validColumnConfigurations = (0, getValidatedConfig_1.default)(columns_label_config);
         if (!(validColumnConfigurations.length)) {
             githubActionsPrettyPrintLogger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;
