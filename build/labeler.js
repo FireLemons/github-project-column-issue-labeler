@@ -27,7 +27,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(require("@actions/core"));
-const getValidatedConfig_1 = __importDefault(require("./getValidatedConfig"));
+const validateConfig_1 = __importDefault(require("./validateConfig"));
 const github = __importStar(require("@actions/github"));
 const githubActionsPrettyPrintLogger = __importStar(require("./githubActionsPrettyPrintLogger"));
 let columns_label_config = core.getInput('column_label_config');
@@ -38,7 +38,7 @@ const octokit = github.getOctokit(token);
 function main() {
     try {
         githubActionsPrettyPrintLogger.info('Validating Config');
-        const validColumnConfigurations = (0, getValidatedConfig_1.default)(columns_label_config);
+        const validColumnConfigurations = (0, validateConfig_1.default)(columns_label_config);
         if (!(validColumnConfigurations.length)) {
             githubActionsPrettyPrintLogger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;

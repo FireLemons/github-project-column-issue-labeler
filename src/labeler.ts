@@ -1,8 +1,7 @@
 import * as core from '@actions/core'
-import getValidatedConfig from './getValidatedConfig'
+import validateConfig from './validateConfig'
 import * as github from '@actions/github'
 import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
-import * as typeChecker from './typeChecker'
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
@@ -12,7 +11,7 @@ const octokit = github.getOctokit(token)
 function main() {
   try {
     githubActionsPrettyPrintLogger.info('Validating Config')
-    const validColumnConfigurations = getValidatedConfig(columns_label_config)
+    const validColumnConfigurations = validateConfig(columns_label_config)
 
     if (!(validColumnConfigurations.length)) {
       githubActionsPrettyPrintLogger.error('Could not find any valid actions to perform from the configuration')

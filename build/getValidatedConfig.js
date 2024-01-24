@@ -30,7 +30,7 @@ const indentation = '  ';
 function isLabelingAction(str) {
     return Object.keys(LabelerConfig_1.LabelingAction).includes(str);
 }
-function getValidatedColumnConfiguration(object) {
+function validateColumnConfiguration(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
@@ -65,7 +65,7 @@ function getValidatedColumnConfiguration(object) {
         labelingRules: validatedLabelingRules
     };
 }
-function getValidatedConfig(config) {
+function validateConfig(config) {
     if (config === '') {
         throw new ReferenceError('Missing required input "column_label_config"');
     }
@@ -83,7 +83,7 @@ function getValidatedConfig(config) {
         githubActionsPrettyPrintLogger.info(`Checking column at index ${index}`, indentation);
         let validatedColumnConfiguration;
         try {
-            validatedColumnConfiguration = getValidatedColumnConfiguration(columnConfiguration);
+            validatedColumnConfiguration = validateColumnConfiguration(columnConfiguration);
             if (validatedColumnConfiguration.labelingRules.length) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
@@ -100,7 +100,7 @@ function getValidatedConfig(config) {
     });
     return validatedColumnConfigurations;
 }
-exports.default = getValidatedConfig;
+exports.default = validateConfig;
 function getValidatedLabelingRule(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Labeling rule must be an object');
