@@ -48,11 +48,16 @@ function determineLabelingRules(rules) {
     else {
         const aggregatedLabels = aggregateLabelsByRule(rules);
         const aggregatedLabelRules = [];
-        for (const labelingAction in aggregatedLabels) {
-            const labelingActionAsEnum = labelingAction;
+        if (aggregatedLabels[LabelerConfig_1.LabelingAction.ADD].length) {
             aggregatedLabelRules.push({
-                action: labelingActionAsEnum,
-                labels: aggregatedLabels[labelingActionAsEnum]
+                action: LabelerConfig_1.LabelingAction.ADD,
+                labels: aggregatedLabels[LabelerConfig_1.LabelingAction.ADD]
+            });
+        }
+        if (aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE].length) {
+            aggregatedLabelRules.push({
+                action: LabelerConfig_1.LabelingAction.REMOVE,
+                labels: aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE]
             });
         }
         return aggregatedLabelRules;

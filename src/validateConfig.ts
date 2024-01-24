@@ -29,12 +29,17 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     const aggregatedLabels = aggregateLabelsByRule(rules)
     const aggregatedLabelRules: LabelingRule[] = []
 
-    for (const labelingAction in aggregatedLabels) {
-      const labelingActionAsEnum = labelingAction as LabelingAction
-
+    if (aggregatedLabels[LabelingAction.ADD].length) {
       aggregatedLabelRules.push({
-        action: labelingActionAsEnum,
-        labels: aggregatedLabels[labelingActionAsEnum]
+        action: LabelingAction.ADD,
+        labels: aggregatedLabels[LabelingAction.ADD]
+      })
+    }
+
+    if (aggregatedLabels[LabelingAction.REMOVE].length) {
+      aggregatedLabelRules.push({
+        action: LabelingAction.REMOVE,
+        labels: aggregatedLabels[LabelingAction.REMOVE]
       })
     }
 
