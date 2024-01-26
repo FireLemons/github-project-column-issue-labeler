@@ -4,19 +4,28 @@ import * as typeChecker from './typeChecker'
 
 const indentation = '  '
 
-function aggregateLabelsByRule (rules: LabelingRule[]): { [key in LabelingAction]?: string[] } {
-  const aggregatedRules: { [key in LabelingAction]?: string[] } = {}
+function aggregateLabelsByRule (rules: LabelingRule[]): LabelingRule[] {
+  const aggregatedRules: Map<LabelingAction, string[]> = new Map()
 
   for(const rule of rules) {
     const {action} = rule
-    if (aggregatedRules[action]) {
-      aggregatedRules[action]!.push(...rule.labels)
+    if (aggregatedRules.has(action)) {
+      aggregatedRules.get(action)!.push(...rule.labels)
     } else {
-      aggregatedRules[action] = [...rule.labels]
+      aggregatedRules.set(action, [...rule.labels]) 
     }
   }
 
-  return aggregatedRules
+  const aggregatedLabelingRules: LabelingRule[] = []
+
+  for (const [action, labels] of aggregatedRules) {
+    aggregatedLabelingRules.push({
+      action: action,
+      labels: labels
+    })
+  }
+
+  return aggregatedLabelingRules
 }
 
 function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
@@ -25,30 +34,13 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   if (lastSetRuleIndex >= 0) {
     githubActionsPrettyPrintLogger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, indentation.repeat(2))
     githubActionsPrettyPrintLogger.info('The column will be using only this rule', indentation.repeat(2))
+
     return [rules[lastSetRuleIndex]]
   } else {
     githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2))
     githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2))
-    const aggregatedLabels = aggregateLabelsByRule(rules)
-    const aggregatedLabelRules: LabelingRule[] = []
-    const addLabels = aggregatedLabels[LabelingAction.ADD]
-    const removeLabels = aggregatedLabels[LabelingAction.REMOVE]
 
-    if (addLabels && addLabels.length) {
-      aggregatedLabelRules.push({
-        action: LabelingAction.ADD,
-        labels: addLabels
-      })
-    }
-
-    if (removeLabels && removeLabels.length) {
-      aggregatedLabelRules.push({
-        action: LabelingAction.REMOVE,
-        labels: removeLabels
-      })
-    }
-
-    return aggregatedLabelRules
+    return aggregateLabelsByRule(rules)
   }
 }
 

@@ -28,17 +28,24 @@ const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const indentation = '  ';
 function aggregateLabelsByRule(rules) {
-    const aggregatedRules = {};
+    const aggregatedRules = new Map();
     for (const rule of rules) {
         const { action } = rule;
-        if (aggregatedRules[action]) {
-            aggregatedRules[action].push(...rule.labels);
+        if (aggregatedRules.has(action)) {
+            aggregatedRules.get(action).push(...rule.labels);
         }
         else {
-            aggregatedRules[action] = [...rule.labels];
+            aggregatedRules.set(action, [...rule.labels]);
         }
     }
-    return aggregatedRules;
+    const aggregatedLabelingRules = [];
+    for (const [action, labels] of aggregatedRules) {
+        aggregatedLabelingRules.push({
+            action: action,
+            labels: labels
+        });
+    }
+    return aggregatedLabelingRules;
 }
 function determineLabelingRules(rules) {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelerConfig_1.LabelingAction.SET);
@@ -50,23 +57,7 @@ function determineLabelingRules(rules) {
     else {
         githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2));
         githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2));
-        const aggregatedLabels = aggregateLabelsByRule(rules);
-        const aggregatedLabelRules = [];
-        const addLabels = aggregatedLabels[LabelerConfig_1.LabelingAction.ADD];
-        const removeLabels = aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE];
-        if (addLabels && addLabels.length) {
-            aggregatedLabelRules.push({
-                action: LabelerConfig_1.LabelingAction.ADD,
-                labels: addLabels
-            });
-        }
-        if (removeLabels && removeLabels.length) {
-            aggregatedLabelRules.push({
-                action: LabelerConfig_1.LabelingAction.REMOVE,
-                labels: removeLabels
-            });
-        }
-        return aggregatedLabelRules;
+        return aggregateLabelsByRule(rules);
     }
 }
 function isLabelingAction(str) {
