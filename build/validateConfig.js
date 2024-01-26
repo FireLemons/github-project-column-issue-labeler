@@ -30,7 +30,13 @@ const indentation = '  ';
 function aggregateLabelsByRule(rules) {
     const aggregatedRules = {};
     for (const rule of rules) {
-        aggregatedRules[rule.action].push(...rule.labels);
+        const { action } = rule;
+        if (aggregatedRules[action]) {
+            aggregatedRules[action].push(...rule.labels);
+        }
+        else {
+            aggregatedRules[action] = [...rule.labels];
+        }
     }
     return aggregatedRules;
 }

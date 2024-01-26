@@ -8,7 +8,12 @@ function aggregateLabelsByRule (rules: LabelingRule[]): { [key in LabelingAction
   const aggregatedRules: { [key in LabelingAction]?: string[] } = {}
 
   for(const rule of rules) {
-    aggregatedRules[rule.action]!.push(...rule.labels)
+    const {action} = rule
+    if (aggregatedRules[action]) {
+      aggregatedRules[action]!.push(...rule.labels)
+    } else {
+      aggregatedRules[action] = [...rule.labels]
+    }
   }
 
   return aggregatedRules
