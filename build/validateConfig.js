@@ -28,11 +28,7 @@ const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const indentation = '  ';
 function aggregateLabelsByRule(rules) {
-    const aggregatedRules = {
-        "ADD": [],
-        "REMOVE": [],
-        "SET": []
-    };
+    const aggregatedRules = {};
     for (const rule of rules) {
         aggregatedRules[rule.action].push(...rule.labels);
     }
@@ -46,18 +42,22 @@ function determineLabelingRules(rules) {
         return [rules[lastSetRuleIndex]];
     }
     else {
+        githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2));
+        githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2));
         const aggregatedLabels = aggregateLabelsByRule(rules);
         const aggregatedLabelRules = [];
-        if (aggregatedLabels[LabelerConfig_1.LabelingAction.ADD].length) {
+        const addLabels = aggregatedLabels[LabelerConfig_1.LabelingAction.ADD];
+        const removeLabels = aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE];
+        if (addLabels && addLabels.length) {
             aggregatedLabelRules.push({
                 action: LabelerConfig_1.LabelingAction.ADD,
-                labels: aggregatedLabels[LabelerConfig_1.LabelingAction.ADD]
+                labels: addLabels
             });
         }
-        if (aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE].length) {
+        if (removeLabels && removeLabels.length) {
             aggregatedLabelRules.push({
                 action: LabelerConfig_1.LabelingAction.REMOVE,
-                labels: aggregatedLabels[LabelerConfig_1.LabelingAction.REMOVE]
+                labels: removeLabels
             });
         }
         return aggregatedLabelRules;

@@ -4,15 +4,11 @@ import * as typeChecker from './typeChecker'
 
 const indentation = '  '
 
-function aggregateLabelsByRule (rules: LabelingRule[]): { [key in LabelingAction]: string[] } {
-  const aggregatedRules: { [key in LabelingAction]: string[] } = {
-    "ADD": [],
-    "REMOVE": [],
-    "SET": []
-  }
+function aggregateLabelsByRule (rules: LabelingRule[]): { [key in LabelingAction]?: string[] } {
+  const aggregatedRules: { [key in LabelingAction]?: string[] } = {}
 
   for(const rule of rules) {
-    aggregatedRules[rule.action].push(...rule.labels)
+    aggregatedRules[rule.action]!.push(...rule.labels)
   }
 
   return aggregatedRules
@@ -26,20 +22,24 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     githubActionsPrettyPrintLogger.info('The column will be using only this rule', indentation.repeat(2))
     return [rules[lastSetRuleIndex]]
   } else {
+    githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2))
+    githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2))
     const aggregatedLabels = aggregateLabelsByRule(rules)
     const aggregatedLabelRules: LabelingRule[] = []
+    const addLabels = aggregatedLabels[LabelingAction.ADD]
+    const removeLabels = aggregatedLabels[LabelingAction.REMOVE]
 
-    if (aggregatedLabels[LabelingAction.ADD].length) {
+    if (addLabels && addLabels.length) {
       aggregatedLabelRules.push({
         action: LabelingAction.ADD,
-        labels: aggregatedLabels[LabelingAction.ADD]
+        labels: addLabels
       })
     }
 
-    if (aggregatedLabels[LabelingAction.REMOVE].length) {
+    if (removeLabels && removeLabels.length) {
       aggregatedLabelRules.push({
         action: LabelingAction.REMOVE,
-        labels: aggregatedLabels[LabelingAction.REMOVE]
+        labels: removeLabels
       })
     }
 
