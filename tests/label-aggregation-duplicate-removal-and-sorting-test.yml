@@ -1,0 +1,79 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    name: Manage Issue Labels
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: 'true'
+      - uses: ./github-project-column-issue-labeler/
+        id: manage-project-issue-labels
+        name: Manage Project Issue Labels
+        with:
+          column_label_config: >  
+            [
+              {
+                "columnName": "Name with whitespace ",
+                "labelingRules": [
+                  {
+                    "action": "AdD",
+                    "labels": ["Duplicate Label", "New"]
+                  },
+                  {
+                    "action": "ADD ",
+                    "labels": ["DuplIcate LaBeL    ", "Help Wanted"]
+                  },
+                  {
+                    "action": "ReMovE",
+                    "labels": ["Duplicate emoji 🐌 ", "   Completed"]
+                  },
+                  {
+                    "action": "ReMOVE",
+                    "labels": ["DupliCAte Emoji 🐌", "Completed 1"]
+                  }
+                ]
+              }
+            ]
+          token: ${{secrets.GITHUB_TOKEN}}
+
+# Result:
+
+#          Validating Config
+#            Checking column at index 0
+#              Checking labeling rule at index 0
+#              Checking labeling rule at index 1
+#              Checking labeling rule at index 2
+#              Checking labeling rule at index 3
+#              Labeling rules list only contains ADD or REMOVE rules
+#              Aggregating lables by action
+#                Aggregated labels for action ADD were found to have duplicate labels
+#                Removed duplicate labels
+#                Aggregated labels for action REMOVE were found to have duplicate labels
+#                Removed duplicate labels
+#          validatedConfig:
+#          [
+#            {
+#              "columnName": "Name with whitespace",
+#              "labelingRules": [
+#                {
+#                  "action": "ADD",
+#                  "labels": [
+#                    "DuplIcate LaBeL",
+#                    "Help Wanted",
+#                    "New"
+#                  ]
+#                },
+#                {
+#                  "action": "REMOVE",
+#                  "labels": [
+#                    "Completed",
+#                    "Completed 1",
+#                    "DupliCAte Emoji 🐌"
+#                  ]
+#                }
+#              ]
+#            }
+#          ]
