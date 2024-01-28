@@ -27,7 +27,7 @@ const githubActionsPrettyPrintLogger = __importStar(require("./githubActionsPret
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const indentation = '  ';
-function aggregateLabelsByRule(rules) {
+function aggregateLabelsByAction(rules) {
     const aggregatedRules = new Map();
     for (const rule of rules) {
         const { action } = rule;
@@ -55,10 +55,29 @@ function determineLabelingRules(rules) {
         return [rules[lastSetRuleIndex]];
     }
     else {
-        githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2));
-        githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2));
-        return aggregateLabelsByRule(rules);
+        githubActionsPrettyPrintLogger.info('Labeling rules list only contains ADD or REMOVE rules', indentation.repeat(2));
+        githubActionsPrettyPrintLogger.info('Aggregating lables by action', indentation.repeat(2));
+        const aggregatedRules = aggregateLabelsByAction(rules);
+        for (const rule of aggregatedRules) {
+            const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels);
+            if (labelsWithoutDuplicates.length < rule.labels.length) {
+                githubActionsPrettyPrintLogger.info(`Aggregated labels for action ${rule.action} were found to have duplicate labels`, indentation.repeat(3));
+                githubActionsPrettyPrintLogger.info('Removed duplicate labels', indentation.repeat(3));
+                rule.labels = labelsWithoutDuplicates;
+            }
+        }
+        return aggregatedRules;
     }
+}
+function filterOutCaseInsensitiveDuplicates(arr) {
+    const sortedArray = arr.toSorted();
+    for (let i = 0; i < sortedArray.length - 1; i++) {
+        const currentElement = sortedArray[i];
+        if (currentElement.toUpperCase() === sortedArray[i + 1].toUpperCase()) {
+            sortedArray.splice(i + 1, 1);
+        }
+    }
+    return sortedArray;
 }
 function isLabelingAction(str) {
     return Object.keys(LabelerConfig_1.LabelingAction).includes(str);

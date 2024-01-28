@@ -4,7 +4,7 @@ import * as typeChecker from './typeChecker'
 
 const indentation = '  '
 
-function aggregateLabelsByRule (rules: LabelingRule[]): LabelingRule[] {
+function aggregateLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
   const aggregatedRules: Map<LabelingAction, string[]> = new Map()
 
   for(const rule of rules) {
@@ -37,11 +37,37 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
 
     return [rules[lastSetRuleIndex]]
   } else {
-    githubActionsPrettyPrintLogger.info('Rules list only contains ADD or REMOVE rules', indentation.repeat(2))
-    githubActionsPrettyPrintLogger.info('Aggregating rules', indentation.repeat(2))
+    githubActionsPrettyPrintLogger.info('Labeling rules list only contains ADD or REMOVE rules', indentation.repeat(2))
+    githubActionsPrettyPrintLogger.info('Aggregating lables by action', indentation.repeat(2))
 
-    return aggregateLabelsByRule(rules)
+    const aggregatedRules = aggregateLabelsByAction(rules)
+
+    for (const rule of aggregatedRules) {
+      const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels)
+
+      if (labelsWithoutDuplicates.length < rule.labels.length) {
+        githubActionsPrettyPrintLogger.info(`Aggregated labels for action ${rule.action} were found to have duplicate labels`, indentation.repeat(3))
+        githubActionsPrettyPrintLogger.info('Removed duplicate labels', indentation.repeat(3))
+        rule.labels = labelsWithoutDuplicates
+      }
+    }
+
+    return aggregatedRules
   }
+}
+
+function filterOutCaseInsensitiveDuplicates (arr: string[]): string[] {
+  const sortedArray = arr.toSorted()
+
+  for (let i = 0; i < sortedArray.length - 1; i++) {
+    const currentElement = sortedArray[i]
+
+    if (currentElement.toUpperCase() === sortedArray[i + 1].toUpperCase()) {
+      sortedArray.splice(i + 1, 1)
+    }
+  }
+
+  return sortedArray
 }
 
 function isLabelingAction (str: string): str is LabelingAction {
