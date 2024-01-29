@@ -71,7 +71,7 @@ function determineLabelingRules(rules) {
     return determinedLabelingRules;
 }
 function filterOutCaseInsensitiveDuplicates(arr) {
-    const sortedArray = arr.toSorted();
+    const sortedArray = arr.toSorted((str1, str2) => str1.localeCompare(str2, undefined, { sensitivity: 'base' }));
     for (let i = 0; i < sortedArray.length - 1; i++) {
         const currentElement = sortedArray[i];
         if (currentElement.toUpperCase() === sortedArray[i + 1].toUpperCase()) {

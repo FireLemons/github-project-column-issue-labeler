@@ -58,7 +58,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
 }
 
 function filterOutCaseInsensitiveDuplicates (arr: string[]): string[] {
-  const sortedArray = arr.toSorted()
+  const sortedArray = arr.toSorted((str1, str2) => str1.localeCompare(str2, undefined, {sensitivity: 'base'}))
 
   for (let i = 0; i < sortedArray.length - 1; i++) {
     const currentElement = sortedArray[i]
