@@ -30,30 +30,31 @@ function aggregateLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
 
 function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelingAction.SET)
+  let determinedLabelingRules
 
   if (lastSetRuleIndex >= 0) {
     githubActionsPrettyPrintLogger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, indentation.repeat(2))
     githubActionsPrettyPrintLogger.info('The column will be using only this rule', indentation.repeat(2))
 
-    return [rules[lastSetRuleIndex]]
+    determinedLabelingRules = [rules[lastSetRuleIndex]]
   } else {
     githubActionsPrettyPrintLogger.info('Labeling rules list only contains ADD or REMOVE rules', indentation.repeat(2))
     githubActionsPrettyPrintLogger.info('Aggregating lables by action', indentation.repeat(2))
 
-    const aggregatedRules = aggregateLabelsByAction(rules)
-
-    for (const rule of aggregatedRules) {
-      const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels)
-
-      if (labelsWithoutDuplicates.length < rule.labels.length) {
-        githubActionsPrettyPrintLogger.info(`Aggregated labels for action ${rule.action} were found to have duplicate labels`, indentation.repeat(3))
-        githubActionsPrettyPrintLogger.info('Removed duplicate labels', indentation.repeat(3))
-        rule.labels = labelsWithoutDuplicates
-      }
-    }
-
-    return aggregatedRules
+    determinedLabelingRules = aggregateLabelsByAction(rules)
   }
+
+  for (const rule of determinedLabelingRules) {
+    const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels)
+
+    if (labelsWithoutDuplicates.length < rule.labels.length) {
+      githubActionsPrettyPrintLogger.info(`Labels for action ${rule.action} were found to have duplicate labels`, indentation.repeat(3))
+      githubActionsPrettyPrintLogger.info('Removed duplicate labels', indentation.repeat(3))
+      rule.labels = labelsWithoutDuplicates
+    }
+  }
+
+  return determinedLabelingRules
 }
 
 function filterOutCaseInsensitiveDuplicates (arr: string[]): string[] {
