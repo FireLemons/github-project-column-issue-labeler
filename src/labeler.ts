@@ -2,11 +2,14 @@ import * as core from '@actions/core'
 import validateConfig from './validateConfig'
 import * as github from '@actions/github'
 import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
+
 let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
-const octokit = github.getOctokit(token)
+const Octokit = github.getOctokit(token)
+const LABEL_PAGE_SIZE = 20
+const ISSUE_PAGE_SIZE = 150
 
 function main() {
   try {

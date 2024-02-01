@@ -34,7 +34,9 @@ let columns_label_config = core.getInput('column_label_config');
 const token = core.getInput('token');
 // Javascript destructuring assignment
 const { owner, repo } = github.context.repo;
-const octokit = github.getOctokit(token);
+const Octokit = github.getOctokit(token);
+const LABEL_PAGE_SIZE = 20;
+const ISSUE_PAGE_SIZE = 150;
 function main() {
     try {
         githubActionsPrettyPrintLogger.info('Validating Config');
