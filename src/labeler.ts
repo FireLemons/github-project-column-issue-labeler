@@ -8,8 +8,46 @@ const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
 const Octokit = github.getOctokit(token)
+const ISSUE_PAGE_SIZE = 100
+const FIELD_VALUE_PAGE_SIZE = 100
 const LABEL_PAGE_SIZE = 20
-const ISSUE_PAGE_SIZE = 150
+const PROJECT_ITEM_PAGE_SIZE = 20
+
+interface ColumnName {
+  fieldValues: {
+    nodes: [
+      {
+        name?: string
+      }
+    ]
+  }
+}
+
+interface GithubAPIResponse {
+  data: Page<Issue>
+}
+
+interface Issue {
+  id: string
+  labels: Page<Label>
+  projectItems: Page<ColumnName>
+}
+
+interface Label {
+  name: string
+}
+
+interface Page<T> {
+  edges: [
+    {
+      node: T
+      cursor: string
+    }
+  ]
+  pageInfo: {
+    hasNextPage: boolean
+  }
+}
 
 function main() {
   try {

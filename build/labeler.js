@@ -35,8 +35,10 @@ const token = core.getInput('token');
 // Javascript destructuring assignment
 const { owner, repo } = github.context.repo;
 const Octokit = github.getOctokit(token);
+const ISSUE_PAGE_SIZE = 100;
+const FIELD_VALUE_PAGE_SIZE = 100;
 const LABEL_PAGE_SIZE = 20;
-const ISSUE_PAGE_SIZE = 150;
+const PROJECT_ITEM_PAGE_SIZE = 20;
 function main() {
     try {
         githubActionsPrettyPrintLogger.info('Validating Config');
