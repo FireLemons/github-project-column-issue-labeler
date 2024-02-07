@@ -58,5 +58,15 @@ function main() {
             process.exitCode = 1;
         }
     }
+    octokit.graphql(`
+    query {
+      repository (name: "gh-actions-sandbox", owner: "firelemons") {
+        nameWithOwner
+      }
+    }
+    `, {
+        owner: "octokit",
+        repo: "graphql.js",
+    });
 }
 module.exports = main;
