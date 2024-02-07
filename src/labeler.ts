@@ -7,7 +7,7 @@ let columns_label_config: string = core.getInput('column_label_config')
 const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
-const Octokit = github.getOctokit(token)
+const octokit = github.getOctokit(token)
 const ISSUE_PAGE_SIZE = 100
 const FIELD_VALUE_PAGE_SIZE = 100
 const LABEL_PAGE_SIZE = 20
@@ -21,6 +21,20 @@ interface ColumnName {
       }
     ]
   }
+}
+
+interface GitHubGraphQLError {
+  type: string
+  path: [
+    string | number
+  ]
+  locations: [
+    {
+      line: number
+      column: number
+    }
+  ],
+  message: string
 }
 
 interface GithubAPIResponse {
