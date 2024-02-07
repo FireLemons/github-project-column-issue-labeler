@@ -67,6 +67,6 @@ function main() {
     `, {
         owner: "octokit",
         repo: "graphql.js",
-    });
+    }).then((response) => { githubActionsPrettyPrintLogger.info(JSON.stringify(response)); });
 }
 module.exports = main;
