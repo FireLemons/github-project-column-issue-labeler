@@ -38,7 +38,8 @@ interface GitHubGraphQLError {
 }
 
 interface GithubAPIResponse {
-  data: Page<Issue>
+  data?: Page<Issue>
+  errors?: GitHubGraphQLError[]
 }
 
 interface Issue {
