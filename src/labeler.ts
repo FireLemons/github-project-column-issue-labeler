@@ -86,17 +86,59 @@ function main() {
   }
   octokit.graphql(
     `
-    query {
-      repository (name: "gh-actions-sandbox", owner: "firelemons") {
-        nameWithOwner
+      query issuesAndIssueLabelsAndIssueProjectColumn($ownerName: String!, $repoName: String!){
+        repository (owner: $ownerName, name: $repoName) {
+          issues (first: 1) {
+            edges {
+              node {
+                id
+                labels (first: 2) {
+                  edges {
+                    node{
+                      name
+                    }
+                    cursor
+                  }
+                  pageInfo{
+                    hasNextPage
+                  }
+                }
+                projectItems (first: 10) {
+                  edges{
+                    node {
+                      fieldValues (first: 20) {
+                        nodes {
+                          ... on ProjectV2ItemFieldSingleSelectValue {
+                            name
+                          }
+                        }
+                      }
+                    }
+                    cursor
+                  },
+                  pageInfo{
+                    hasNextPage
+                  }
+                }
+              }
+              cursor
+            }
+            pageInfo {
+              hasNextPage
+            }
+          }
+        }
       }
-    }
     `,
     {
-      owner: "octokit",
-      repo: "graphql.js",
+      ownerName: owner,
+      repoName: repo,
     },
-  ).then((response)=>{githubActionsPrettyPrintLogger.info(JSON.stringify(response))})
+  ).then(
+    (response) => {
+      githubActionsPrettyPrintLogger.info(JSON.stringify(response))
+    }
+  )
 
 }
 
