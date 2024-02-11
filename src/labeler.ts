@@ -169,6 +169,13 @@ function main() {
       githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2))
     }
   )
+  .catch((error) => {
+    if(error instanceof Error) {
+      githubActionsPrettyPrintLogger.error(error.message)
+    } else {
+      githubActionsPrettyPrintLogger.error(error)
+    }
+  })
 }
 
 module.exports = main
