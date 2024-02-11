@@ -38,7 +38,7 @@ const octokit = github.getOctokit(token);
 const ISSUE_PAGE_SIZE = 100;
 const FIELD_VALUE_PAGE_SIZE = 100;
 const LABEL_PAGE_SIZE = 20;
-const PROJECT_ITEM_PAGE_SIZE = 20;
+const PROJECT_ITEM_PAGE_SIZE = 2000; //20
 async function fetchIssuesWithLabelsAndColumn() {
     return octokit.graphql(`
   query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
