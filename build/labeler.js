@@ -43,7 +43,7 @@ async function fetchIssuesWithLabelsAndColumn() {
     return octokit.graphql(`
   query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
     repository (owner: $ownerName, name: $repoName) {
-        issues (first: $issuePageSize) {
+        issues (first: $pageSizeIssue) {
           ...issuePage
         }
       }
