@@ -39,6 +39,81 @@ const ISSUE_PAGE_SIZE = 100;
 const FIELD_VALUE_PAGE_SIZE = 100;
 const LABEL_PAGE_SIZE = 20;
 const PROJECT_ITEM_PAGE_SIZE = 20;
+async function fetchIssuesWithLabelsAndColumn() {
+    return octokit.graphql(`
+  query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
+    repository (owner: $ownerName, name: $repoName) {
+        issues (first: $issuePageSize) {
+          ...issuePage
+        }
+      }
+    }
+
+    fragment issuePage on IssueConnection {
+      edges {
+        node {
+          id
+          labels (first: $pageSizeLabel) {
+            ...labelPage
+          }
+          projectItems (first: $pageSizeProjectItem) {
+            ...projectItemPage
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+
+    fragment labelPage on LabelConnection {
+      edges {
+        node {
+          name
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+
+    fragment projectFieldPage on ProjectV2ItemFieldValueConnection {
+      edges {
+        node {
+          ... on ProjectV2ItemFieldSingleSelectValue {
+            name
+          }
+        }
+        cursor
+      },
+      pageInfo {
+        hasNextPage
+      }
+    }
+
+    fragment projectItemPage on ProjectV2ItemConnection {
+      edges {
+        node {
+          fieldValues (first: $pageSizeProjectField) {
+            ...projectFieldPage
+          }
+        }
+        cursor
+      },
+      pageInfo {
+        hasNextPage
+      }
+    }`, {
+        pageSizeIssue: ISSUE_PAGE_SIZE,
+        pageSizeLabel: LABEL_PAGE_SIZE,
+        pageSizeProjectField: FIELD_VALUE_PAGE_SIZE,
+        pageSizeProjectItem: PROJECT_ITEM_PAGE_SIZE,
+        ownerName: owner,
+        repoName: repo,
+    });
+}
 function main() {
     try {
         githubActionsPrettyPrintLogger.info('Validating Config');
@@ -58,55 +133,9 @@ function main() {
             process.exitCode = 1;
         }
     }
-    octokit.graphql(`
-      query issuesAndIssueLabelsAndIssueProjectColumn($ownerName: String!, $repoName: String!){
-        repository (owner: $ownerName, name: $repoName) {
-          issues (first: 1) {
-            edges {
-              node {
-                id
-                labels (first: 2) {
-                  edges {
-                    node{
-                      name
-                    }
-                    cursor
-                  }
-                  pageInfo{
-                    hasNextPage
-                  }
-                }
-                projectItems (first: 10) {
-                  edges{
-                    node {
-                      fieldValues (first: 20) {
-                        nodes {
-                          ... on ProjectV2ItemFieldSingleSelectValue {
-                            name
-                          }
-                        }
-                      }
-                    }
-                    cursor
-                  },
-                  pageInfo{
-                    hasNextPage
-                  }
-                }
-              }
-              cursor
-            }
-            pageInfo {
-              hasNextPage
-            }
-          }
-        }
-      }
-    `, {
-        ownerName: owner,
-        repoName: repo,
-    }).then((response) => {
-        githubActionsPrettyPrintLogger.info(JSON.stringify(response));
+    fetchIssuesWithLabelsAndColumn()
+        .then((response) => {
+        githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2));
     });
 }
 module.exports = main;
