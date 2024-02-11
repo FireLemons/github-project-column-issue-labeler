@@ -8,10 +8,11 @@ const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
 const octokit = github.getOctokit(token)
+const INDENTATION = '  '
 const ISSUE_PAGE_SIZE = 100
 const FIELD_VALUE_PAGE_SIZE = 100
 const LABEL_PAGE_SIZE = 20
-const PROJECT_ITEM_PAGE_SIZE = 2000//20
+const PROJECT_ITEM_PAGE_SIZE = 20
 
 interface ColumnName {
   fieldValues: {
@@ -153,29 +154,45 @@ function main() {
       return
     }
 
-    githubActionsPrettyPrintLogger.info('validatedConfig:')
+    githubActionsPrettyPrintLogger.info('Validated Config:')
     githubActionsPrettyPrintLogger.info(JSON.stringify(validColumnConfigurations, null, 2))
   } catch (error) {
     if (error instanceof Error && error.message) {
       githubActionsPrettyPrintLogger.error('Failed to validate config')
       githubActionsPrettyPrintLogger.error(error.message)
       process.exitCode = 1
+      return
     }
   }
 
-  fetchIssuesWithLabelsAndColumn()
-  .then(
-    (response) => {
-      githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2))
+  try {
+      githubActionsPrettyPrintLogger.info('Fetching issues with labels and associated column data...')
+      fetchIssuesWithLabelsAndColumn()
+      .then(
+        (response) => {
+          githubActionsPrettyPrintLogger.error('Fetched issues with labels and associated column data', INDENTATION)
+          githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2))
+        }
+      )
+      .catch(
+        (error) => {
+          githubActionsPrettyPrintLogger.error('Encountered errors after fetching issues with labels and associated column data', INDENTATION)
+          if(error instanceof Error) {
+            githubActionsPrettyPrintLogger.error(error.message, INDENTATION.repeat(2))
+          } else {
+            githubActionsPrettyPrintLogger.error(error, INDENTATION.repeat(2))
+          }
+        }
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message) {
+        githubActionsPrettyPrintLogger.error('Failed to fetch issues with labels and associated column data', INDENTATION)
+        githubActionsPrettyPrintLogger.error(error.message, INDENTATION.repeat(2))
+        process.exitCode = 1
+      }
+
+      return
     }
-  )
-  .catch((error) => {
-    if(error instanceof Error) {
-      githubActionsPrettyPrintLogger.error(error.message)
-    } else {
-      githubActionsPrettyPrintLogger.error(error)
-    }
-  })
-}
+  }
 
 module.exports = main
