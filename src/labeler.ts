@@ -170,7 +170,7 @@ function main() {
       fetchIssuesWithLabelsAndColumn()
       .then(
         (response) => {
-          githubActionsPrettyPrintLogger.error('Fetched issues with labels and associated column data', INDENTATION)
+          githubActionsPrettyPrintLogger.info('Fetched issues with labels and associated column data', INDENTATION)
           githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2))
         }
       )
