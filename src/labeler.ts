@@ -9,10 +9,10 @@ const token = core.getInput('token')
 const {owner, repo} = github.context.repo
 const octokit = github.getOctokit(token)
 const INDENTATION = '  '
-const ISSUE_PAGE_SIZE = 100
-const FIELD_VALUE_PAGE_SIZE = 100
-const LABEL_PAGE_SIZE = 20
-const PROJECT_ITEM_PAGE_SIZE = 20
+const ISSUE_PAGE_SIZE = 1//100
+const FIELD_VALUE_PAGE_SIZE = 1//100
+const LABEL_PAGE_SIZE = 1//20
+const PROJECT_ITEM_PAGE_SIZE = 1//20
 
 interface ColumnName {
   fieldValues: {
@@ -39,7 +39,9 @@ interface GitHubGraphQLError {
 }
 
 interface GithubAPIResponse {
-  data?: Page<Issue>
+  repository?: {
+    issues: Page<Issue>
+  }
   errors?: GitHubGraphQLError[]
 }
 
@@ -65,7 +67,7 @@ interface Page<T> {
   }
 }
 
-async function fetchIssuesWithLabelsAndColumn () {
+async function fetchIssuesWithLabelsAndColumn (): Promise<GithubAPIResponse> {
   return octokit.graphql(`
   query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
     repository (owner: $ownerName, name: $repoName) {
