@@ -1,4 +1,4 @@
-import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
+import * as githubActionsPrettyPrintLogger from './logger'
 import { ColumnConfiguration, LabelingAction, LabelingRule } from './LabelerConfig'
 import * as typeChecker from './typeChecker'
 

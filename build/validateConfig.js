@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const githubActionsPrettyPrintLogger = __importStar(require("./githubActionsPrettyPrintLogger"));
+const githubActionsPrettyPrintLogger = __importStar(require("./logger"));
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const indentation = '  ';

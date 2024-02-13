@@ -1,6 +1,6 @@
 import { Octokit, App } from 'octokit'
 import validateConfig from './validateConfig'
-import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
+import * as Logger from './logger'
 
 let columns_label_config: string = core.getInput('column_label_config')
 // Javascript destructuring assignment
@@ -145,49 +145,49 @@ async function fetchIssuesWithLabelsAndColumn (): Promise<GithubAPIResponse> {
 
 function main() {
   try {
-    githubActionsPrettyPrintLogger.info('Validating Config')
+    Logger.info('Validating Config')
     const validColumnConfigurations = validateConfig(columns_label_config)
 
     if (!(validColumnConfigurations.length)) {
-      githubActionsPrettyPrintLogger.error('Could not find any valid actions to perform from the configuration')
+      Logger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
       return
     }
 
-    githubActionsPrettyPrintLogger.info('Validated Config:')
-    githubActionsPrettyPrintLogger.info(JSON.stringify(validColumnConfigurations, null, 2))
+    Logger.info('Validated Config:')
+    Logger.info(JSON.stringify(validColumnConfigurations, null, 2))
   } catch (error) {
     if (error instanceof Error && error.message) {
-      githubActionsPrettyPrintLogger.error('Failed to validate config')
-      githubActionsPrettyPrintLogger.error(error.message)
+      Logger.error('Failed to validate config')
+      Logger.error(error.message)
       process.exitCode = 1
       return
     }
   }
 
   try {
-      githubActionsPrettyPrintLogger.info('Fetching issues with labels and associated column data...')
+      Logger.info('Fetching issues with labels and associated column data...')
       fetchIssuesWithLabelsAndColumn()
       .then(
         (response) => {
-          githubActionsPrettyPrintLogger.info('Fetched issues with labels and associated column data', INDENTATION)
-          githubActionsPrettyPrintLogger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2))
+          Logger.info('Fetched issues with labels and associated column data', INDENTATION)
+          Logger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2))
         }
       )
       .catch(
         (error) => {
-          githubActionsPrettyPrintLogger.error('Encountered errors after fetching issues with labels and associated column data', INDENTATION)
+          Logger.error('Encountered errors after fetching issues with labels and associated column data', INDENTATION)
           if(error instanceof Error) {
-            githubActionsPrettyPrintLogger.error(error.message, INDENTATION.repeat(2))
+            Logger.error(error.message, INDENTATION.repeat(2))
           } else {
-            githubActionsPrettyPrintLogger.error(error, INDENTATION.repeat(2))
+            Logger.error(error, INDENTATION.repeat(2))
           }
         }
       )
     } catch (error) {
       if (error instanceof Error && error.message) {
-        githubActionsPrettyPrintLogger.error('Failed to fetch issues with labels and associated column data', INDENTATION)
-        githubActionsPrettyPrintLogger.error(error.message, INDENTATION.repeat(2))
+        Logger.error('Failed to fetch issues with labels and associated column data', INDENTATION)
+        Logger.error(error.message, INDENTATION.repeat(2))
         process.exitCode = 1
       }
 
