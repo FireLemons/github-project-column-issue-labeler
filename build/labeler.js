@@ -26,15 +26,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(require("@actions/core"));
+const octokit_1 = require("octokit");
 const validateConfig_1 = __importDefault(require("./validateConfig"));
-const github = __importStar(require("@actions/github"));
 const githubActionsPrettyPrintLogger = __importStar(require("./githubActionsPrettyPrintLogger"));
 let columns_label_config = core.getInput('column_label_config');
-const token = core.getInput('token');
 // Javascript destructuring assignment
 const { owner, repo } = github.context.repo;
-const octokit = github.getOctokit(token);
+const octokit = new octokit_1.Octokit({ auth: 'PERSONAL-ACCESS-TOKEN' });
 const INDENTATION = '  ';
 const ISSUE_PAGE_SIZE = 1; //100
 const FIELD_VALUE_PAGE_SIZE = 1; //100

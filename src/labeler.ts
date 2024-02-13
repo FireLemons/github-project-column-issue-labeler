@@ -1,13 +1,11 @@
-import * as core from '@actions/core'
+import { Octokit, App } from 'octokit'
 import validateConfig from './validateConfig'
-import * as github from '@actions/github'
 import * as githubActionsPrettyPrintLogger from './githubActionsPrettyPrintLogger'
 
 let columns_label_config: string = core.getInput('column_label_config')
-const token = core.getInput('token')
 // Javascript destructuring assignment
 const {owner, repo} = github.context.repo
-const octokit = github.getOctokit(token)
+const octokit = new Octokit({auth: 'PERSONAL-ACCESS-TOKEN'})
 const INDENTATION = '  '
 const ISSUE_PAGE_SIZE = 1//100
 const FIELD_VALUE_PAGE_SIZE = 1//100
