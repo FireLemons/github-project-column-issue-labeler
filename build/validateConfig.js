@@ -23,10 +23,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const githubActionsPrettyPrintLogger = __importStar(require("./logger"));
+const Logger = __importStar(require("./logger"));
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
-const indentation = '  ';
 function aggregateLabelsByAction(rules) {
     const aggregatedRules = new Map();
     for (const rule of rules) {
@@ -51,20 +50,20 @@ function determineLabelingRules(rules) {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelerConfig_1.LabelingAction.SET);
     let determinedLabelingRules;
     if (lastSetRuleIndex >= 0) {
-        githubActionsPrettyPrintLogger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, indentation.repeat(2));
-        githubActionsPrettyPrintLogger.info('The column will be using only this rule', indentation.repeat(2));
+        Logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 4);
+        Logger.info('The column will be using only this rule', 4);
         determinedLabelingRules = [rules[lastSetRuleIndex]];
     }
     else {
-        githubActionsPrettyPrintLogger.info('Labeling rules list only contains ADD or REMOVE rules', indentation.repeat(2));
-        githubActionsPrettyPrintLogger.info('Aggregating lables by action', indentation.repeat(2));
+        Logger.info('Labeling rules list only contains ADD or REMOVE rules', 4);
+        Logger.info('Aggregating lables by action', 4);
         determinedLabelingRules = aggregateLabelsByAction(rules);
     }
     for (const rule of determinedLabelingRules) {
         const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels);
         if (labelsWithoutDuplicates.length < rule.labels.length) {
-            githubActionsPrettyPrintLogger.info(`Labels for action ${rule.action} were found to have duplicate labels`, indentation.repeat(3));
-            githubActionsPrettyPrintLogger.info('Removed duplicate labels', indentation.repeat(3));
+            Logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 6);
+            Logger.info('Removed duplicate labels', 6);
             rule.labels = labelsWithoutDuplicates;
         }
     }
@@ -86,7 +85,7 @@ function isLabelingAction(str) {
 function validateColumnConfigurationsArray(arr) {
     const validatedColumnConfigurations = [];
     arr.forEach((columnConfiguration, index) => {
-        githubActionsPrettyPrintLogger.info(`Checking column at index ${index}`, indentation);
+        Logger.info(`Checking column at index ${index}`, 2);
         let validatedColumnConfiguration;
         try {
             validatedColumnConfiguration = validateColumnConfiguration(columnConfiguration);
@@ -94,13 +93,13 @@ function validateColumnConfigurationsArray(arr) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
             else {
-                githubActionsPrettyPrintLogger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, indentation.repeat(2));
+                Logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 4);
             }
         }
         catch (error) {
-            githubActionsPrettyPrintLogger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, indentation.repeat(2));
+            Logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 4);
             if (error instanceof Error && error.message) {
-                githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(3));
+                Logger.error(error.message, 6);
             }
         }
     });
@@ -123,25 +122,32 @@ function validateColumnConfiguration(object) {
     };
 }
 function validateConfig(config) {
-    if (config === '') {
-        throw new ReferenceError('Missing required input "column_label_config"');
-    }
+    let configAsObject;
     try {
-        config = JSON.parse(config);
+        configAsObject = JSON.parse(config);
     }
     catch (error) {
-        throw new SyntaxError('Could not parse input "column_label_config" as JSON');
+        throw new SyntaxError('Could not parse config as JSON');
     }
-    if (!(Array.isArray(config))) {
-        throw new TypeError('input "column_label_config" must be an array');
+    if (!(typeChecker.isObject(configAsObject))) {
+        throw new TypeError('The config must be an object');
     }
-    return validateColumnConfigurationsArray(config);
+    typeChecker.validateObjectMember(configAsObject, 'access-token', typeChecker.Type.string);
+    typeChecker.validateObjectMember(configAsObject, 'owner', typeChecker.Type.string);
+    typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.string);
+    typeChecker.validateObjectMember(configAsObject, 'column-label-config', typeChecker.Type.array);
+    return {
+        'access-token': configAsObject['access-token'].trim(),
+        owner: configAsObject['owner'].trim(),
+        repo: configAsObject['repo'].trim(),
+        'column-label-config': validateColumnConfigurationsArray(configAsObject['column-label-config'])
+    };
 }
 exports.default = validateConfig;
 function validateLabelingRulesArray(arr) {
     const validatedLabelingRules = [];
     arr.forEach((labelingRule, index) => {
-        githubActionsPrettyPrintLogger.info(`Checking labeling rule at index ${index}`, indentation.repeat(2));
+        Logger.info(`Checking labeling rule at index ${index}`, 4);
         let validatedLabelingRule;
         try {
             validatedLabelingRule = validateLabelingRule(labelingRule);
@@ -149,13 +155,13 @@ function validateLabelingRulesArray(arr) {
                 validatedLabelingRules.push(validatedLabelingRule);
             }
             else {
-                githubActionsPrettyPrintLogger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, indentation.repeat(3));
+                Logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, 6);
             }
         }
         catch (error) {
-            githubActionsPrettyPrintLogger.warn(`Could not make valid labeling rule from value at index: ${index}`, indentation.repeat(3));
+            Logger.warn(`Could not make valid labeling rule from value at index: ${index}`, 6);
             if (error instanceof Error && error.message) {
-                githubActionsPrettyPrintLogger.error(error.message, indentation.repeat(4));
+                Logger.error(error.message, 8);
             }
         }
     });
@@ -180,12 +186,12 @@ function validateLabelsArray(arr) {
     const validatedLabels = [];
     arr.forEach((label, index) => {
         if (!(typeChecker.isString(label))) {
-            githubActionsPrettyPrintLogger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, indentation.repeat(3));
+            Logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 6);
         }
         else {
             const labelWithoutSurroundingWhitespace = label.trim();
             if (!(labelWithoutSurroundingWhitespace.length)) {
-                githubActionsPrettyPrintLogger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, indentation.repeat(3));
+                Logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 6);
             }
             else {
                 validatedLabels.push(labelWithoutSurroundingWhitespace);

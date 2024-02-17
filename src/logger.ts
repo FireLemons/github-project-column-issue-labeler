@@ -1,26 +1,38 @@
 import commandLineColor from 'cli-color'
 
-function makePrettyString (message: string, level: string, indentation: string, applyColor: (...text: any[]) => string): string {
-  const messageLines = message.split('\n')
-
-  const firstLine = applyColor(`${level}: ${indentation}${messageLines[0]}`)
-  const remainingLines = messageLines.slice(1)
-
-  const adjustedIndentation = indentation + ' '.repeat(level.length + 2)
-
-  return [firstLine, ...remainingLines.map((line) => {
-    return adjustedIndentation + applyColor(line)
-  })].join('\n')
+function indentationAmountToString (indentationAmount: number): string {
+  return ' '.repeat(indentationAmount)
 }
 
-export function info (message: string, indentation: string = '') {
+function formatSubequentLines (lines: string[], indentation: number, applyColor: (...text: any[]) => string): string {
+  const formattedLines = lines.map((line) => {
+    return indentationAmountToString(indentation) + applyColor(line)
+  })
+
+  if (formattedLines.length) {
+    formattedLines[0] = '\n' + formattedLines[0]
+  }
+
+  return formattedLines.join('\n')
+}
+
+function makePrettyString (message: string, level: string, indentation: number, applyColor: (...text: any[]) => string): string {
+  const messageLines = message.split('\n')
+
+  const firstLineFormatted = applyColor(`${level}: ${indentationAmountToString(indentation)}${messageLines[0]}`)
+  const remainingLinesFormatted = formatSubequentLines(messageLines.slice(1), indentation + level.length + 2, applyColor)
+
+  return firstLineFormatted + remainingLinesFormatted
+}
+
+export function info (message: string, indentation: number = 0) {
   console.info(makePrettyString(message, 'INFO', indentation, commandLineColor.cyan))
 }
 
-export function error (message: string, indentation: string = '') {
+export function error (message: string, indentation: number = 0) {
   console.error(makePrettyString(message, 'FAIL', indentation, commandLineColor.red))
 }
 
-export function warn (message: string, indentation: string = '') {
+export function warn (message: string, indentation: number = 0) {
   console.warn(makePrettyString(message, 'WARN', indentation, commandLineColor.yellow))
 }

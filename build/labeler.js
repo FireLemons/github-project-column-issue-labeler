@@ -26,19 +26,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const Logger = __importStar(require("./logger"));
+// Javascript destructuring assignment
 const octokit_1 = require("octokit");
 const validateConfig_1 = __importDefault(require("./validateConfig"));
-const Logger = __importStar(require("./logger"));
-let columns_label_config = core.getInput('column_label_config');
-// Javascript destructuring assignment
-const { owner, repo } = github.context.repo;
+const fsPromises = fs_1.default.promises;
 const octokit = new octokit_1.Octokit({ auth: 'PERSONAL-ACCESS-TOKEN' });
-const INDENTATION = '  ';
 const ISSUE_PAGE_SIZE = 1; //100
 const FIELD_VALUE_PAGE_SIZE = 1; //100
 const LABEL_PAGE_SIZE = 1; //20
 const PROJECT_ITEM_PAGE_SIZE = 1; //20
-async function fetchIssuesWithLabelsAndColumn() {
+async function loadConfig() {
+    const configContents = await fsPromises.readFile('./config.json');
+    return "" + configContents;
+}
+async function fetchIssuesWithLabelsAndColumn(owner, repo) {
     return octokit.graphql(`
   query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
     repository (owner: $ownerName, name: $repoName) {
@@ -113,11 +116,23 @@ async function fetchIssuesWithLabelsAndColumn() {
         repoName: repo,
     });
 }
-function main() {
+async function main() {
+    let config;
+    try {
+        Logger.info('Loading Config');
+        config = await loadConfig();
+    }
+    catch (error) {
+        Logger.error('Failed to load config', 2);
+        if (error instanceof Error) {
+            Logger.error(error.message, 4);
+        }
+        return;
+    }
     try {
         Logger.info('Validating Config');
-        const validColumnConfigurations = (0, validateConfig_1.default)(columns_label_config);
-        if (!(validColumnConfigurations.length)) {
+        const validColumnConfigurations = (0, validateConfig_1.default)(config);
+        if (!(validColumnConfigurations['column-label-config'].length)) {
             Logger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;
             return;
@@ -133,30 +148,33 @@ function main() {
             return;
         }
     }
-    try {
-        Logger.info('Fetching issues with labels and associated column data...');
+    /*try {
+        Logger.info('Fetching issues with labels and associated column data...')
         fetchIssuesWithLabelsAndColumn()
-            .then((response) => {
-            Logger.info('Fetched issues with labels and associated column data', INDENTATION);
-            Logger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2));
-        })
-            .catch((error) => {
-            Logger.error('Encountered errors after fetching issues with labels and associated column data', INDENTATION);
-            if (error instanceof Error) {
-                Logger.error(error.message, INDENTATION.repeat(2));
+        .then(
+          (response) => {
+            Logger.info('Fetched issues with labels and associated column data', 2)
+            Logger.info(JSON.stringify(response, null, 2), 4)
+          }
+        )
+        .catch(
+          (error) => {
+            Logger.error('Encountered errors after fetching issues with labels and associated column data', 2)
+            if(error instanceof Error) {
+              Logger.error(error.message, 4)
+            } else {
+              Logger.error(error, 4)
             }
-            else {
-                Logger.error(error, INDENTATION.repeat(2));
-            }
-        });
-    }
-    catch (error) {
+          }
+        )
+      } catch (error) {
         if (error instanceof Error && error.message) {
-            Logger.error('Failed to fetch issues with labels and associated column data', INDENTATION);
-            Logger.error(error.message, INDENTATION.repeat(2));
-            process.exitCode = 1;
+          Logger.error('Failed to fetch issues with labels and associated column data', 2)
+          Logger.error(error.message, 4)
+          process.exitCode = 1
         }
-        return;
-    }
+  
+        return
+      }*/
 }
 module.exports = main;

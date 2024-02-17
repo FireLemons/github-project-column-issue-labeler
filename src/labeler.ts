@@ -1,12 +1,11 @@
+import fs from 'fs'
+import * as Logger from './logger'
+// Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
 import validateConfig from './validateConfig'
-import * as Logger from './logger'
 
-let columns_label_config: string = core.getInput('column_label_config')
-// Javascript destructuring assignment
-const {owner, repo} = github.context.repo
+const fsPromises = fs.promises
 const octokit = new Octokit({auth: 'PERSONAL-ACCESS-TOKEN'})
-const INDENTATION = '  '
 const ISSUE_PAGE_SIZE = 1//100
 const FIELD_VALUE_PAGE_SIZE = 1//100
 const LABEL_PAGE_SIZE = 1//20
@@ -65,7 +64,13 @@ interface Page<T> {
   }
 }
 
-async function fetchIssuesWithLabelsAndColumn (): Promise<GithubAPIResponse> {
+async function loadConfig(): Promise<string> {
+  const configContents = await fsPromises.readFile('./config.json')
+
+  return "" + configContents
+}
+
+async function fetchIssuesWithLabelsAndColumn (owner: string, repo: string): Promise<GithubAPIResponse> {
   return octokit.graphql(`
   query issuesEachWithLabelsAndColumn($pageSizeIssue: Int, $pageSizeLabel: Int, $pageSizeProjectField: Int, $pageSizeProjectItem: Int, $ownerName: String!, $repoName: String!){
     repository (owner: $ownerName, name: $repoName) {
@@ -143,12 +148,26 @@ async function fetchIssuesWithLabelsAndColumn (): Promise<GithubAPIResponse> {
   )
 }
 
-function main() {
+async function main() {
+  let config
+
+  try {
+    Logger.info('Loading Config')
+    config = await loadConfig()
+  } catch (error) {
+    Logger.error('Failed to load config', 2)
+    if (error instanceof Error) {
+      Logger.error(error.message, 4)
+    }
+
+    return
+  }
+
   try {
     Logger.info('Validating Config')
-    const validColumnConfigurations = validateConfig(columns_label_config)
+    const validColumnConfigurations = validateConfig(config)
 
-    if (!(validColumnConfigurations.length)) {
+    if (!(validColumnConfigurations['column-label-config'].length)) {
       Logger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
       return
@@ -165,34 +184,34 @@ function main() {
     }
   }
 
-  try {
+  /*try {
       Logger.info('Fetching issues with labels and associated column data...')
       fetchIssuesWithLabelsAndColumn()
       .then(
         (response) => {
-          Logger.info('Fetched issues with labels and associated column data', INDENTATION)
-          Logger.info(JSON.stringify(response, null, 2), INDENTATION.repeat(2))
+          Logger.info('Fetched issues with labels and associated column data', 2)
+          Logger.info(JSON.stringify(response, null, 2), 4)
         }
       )
       .catch(
         (error) => {
-          Logger.error('Encountered errors after fetching issues with labels and associated column data', INDENTATION)
+          Logger.error('Encountered errors after fetching issues with labels and associated column data', 2)
           if(error instanceof Error) {
-            Logger.error(error.message, INDENTATION.repeat(2))
+            Logger.error(error.message, 4)
           } else {
-            Logger.error(error, INDENTATION.repeat(2))
+            Logger.error(error, 4)
           }
         }
       )
     } catch (error) {
       if (error instanceof Error && error.message) {
-        Logger.error('Failed to fetch issues with labels and associated column data', INDENTATION)
-        Logger.error(error.message, INDENTATION.repeat(2))
+        Logger.error('Failed to fetch issues with labels and associated column data', 2)
+        Logger.error(error.message, 4)
         process.exitCode = 1
       }
 
       return
-    }
+    }*/
   }
 
 module.exports = main
