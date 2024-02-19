@@ -8,30 +8,30 @@ const cli_color_1 = __importDefault(require("cli-color"));
 function indentationAmountToString(indentationAmount) {
     return ' '.repeat(indentationAmount);
 }
-function formatSubequentLines(lines, indentation, applyColor) {
+function formatSubequentLines(lines, spaceIndentationCount, applyColor) {
     const formattedLines = lines.map((line) => {
-        return indentationAmountToString(indentation) + applyColor(line);
+        return indentationAmountToString(spaceIndentationCount) + applyColor(line);
     });
     if (formattedLines.length) {
         formattedLines[0] = '\n' + formattedLines[0];
     }
     return formattedLines.join('\n');
 }
-function makePrettyString(message, level, indentation, applyColor) {
+function makePrettyString(message, level, spaceIndentationCount, applyColor) {
     const messageLines = message.split('\n');
-    const firstLineFormatted = applyColor(`${level}: ${indentationAmountToString(indentation)}${messageLines[0]}`);
-    const remainingLinesFormatted = formatSubequentLines(messageLines.slice(1), indentation + level.length + 2, applyColor);
+    const firstLineFormatted = applyColor(`${level}: ${indentationAmountToString(spaceIndentationCount)}${messageLines[0]}`);
+    const remainingLinesFormatted = formatSubequentLines(messageLines.slice(1), spaceIndentationCount + level.length + 2, applyColor);
     return firstLineFormatted + remainingLinesFormatted;
 }
-function info(message, indentation = 0) {
-    console.info(makePrettyString(message, 'INFO', indentation, cli_color_1.default.cyan));
+function info(message, spaceIndentationCount = 0) {
+    console.info(makePrettyString(message, 'INFO', spaceIndentationCount, cli_color_1.default.cyan));
 }
 exports.info = info;
-function error(message, indentation = 0) {
-    console.error(makePrettyString(message, 'FAIL', indentation, cli_color_1.default.red));
+function error(message, spaceIndentationCount = 0) {
+    console.error(makePrettyString(message, 'FAIL', spaceIndentationCount, cli_color_1.default.red));
 }
 exports.error = error;
-function warn(message, indentation = 0) {
-    console.warn(makePrettyString(message, 'WARN', indentation, cli_color_1.default.yellow));
+function warn(message, spaceIndentationCount = 0) {
+    console.warn(makePrettyString(message, 'WARN', spaceIndentationCount, cli_color_1.default.yellow));
 }
 exports.warn = warn;
