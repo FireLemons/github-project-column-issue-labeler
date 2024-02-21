@@ -4,6 +4,7 @@
     "outDir": "./build"
   },
   "files": [
+    "src/githubAPIClient.ts",
     "src/labeler.ts",
     "src/logger.ts",
     "src/typeChecker.ts"
