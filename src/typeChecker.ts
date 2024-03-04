@@ -3,8 +3,10 @@ interface objectWithKeys {
 }
 
 export enum Type {
-  string = 'string',
-  array = 'array'
+  array = 'array',
+  boolean = 'boolean',
+  object = 'object',
+  string = 'string'
 }
 
 export function isObject(obj: any):boolean {
@@ -24,10 +26,21 @@ export function validateObjectMember(obj: objectWithKeys, key: string, type: Typ
 
   switch (type) {
     case Type.array:
-      if(!(Array.isArray(member))) {
+      if (!(Array.isArray(member))) {
         throw new TypeError(`Member "${key}" was found not to be an array`)
       }
 
+      break;
+    case Type.boolean:
+      if (!(member === true || member === false)) {
+        throw new TypeError(`Member "${key}" was found not to be a boolean`)
+      }
+
+      break;
+    case Type.object:
+      if (!isObject(member)) {
+        throw new TypeError(`Member "${key}" was found not to be an object`)
+      }
       break;
     case Type.string:
       if (!isString(member)) {

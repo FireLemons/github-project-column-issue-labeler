@@ -3,8 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateObjectMember = exports.isString = exports.isObject = exports.Type = void 0;
 var Type;
 (function (Type) {
-    Type["string"] = "string";
     Type["array"] = "array";
+    Type["boolean"] = "boolean";
+    Type["object"] = "object";
+    Type["string"] = "string";
 })(Type || (exports.Type = Type = {}));
 function isObject(obj) {
     return typeof obj === 'object' && !Array.isArray(obj) && obj !== null;
@@ -23,6 +25,16 @@ function validateObjectMember(obj, key, type) {
         case Type.array:
             if (!(Array.isArray(member))) {
                 throw new TypeError(`Member "${key}" was found not to be an array`);
+            }
+            break;
+        case Type.boolean:
+            if (!(member === true || member === false)) {
+                throw new TypeError(`Member "${key}" was found not to be a boolean`);
+            }
+            break;
+        case Type.object:
+            if (!isObject(member)) {
+                throw new TypeError(`Member "${key}" was found not to be an object`);
             }
             break;
         case Type.string:
