@@ -1,21 +1,13 @@
-import * as Logger from './logger'
+import { IssueWithChildPages, GraphQLPage } from './githubObjects'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
 
-const ISSUE_PAGE_SIZE = 1//100
-const FIELD_VALUE_PAGE_SIZE = 1//100
+const MAX_PAGE_SIZE = 100
+
+const ISSUE_PAGE_SIZE = 1//MAX_PAGE_SIZE
+const FIELD_VALUE_PAGE_SIZE = 1//MAX_PAGE_SIZE
 const LABEL_PAGE_SIZE = 1//20
 const PROJECT_ITEM_PAGE_SIZE = 1//20
-
-interface ColumnName {
-  fieldValues: {
-    nodes: [
-      {
-        name?: string
-      }
-    ]
-  }
-}
 
 interface GitHubGraphQLError {
   type: string
@@ -31,33 +23,11 @@ interface GitHubGraphQLError {
   message: string
 }
 
-interface GithubAPIResponse {
+export interface IssuePageResponse {
   repository?: {
-    issues: Page<Issue>
+    issues: GraphQLPage<IssueWithChildPages>
   }
   errors?: GitHubGraphQLError[]
-}
-
-interface Issue {
-  id: string
-  labels: Page<Label>
-  projectItems: Page<ColumnName>
-}
-
-interface Label {
-  name: string
-}
-
-interface Page<T> {
-  edges: [
-    {
-      node: T
-      cursor: string
-    }
-  ]
-  pageInfo: {
-    hasNextPage: boolean
-  }
 }
 
 export class GithubAPIClient {
@@ -71,10 +41,10 @@ export class GithubAPIClient {
     this.repoOwnerName = repoOwnerName
   }
 
-  async fetchIssuePage (cursor?: string): Promise<GithubAPIResponse> {
+  fetchIssuePage (cursor?: string): Promise<IssuePageResponse> {
     return this.octokit.graphql(`
-    query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeProjectField: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
-      repository (owner: $ownerName, name: $repoName) {
+      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeProjectField: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
+        repository (owner: $ownerName, name: $repoName) {
           issues (first: $pageSizeIssue, after: $cursor) {
             ...issuePage
           }
@@ -92,10 +62,10 @@ export class GithubAPIClient {
               ...projectItemPage
             }
           }
-          cursor
         }
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -104,10 +74,10 @@ export class GithubAPIClient {
           node {
             name
           }
-          cursor
         }
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -118,10 +88,10 @@ export class GithubAPIClient {
               name
             }
           }
-          cursor
         },
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -132,10 +102,10 @@ export class GithubAPIClient {
               ...projectFieldPage
             }
           }
-          cursor
         },
         pageInfo {
           hasNextPage
+          endCursor
         }
       }`,
       {

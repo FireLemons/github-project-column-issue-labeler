@@ -28,6 +28,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const githubAPIClient_1 = require("./githubAPIClient");
+const githubDataFetcher_1 = require("./githubDataFetcher");
 const Logger = __importStar(require("./logger"));
 const validateConfig_1 = __importDefault(require("./validateConfig"));
 const fsPromises = fs_1.default.promises;
@@ -69,20 +70,24 @@ async function main() {
         return;
     }
     let githubAPIClient;
+    let githubDataFetcher;
     try {
+        Logger.info('Initializing github API accessors');
         githubAPIClient = new githubAPIClient_1.GithubAPIClient(config['access-token'], config.repo, config.owner);
+        githubDataFetcher = new githubDataFetcher_1.GithubDataFetcher(githubAPIClient);
     }
     catch (error) {
         if (error instanceof Error && error.message) {
-            Logger.error('Failed to initialize github API client', 2);
+            Logger.error('Failed to initialize github API accessors', 2);
             Logger.error(error.message, 4);
             process.exitCode = 1;
         }
         return;
     }
+    Logger.info('Initialized github API accessors');
     try {
         Logger.info('Fetching issues with labels and associated column data...');
-        githubAPIClient.fetchIssuePage()
+        githubDataFetcher.fetchAllIssues()
             .then((response) => {
             Logger.info('Fetched issues with labels and associated column data', 2);
             Logger.info(JSON.stringify(response, null, 2), 4);

@@ -1,5 +1,6 @@
 import fs from 'fs'
 import { GithubAPIClient } from './githubAPIClient'
+import { GithubDataFetcher } from './githubDataFetcher'
 import * as Logger from './logger'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
@@ -53,12 +54,15 @@ async function main() {
   }
 
   let githubAPIClient
+  let githubDataFetcher
 
   try {
+    Logger.info('Initializing github API accessors')
     githubAPIClient = new GithubAPIClient(config['access-token'], config.repo, config.owner)
+    githubDataFetcher = new GithubDataFetcher(githubAPIClient)
   } catch (error) {
     if (error instanceof Error && error.message) {
-      Logger.error('Failed to initialize github API client', 2)
+      Logger.error('Failed to initialize github API accessors', 2)
       Logger.error(error.message, 4)
       process.exitCode = 1
     }
@@ -66,9 +70,11 @@ async function main() {
     return
   }
 
+  Logger.info('Initialized github API accessors')
+
   try {
       Logger.info('Fetching issues with labels and associated column data...')
-      githubAPIClient.fetchIssuePage()
+      githubDataFetcher.fetchAllIssues()
       .then(
         (response) => {
           Logger.info('Fetched issues with labels and associated column data', 2)

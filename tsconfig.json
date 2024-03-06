@@ -5,8 +5,11 @@
   },
   "files": [
     "src/githubAPIClient.ts",
+    "src/githubDataFetcher.ts",
+    "src/githubObjects.ts",
     "src/labeler.ts",
     "src/logger.ts",
-    "src/typeChecker.ts"
+    "src/typeChecker.ts",
+    "src/validateConfig.ts"
   ]
 }

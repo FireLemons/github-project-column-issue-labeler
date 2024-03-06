@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GithubAPIClient = void 0;
 // Javascript destructuring assignment
 const octokit_1 = require("octokit");
-const ISSUE_PAGE_SIZE = 1; //100
-const FIELD_VALUE_PAGE_SIZE = 1; //100
+const MAX_PAGE_SIZE = 100;
+const ISSUE_PAGE_SIZE = 1; //MAX_PAGE_SIZE
+const FIELD_VALUE_PAGE_SIZE = 1; //MAX_PAGE_SIZE
 const LABEL_PAGE_SIZE = 1; //20
 const PROJECT_ITEM_PAGE_SIZE = 1; //20
 class GithubAPIClient {
@@ -16,10 +17,10 @@ class GithubAPIClient {
         this.repoName = repoName;
         this.repoOwnerName = repoOwnerName;
     }
-    async fetchIssuePage(cursor) {
+    fetchIssuePage(cursor) {
         return this.octokit.graphql(`
-    query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeProjectField: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
-      repository (owner: $ownerName, name: $repoName) {
+      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeProjectField: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
+        repository (owner: $ownerName, name: $repoName) {
           issues (first: $pageSizeIssue, after: $cursor) {
             ...issuePage
           }
@@ -37,10 +38,10 @@ class GithubAPIClient {
               ...projectItemPage
             }
           }
-          cursor
         }
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -49,10 +50,10 @@ class GithubAPIClient {
           node {
             name
           }
-          cursor
         }
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -63,10 +64,10 @@ class GithubAPIClient {
               name
             }
           }
-          cursor
         },
         pageInfo {
           hasNextPage
+          endCursor
         }
       }
 
@@ -77,10 +78,10 @@ class GithubAPIClient {
               ...projectFieldPage
             }
           }
-          cursor
         },
         pageInfo {
           hasNextPage
+          endCursor
         }
       }`, {
             cursor: cursor,
