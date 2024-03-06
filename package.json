@@ -7,6 +7,7 @@
     "build": "npx tsc",
     "build:dev": "npx tsc --watch",
     "lint": "npx ts-standard",
+    "start": "node ./index.js",
     "test": "npx jest"
   },
   "repository": {
