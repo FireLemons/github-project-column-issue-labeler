@@ -4,7 +4,7 @@ import { Octokit, App } from 'octokit'
 
 const MAX_PAGE_SIZE = 100
 
-const ISSUE_PAGE_SIZE = 1//MAX_PAGE_SIZE
+const ISSUE_PAGE_SIZE = MAX_PAGE_SIZE
 const FIELD_VALUE_PAGE_SIZE = 1//MAX_PAGE_SIZE
 const LABEL_PAGE_SIZE = 1//20
 const PROJECT_ITEM_PAGE_SIZE = 1//20
