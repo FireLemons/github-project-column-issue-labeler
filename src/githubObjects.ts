@@ -1,13 +1,11 @@
 import * as TypeChecker from './typeChecker'
 
 interface ColumnName {
-  fieldValues: {
-    nodes: [
-      {
-        name?: string
-      }
-    ]
-  }
+  name?: string
+}
+
+interface projectItem {
+  fieldValues: GraphQLPage<ColumnName>
 }
 
 export interface IssueWithChildPages {

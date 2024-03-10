@@ -1,5 +1,61 @@
 import { GraphQLPage, IssueWithChildPages } from '../src/githubObjects'
 
+const columnNamePage = {
+  edges: [
+    {
+      node: {}
+    }
+  ],
+  pageInfo: {
+    endCursor: "MQ",
+    hasNextPage: true
+  }
+}
+
+const projectItemPage = {
+  edges: [
+    {
+      node: {
+        fieldValues: columnNamePage
+      }
+    }
+  ],
+  pageInfo: {
+    endCursor: "MQ",
+    hasNextPage: false
+  }
+}
+
+const labelPage = {
+  edges: [
+    {
+      node: {
+        name: "help wanted"
+      }
+    }
+  ],
+  pageInfo: {
+    endCursor: "MQ",
+    hasNextPage: true
+  }
+}
+
+const issuePage = {
+  edges: [
+    {
+      node: {
+        id: "id string",
+        labels: labelPage,
+        projectItems: projectItemPage
+      }
+    }
+  ],
+  pageInfo: {
+    endCursor: "cursor",
+    hasNextPage: true
+  }
+}
+
 describe('The GraphQLPage class', () => {
   describe('constructor', () => {
     test('it throws an error when not passed an object', () => {
@@ -21,56 +77,7 @@ describe('The GraphQLPage class', () => {
     })
 
     test('it throws an error when passed almost a page object', () => {
-      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = {
-        edges: [
-          {
-            node: {
-              id: "id string",
-              labels: {
-                edges: [
-                  {
-                    node: {
-                      name: "help wanted"
-                    }
-                  }
-                ],
-                pageInfo: {
-                  endCursor: "MQ",
-                  hasNextPage: true
-                }
-              },
-              projectItems: {
-                edges: [
-                  {
-                    node: {
-                      fieldValues: {
-                        edges: [
-                          {
-                            node: {}
-                          }
-                        ],
-                        pageInfo: {
-                          endCursor: "MQ",
-                          hasNextPage: true
-                        }
-                      }
-                    }
-                  }
-                ],
-                pageInfo: {
-                  endCursor: "MQ",
-                  hasNextPage: false
-                }
-              }
-            }
-          }
-        ],
-        pageInfo: {
-          endCursor: "cursor",
-          hasNextPage: true
-        }
-      }
-
+      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePage)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
       expect(() => {
@@ -79,29 +86,7 @@ describe('The GraphQLPage class', () => {
     })
 
     test('does not throw an error when passed a page', () => {
-      const normalPage = {
-        edges: [
-          {
-            node: {
-              fieldValues: {
-                edges: [
-                  {
-                    node: {}
-                  }
-                ],
-                pageInfo: {
-                  endCursor: "MQ",
-                  hasNextPage: true
-                }
-              }
-            }
-          }
-        ],
-        pageInfo: {
-          endCursor: "MQ",
-          hasNextPage: false
-        }
-      }
+      const normalPage = structuredClone(projectItemPage)
 
       expect(() => {
         new GraphQLPage(normalPage)
