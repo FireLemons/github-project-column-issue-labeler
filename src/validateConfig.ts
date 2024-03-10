@@ -141,8 +141,14 @@ export default function validateConfig (config: string): Config {
   typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.string)
   typeChecker.validateObjectMember(configAsObject, 'column-label-config', typeChecker.Type.array)
 
+  const trimmedGithubAccessToken = configAsObject['access-token'].trim()
+
+  if (!(trimmedGithubAccessToken.length)) {
+    throw new RangeError('The github access token cannot be empty or contain only whitespace')
+  }
+
   return {
-    'access-token': configAsObject['access-token'].trim(),
+    'access-token': trimmedGithubAccessToken,
     owner: configAsObject['owner'].trim(),
     repo: configAsObject['repo'].trim(),
     'column-label-config': validateColumnConfigurationsArray(configAsObject['column-label-config'])
