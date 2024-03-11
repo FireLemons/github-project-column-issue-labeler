@@ -65,13 +65,59 @@ describe('validateConfig()', () => {
       })
     })
 
-    describe('when the labeling rules are not an array', () => {
-      test('it throws a TypeError with a message describing the config key and correct type', async () => {
-        const configContents = await fsPromises.readFile('./tests/configWrongTypeLabelingRules.json')
+    describe('the labeling rules', () => {
+      let consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>}
 
-        expect(() => {
+      function initializeSpies () {
+        consoleLoggingFunctionSpies = {
+          info: jest.spyOn(console, 'info'),
+          warn: jest.spyOn(console, 'warn'),
+          error: jest.spyOn(console, 'error')
+        }
+      }
+
+      function deactivateSpies () {
+        for (const consoleLoggingFunctionName in consoleLoggingFunctionSpies) {
+          consoleLoggingFunctionSpies[consoleLoggingFunctionName].mockReset()
+        }
+      }
+
+      beforeEach(() => {
+        initializeSpies()
+      })
+
+      afterEach(() => {
+        deactivateSpies()
+      })
+
+      describe('when the labeling rules are not an array', () => {
+        test('it throws a TypeError with a message describing the config key and correct type', async () => {
+          const configContents = await fsPromises.readFile('./tests/configWrongTypeLabelingRules.json')
+  
+          expect(() => {
+            validateConfig(configContents.toString())
+          }).toThrow(new TypeError(`Member "column-label-config" was found not to be an array`))
+        })
+      })
+
+      describe('when all the elements of the labeling rules array are not objects', () => {
+        test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
+          const configContents = await fsPromises.readFile('./tests/configAllLabelingRulesInvalidType.json')
+          const LABELING_RULE_COUNT = 3
+
           validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "column-label-config" was found not to be an array`))
+
+          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+
+          expect(consoleWarnCalls.length).toBe(LABELING_RULE_COUNT)
+          expect(consoleErrorCalls.length).toBe(LABELING_RULE_COUNT)
+
+          for (let i = 0; i < LABELING_RULE_COUNT; i++) {
+            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${i}. Skipping column.`))
+            expect(consoleErrorCalls[i][0]).toMatch(/  Column configuration must be an object/)
+          }
+        })
       })
     })
   })
