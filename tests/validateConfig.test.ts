@@ -100,9 +100,9 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('when all the elements of the labeling rules array are not objects', () => {
+      describe('when all of the column configurations are not objects', () => {
         test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
-          const configContents = await fsPromises.readFile('./tests/configAllLabelingRulesInvalidType.json')
+          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationsInvalidType.json')
           const LABELING_RULE_COUNT = 3
 
           validateConfig(configContents.toString())
@@ -117,6 +117,57 @@ describe('validateConfig()', () => {
             expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${i}. Skipping column.`))
             expect(consoleErrorCalls[i][0]).toMatch(/  Column configuration must be an object/)
           }
+        })
+      })
+
+      describe('when all of the column configurations are missing a required key', () => {
+        test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
+          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationMissingKeys.json')
+          const LABELING_RULE_COUNT = 3
+
+          validateConfig(configContents.toString())
+
+          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+
+          expect(consoleWarnCalls.length).toBe(LABELING_RULE_COUNT)
+          expect(consoleErrorCalls.length).toBe(LABELING_RULE_COUNT)
+
+          expect(consoleWarnCalls[0][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${0}. Skipping column.`))
+          expect(consoleErrorCalls[0][0]).toMatch(/  key "columnName" was not found in the object/)
+
+          expect(consoleWarnCalls[1][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${1}. Skipping column.`))
+          expect(consoleErrorCalls[1][0]).toMatch(/  key "labelingRules" was not found in the object/)
+
+          expect(consoleWarnCalls[2][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${2}. Skipping column.`))
+          expect(consoleErrorCalls[2][0]).toMatch(/  key "columnName" was not found in the object/)
+        })
+      })
+
+      describe('when all of the column configurations have invalid values for required values', () => {
+        test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
+          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationInvalidValues.json')
+          const LABELING_RULE_COUNT = 4
+
+          validateConfig(configContents.toString())
+
+          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+
+          expect(consoleWarnCalls.length).toBe(LABELING_RULE_COUNT)
+          expect(consoleErrorCalls.length).toBe(LABELING_RULE_COUNT)
+
+          expect(consoleWarnCalls[0][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${0}. Skipping column.`))
+          expect(consoleErrorCalls[0][0]).toMatch(/  Member "columnName" was found not to be a string/)
+
+          expect(consoleWarnCalls[1][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${1}. Skipping column.`))
+          expect(consoleErrorCalls[1][0]).toMatch(/  Member "labelingRules" was found not to be an array/)
+
+          expect(consoleWarnCalls[2][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${2}. Skipping column.`))
+          expect(consoleErrorCalls[2][0]).toMatch(/  columnName must contain at least one non whitespace character/)
+
+          expect(consoleWarnCalls[2][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${2}. Skipping column.`))
+          expect(consoleErrorCalls[2][0]).toMatch(/  columnName must contain at least one non whitespace character/)
         })
       })
     })
