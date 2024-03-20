@@ -1,6 +1,8 @@
 import { GithubAPIClient, IssuePageResponse } from './githubAPIClient'
 import { IssueWithChildPages, Label, GraphQLPage } from './githubObjects'
-import * as Logger from './logger'
+import { Logger } from './logger'
+
+const logger = new Logger()
 
 interface Issue {
   labels: Label
@@ -15,7 +17,7 @@ export class GithubDataFetcher {
   }
 
   async fetchAllIssues (): Promise<GraphQLPage<IssueWithChildPages>> {
-    Logger.info('Fetching Issues', 2)
+    logger.info('Fetching Issues', 2)
     let cursor
     let issues!: GraphQLPage<IssueWithChildPages>
     let issuePageResponse!: IssuePageResponse
@@ -37,7 +39,7 @@ export class GithubDataFetcher {
       } catch (error) {
         if (issuePageResponse.repository) {
           let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page'
-          Logger.warn('Encountered errors while fetching ' + pageMessageIndex, 2)
+          logger.warn('Encountered errors while fetching ' + pageMessageIndex, 2)
         } else {
           throw error
         }

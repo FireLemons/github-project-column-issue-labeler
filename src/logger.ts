@@ -1,38 +1,59 @@
 import commandLineColor from 'cli-color'
 
-function indentationAmountToString (indentationAmount: number): string {
-  return ' '.repeat(indentationAmount)
+export enum Indentation {
+  space = ' ',
+  tab = '	'
 }
 
-function formatSubequentLines (lines: string[], spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {
-  const formattedLines = lines.map((line) => {
-    return indentationAmountToString(spaceIndentationCount) + applyColor(line)
-  })
+export class Logger {
+  baseIndentation: number
+  indentationCharacter: string
 
-  if (formattedLines.length) {
-    formattedLines[0] = '\n' + formattedLines[0]
+  constructor (indentationCharacter: Indentation = Indentation.space) {
+    this.baseIndentation = 0
+    this.indentationCharacter = indentationCharacter
   }
 
-  return formattedLines.join('\n')
-}
+  addBaseIndentation (amount: number) {
+    this.baseIndentation = Math.max(0, this.baseIndentation + amount)
+  }
 
-function makePrettyString (message: string, level: string, spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {
-  const messageLines = message.split('\n')
+  info (message: string, indentationCount: number = 0) {
+    console.info(this.#makePrettyString(message, 'INFO', this.baseIndentation + indentationCount, commandLineColor.cyan))
+  }
 
-  const firstLineFormatted = applyColor(`${level}: ${indentationAmountToString(spaceIndentationCount)}${messageLines[0]}`)
-  const remainingLinesFormatted = formatSubequentLines(messageLines.slice(1), spaceIndentationCount + level.length + 2, applyColor)
+  error (message: string, indentationCount: number = 0) {
+    console.error(this.#makePrettyString(message, 'FAIL', this.baseIndentation + indentationCount, commandLineColor.red))
+  }
 
-  return firstLineFormatted + remainingLinesFormatted
-}
+  warn (message: string, indentationCount: number = 0) {
+    console.warn(this.#makePrettyString(message, 'WARN', this.baseIndentation + indentationCount, commandLineColor.yellow))
+  }
 
-export function info (message: string, spaceIndentationCount: number = 0) {
-  console.info(makePrettyString(message, 'INFO', spaceIndentationCount, commandLineColor.cyan))
-}
+  #indentationAmountToString (indentationAmount: number): string {
+    return this.indentationCharacter.repeat(indentationAmount)
+  }
 
-export function error (message: string, spaceIndentationCount: number = 0) {
-  console.error(makePrettyString(message, 'FAIL', spaceIndentationCount, commandLineColor.red))
-}
+  #formatSubequentLines (lines: string[], spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {
+    if (!(lines.length)) {
+      return ''
+    }
 
-export function warn (message: string, spaceIndentationCount: number = 0) {
-  console.warn(makePrettyString(message, 'WARN', spaceIndentationCount, commandLineColor.yellow))
+    const formattedLines = lines.map((line) => {
+      return this.#indentationAmountToString(spaceIndentationCount) + applyColor(line)
+    })
+
+    formattedLines[0] = '\n' + formattedLines[0]
+
+    return formattedLines.join('\n')
+  }
+
+  #makePrettyString (message: string, level: string, spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {
+    const messageLines = message.split('\n')
+
+    const firstLineFormatted = applyColor(`${level}: ${this.#indentationAmountToString(spaceIndentationCount)}${messageLines[0]}`)
+    const remainingLinesFormatted = this.#formatSubequentLines(messageLines.slice(1), spaceIndentationCount + level.length + 2, applyColor)
+
+    return firstLineFormatted + remainingLinesFormatted
+  }
 }

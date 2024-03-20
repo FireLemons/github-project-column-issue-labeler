@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -29,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const githubAPIClient_1 = require("./githubAPIClient");
 const githubDataFetcher_1 = require("./githubDataFetcher");
-const Logger = __importStar(require("./logger"));
+const logger_1 = require("./logger");
 const validateConfig_1 = __importDefault(require("./validateConfig"));
 const fsPromises = fs_1.default.promises;
+const logger = new logger_1.Logger();
 async function loadConfig() {
     const configContents = await fsPromises.readFile('./config.json');
     return "" + configContents;
@@ -39,32 +17,32 @@ async function loadConfig() {
 async function main() {
     let configFileContents;
     try {
-        Logger.info('Loading Config');
+        logger.info('Loading Config');
         configFileContents = await loadConfig();
     }
     catch (error) {
-        Logger.error('Failed to load config', 2);
+        logger.error('Failed to load config', 2);
         if (error instanceof Error) {
-            Logger.error(error.message, 4);
+            logger.error(error.message, 4);
         }
         return;
     }
     let config;
     try {
-        Logger.info('Validating Config');
+        logger.info('Validating Config');
         config = (0, validateConfig_1.default)(configFileContents);
         if (!(config['column-label-config'].length)) {
-            Logger.error('Could not find any valid actions to perform from the configuration');
+            logger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;
             return;
         }
-        Logger.info('Validated Config:');
-        Logger.info(JSON.stringify(config, null, 2));
+        logger.info('Validated Config:');
+        logger.info(JSON.stringify(config, null, 2));
     }
     catch (error) {
         if (error instanceof Error && error.message) {
-            Logger.error('Failed to validate config');
-            Logger.error(error.message);
+            logger.error('Failed to validate config');
+            logger.error(error.message);
             process.exitCode = 1;
         }
         return;
@@ -72,40 +50,40 @@ async function main() {
     let githubAPIClient;
     let githubDataFetcher;
     try {
-        Logger.info('Initializing github API accessors');
+        logger.info('Initializing github API accessors');
         githubAPIClient = new githubAPIClient_1.GithubAPIClient(config['access-token'], config.repo, config.owner);
         githubDataFetcher = new githubDataFetcher_1.GithubDataFetcher(githubAPIClient);
     }
     catch (error) {
         if (error instanceof Error && error.message) {
-            Logger.error('Failed to initialize github API accessors', 2);
-            Logger.error(error.message, 4);
+            logger.error('Failed to initialize github API accessors', 2);
+            logger.error(error.message, 4);
             process.exitCode = 1;
         }
         return;
     }
-    Logger.info('Initialized github API accessors');
+    logger.info('Initialized github API accessors');
     try {
-        Logger.info('Fetching issues with labels and associated column data...');
+        logger.info('Fetching issues with labels and associated column data...');
         githubDataFetcher.fetchAllIssues()
             .then((response) => {
-            Logger.info('Fetched issues with labels and associated column data', 2);
-            Logger.info(JSON.stringify(response, null, 2), 4);
+            logger.info('Fetched issues with labels and associated column data', 2);
+            logger.info(JSON.stringify(response, null, 2), 4);
         })
             .catch((error) => {
-            Logger.error('Encountered errors after fetching issues with labels and associated column data', 2);
+            logger.error('Encountered errors after fetching issues with labels and associated column data', 2);
             if (error instanceof Error) {
-                Logger.error(error.message, 4);
+                logger.error(error.message, 4);
             }
             else {
-                Logger.error(error, 4);
+                logger.error(error, 4);
             }
         });
     }
     catch (error) {
         if (error instanceof Error && error.message) {
-            Logger.error('Failed to fetch issues with labels and associated column data', 2);
-            Logger.error(error.message, 4);
+            logger.error('Failed to fetch issues with labels and associated column data', 2);
+            logger.error(error.message, 4);
             process.exitCode = 1;
         }
         return;

@@ -1,6 +1,8 @@
-import * as Logger from './logger'
+import { Logger } from './logger'
 import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './LabelerConfig'
 import * as typeChecker from './typeChecker'
+
+const logger = new Logger()
 
 function aggregateLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
   const aggregatedRules: Map<LabelingAction, string[]> = new Map()
@@ -31,13 +33,13 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   let determinedLabelingRules
 
   if (lastSetRuleIndex >= 0) {
-    Logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 4)
-    Logger.info('The column will be using only this rule', 4)
+    logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 4)
+    logger.info('The column will be using only this rule', 4)
 
     determinedLabelingRules = [rules[lastSetRuleIndex]]
   } else {
-    Logger.info('Labeling rules list only contains ADD or REMOVE rules', 4)
-    Logger.info('Aggregating lables by action', 4)
+    logger.info('Labeling rules list only contains ADD or REMOVE rules', 4)
+    logger.info('Aggregating lables by action', 4)
 
     determinedLabelingRules = aggregateLabelsByAction(rules)
   }
@@ -46,8 +48,8 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels)
 
     if (labelsWithoutDuplicates.length < rule.labels.length) {
-      Logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 6)
-      Logger.info('Removed duplicate labels', 6)
+      logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 6)
+      logger.info('Removed duplicate labels', 6)
       rule.labels = labelsWithoutDuplicates
     }
   }
@@ -77,7 +79,7 @@ function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
   const validatedColumnConfigurations: ColumnConfiguration[] = []
 
   arr.forEach((columnConfiguration: any, index: number) => {
-    Logger.info(`Checking column at index ${index}`, 2)
+    logger.info(`Checking column at index ${index}`, 2)
     let validatedColumnConfiguration
 
     try {
@@ -86,13 +88,13 @@ function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
       if (validatedColumnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        Logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 4)
+        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 4)
       }
     } catch (error) {
-      Logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 4)
+      logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 4)
 
       if (error instanceof Error && error.message) {
-        Logger.error(error.message, 6)
+        logger.error(error.message, 6)
       }
     }
   })
@@ -159,7 +161,7 @@ function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
   const validatedLabelingRules: LabelingRule[] = []
   
   arr.forEach((labelingRule: any, index: number) => {
-    Logger.info(`Checking labeling rule at index ${index}`, 4)
+    logger.info(`Checking labeling rule at index ${index}`, 4)
     let validatedLabelingRule
 
     try {
@@ -168,13 +170,13 @@ function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
       if (validatedLabelingRule.labels.length) {
         validatedLabelingRules.push(validatedLabelingRule)
       } else {
-        Logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, 6)
+        logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, 6)
       }
     } catch (error) {
-      Logger.warn(`Could not make valid labeling rule from value at index: ${index}`, 6)
+      logger.warn(`Could not make valid labeling rule from value at index: ${index}. Skipping rule.`, 6)
 
       if (error instanceof Error && error.message) {
-        Logger.error(error.message, 8)
+        logger.error(error.message, 8)
       }
     }
   })
@@ -208,12 +210,12 @@ function validateLabelsArray (arr: any[]): string[] {
   
   arr.forEach((label: any, index: number) => {
     if (!(typeChecker.isString(label))) {
-      Logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 6)
+      logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 6)
     } else {
       const labelWithoutSurroundingWhitespace = label.trim()
 
       if (!(labelWithoutSurroundingWhitespace.length)) {
-        Logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 6)
+        logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 6)
       } else {
         validatedLabels.push(labelWithoutSurroundingWhitespace)
       }

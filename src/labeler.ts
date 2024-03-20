@@ -1,12 +1,13 @@
 import fs from 'fs'
 import { GithubAPIClient } from './githubAPIClient'
 import { GithubDataFetcher } from './githubDataFetcher'
-import * as Logger from './logger'
+import { Logger } from './logger'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
 import validateConfig from './validateConfig'
 
 const fsPromises = fs.promises
+const logger = new Logger()
 
 async function loadConfig(): Promise<string> {
   const configContents = await fsPromises.readFile('./config.json')
@@ -18,12 +19,12 @@ async function main() {
   let configFileContents
 
   try {
-    Logger.info('Loading Config')
+    logger.info('Loading Config')
     configFileContents = await loadConfig()
   } catch (error) {
-    Logger.error('Failed to load config', 2)
+    logger.error('Failed to load config', 2)
     if (error instanceof Error) {
-      Logger.error(error.message, 4)
+      logger.error(error.message, 4)
     }
 
     return
@@ -32,21 +33,21 @@ async function main() {
   let config
 
   try {
-    Logger.info('Validating Config')
+    logger.info('Validating Config')
     config = validateConfig(configFileContents)
 
     if (!(config['column-label-config'].length)) {
-      Logger.error('Could not find any valid actions to perform from the configuration')
+      logger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
       return
     }
 
-    Logger.info('Validated Config:')
-    Logger.info(JSON.stringify(config, null, 2))
+    logger.info('Validated Config:')
+    logger.info(JSON.stringify(config, null, 2))
   } catch (error) {
     if (error instanceof Error && error.message) {
-      Logger.error('Failed to validate config')
-      Logger.error(error.message)
+      logger.error('Failed to validate config')
+      logger.error(error.message)
       process.exitCode = 1
     }
 
@@ -57,44 +58,44 @@ async function main() {
   let githubDataFetcher
 
   try {
-    Logger.info('Initializing github API accessors')
+    logger.info('Initializing github API accessors')
     githubAPIClient = new GithubAPIClient(config['access-token'], config.repo, config.owner)
     githubDataFetcher = new GithubDataFetcher(githubAPIClient)
   } catch (error) {
     if (error instanceof Error && error.message) {
-      Logger.error('Failed to initialize github API accessors', 2)
-      Logger.error(error.message, 4)
+      logger.error('Failed to initialize github API accessors', 2)
+      logger.error(error.message, 4)
       process.exitCode = 1
     }
 
     return
   }
 
-  Logger.info('Initialized github API accessors')
+  logger.info('Initialized github API accessors')
 
   try {
-      Logger.info('Fetching issues with labels and associated column data...')
+      logger.info('Fetching issues with labels and associated column data...')
       githubDataFetcher.fetchAllIssues()
       .then(
         (response) => {
-          Logger.info('Fetched issues with labels and associated column data', 2)
-          Logger.info(JSON.stringify(response, null, 2), 4)
+          logger.info('Fetched issues with labels and associated column data', 2)
+          logger.info(JSON.stringify(response, null, 2), 4)
         }
       )
       .catch(
         (error) => {
-          Logger.error('Encountered errors after fetching issues with labels and associated column data', 2)
+          logger.error('Encountered errors after fetching issues with labels and associated column data', 2)
           if(error instanceof Error) {
-            Logger.error(error.message, 4)
+            logger.error(error.message, 4)
           } else {
-            Logger.error(error, 4)
+            logger.error(error, 4)
           }
         }
       )
     } catch (error) {
       if (error instanceof Error && error.message) {
-        Logger.error('Failed to fetch issues with labels and associated column data', 2)
-        Logger.error(error.message, 4)
+        logger.error('Failed to fetch issues with labels and associated column data', 2)
+        logger.error(error.message, 4)
         process.exitCode = 1
       }
 
