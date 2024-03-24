@@ -51,19 +51,19 @@ function determineLabelingRules(rules) {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelerConfig_1.LabelingAction.SET);
     let determinedLabelingRules;
     if (lastSetRuleIndex >= 0) {
-        logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 4);
-        logger.info('The column will be using only this rule', 4);
+        logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 2);
+        logger.info('The column will be using only this rule', 2);
         determinedLabelingRules = [rules[lastSetRuleIndex]];
     }
     else {
-        logger.info('Labeling rules list only contains ADD or REMOVE rules', 4);
-        logger.info('Aggregating lables by action', 4);
+        logger.info('Labeling rules list only contains ADD or REMOVE rules', 2);
+        logger.info('Aggregating lables by action', 2);
         determinedLabelingRules = aggregateLabelsByAction(rules);
     }
     for (const rule of determinedLabelingRules) {
         const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels);
         if (labelsWithoutDuplicates.length < rule.labels.length) {
-            logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 6);
+            logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 4);
             logger.info('Removed duplicate labels', 6);
             rule.labels = labelsWithoutDuplicates;
         }
@@ -85,8 +85,9 @@ function isLabelingAction(str) {
 }
 function validateColumnConfigurationsArray(arr) {
     const validatedColumnConfigurations = [];
+    logger.addBaseIndentation(2);
     arr.forEach((columnConfiguration, index) => {
-        logger.info(`Checking column at index ${index}`, 2);
+        logger.info(`Checking column at index ${index}`);
         let validatedColumnConfiguration;
         try {
             validatedColumnConfiguration = validateColumnConfiguration(columnConfiguration);
@@ -94,16 +95,17 @@ function validateColumnConfigurationsArray(arr) {
                 validatedColumnConfigurations.push(validatedColumnConfiguration);
             }
             else {
-                logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 4);
+                logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 2);
             }
         }
         catch (error) {
-            logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 4);
+            logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 2);
             if (error instanceof Error && error.message) {
-                logger.error(error.message, 6);
+                logger.error(error.message, 4);
             }
         }
     });
+    logger.addBaseIndentation(-2);
     return validatedColumnConfigurations;
 }
 function validateColumnConfiguration(object) {
@@ -151,25 +153,29 @@ function validateConfig(config) {
 exports.default = validateConfig;
 function validateLabelingRulesArray(arr) {
     const validatedLabelingRules = [];
+    logger.addBaseIndentation(2);
     arr.forEach((labelingRule, index) => {
-        logger.info(`Checking labeling rule at index ${index}`, 4);
+        logger.info(`Checking labeling rule at index ${index}`);
         let validatedLabelingRule;
+        logger.addBaseIndentation(2);
         try {
             validatedLabelingRule = validateLabelingRule(labelingRule);
             if (validatedLabelingRule.labels.length) {
                 validatedLabelingRules.push(validatedLabelingRule);
             }
             else {
-                logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`, 6);
+                logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`);
             }
         }
         catch (error) {
-            logger.warn(`Could not make valid labeling rule from value at index: ${index}. Skipping rule.`, 6);
+            logger.warn(`Could not make valid labeling rule from value at index: ${index}. Skipping rule.`);
             if (error instanceof Error && error.message) {
-                logger.error(error.message, 8);
+                logger.error(error.message, 2);
             }
         }
+        logger.addBaseIndentation(-2);
     });
+    logger.addBaseIndentation(-2);
     return validatedLabelingRules;
 }
 function validateLabelingRule(object) {
@@ -189,19 +195,21 @@ function validateLabelingRule(object) {
 }
 function validateLabelsArray(arr) {
     const validatedLabels = [];
+    logger.addBaseIndentation(2);
     arr.forEach((label, index) => {
         if (!(typeChecker.isString(label))) {
-            logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 6);
+            logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 2);
         }
         else {
             const labelWithoutSurroundingWhitespace = label.trim();
             if (!(labelWithoutSurroundingWhitespace.length)) {
-                logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 6);
+                logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 2);
             }
             else {
                 validatedLabels.push(labelWithoutSurroundingWhitespace);
             }
         }
     });
+    logger.addBaseIndentation(-2);
     return validatedLabels;
 }
