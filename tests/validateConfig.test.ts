@@ -186,6 +186,29 @@ describe('validateConfig()', () => {
           expect(hasGreaterIndentation(consoleWarnCalls[3][0], consoleErrorCalls[3][0])).toBe(true)
         })
       })
+
+      describe('when all of the labeling rules of each column configuration are invalid', () => {
+        test('it prints errors specifying the index of the invalid element, why that element is invalid, and what will be done with the element', async () => {
+          const configContents = await fsPromises.readFile('./tests/configLabelingRulesInvalidValues.json')
+          const LABELING_RULE_COUNT = 6
+
+          validateConfig(configContents.toString())
+
+          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+
+          expect(consoleWarnCalls.length).toBe(LABELING_RULE_COUNT + 1)
+          expect(consoleErrorCalls.length).toBe(LABELING_RULE_COUNT)
+
+          expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid labeling rule from value at index: 0\. Skipping rule\./)
+          expect(consoleErrorCalls[0][0]).toMatch(/key "action" was not found in the object/)
+
+          expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
+          expect(consoleErrorCalls[1][0]).toMatch(/key "labels" was not found in the object/)
+          console.log(consoleWarnCalls)
+          console.log(consoleErrorCalls)
+        })
+      })
     })
   })
 })
