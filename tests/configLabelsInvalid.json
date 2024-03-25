@@ -1,0 +1,19 @@
+{
+  "access-token": "token",
+  "owner": "repo owner",
+  "repo": "repo name",
+  "column-label-config": [
+    {
+      "columnName": "Name with whitespace ",
+      "labelingRules": [
+        {
+          "action": "ADD",
+          "labels": ["", "    ", 3, {}]
+        }
+      ]
+    },
+    {
+      "columnName": "invalid column"
+    }
+  ]
+}
