@@ -33,26 +33,29 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   let determinedLabelingRules
 
   if (lastSetRuleIndex >= 0) {
-    logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`, 2)
-    logger.info('The column will be using only this rule', 2)
+    logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`)
+    logger.info('The column will be using only this rule')
 
     determinedLabelingRules = [rules[lastSetRuleIndex]]
   } else {
-    logger.info('Labeling rules list only contains ADD or REMOVE rules', 2)
-    logger.info('Aggregating lables by action', 2)
+    logger.info('Labeling rules list only contains ADD or REMOVE rules')
+    logger.info('Aggregating lables by action')
 
     determinedLabelingRules = aggregateLabelsByAction(rules)
   }
+
+  logger.addBaseIndentation(2)
 
   for (const rule of determinedLabelingRules) {
     const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels)
 
     if (labelsWithoutDuplicates.length < rule.labels.length) {
-      logger.info(`Labels for action ${rule.action} were found to have duplicate labels`, 4)
-      logger.info('Removed duplicate labels', 6)
+      logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`)
       rule.labels = labelsWithoutDuplicates
     }
   }
+
+  logger.addBaseIndentation(-2)
 
   return determinedLabelingRules
 }
@@ -84,21 +87,25 @@ function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
     logger.info(`Checking column at index ${index}`)
     let validatedColumnConfiguration
 
+    logger.addBaseIndentation(2)
+
     try {
       validatedColumnConfiguration = validateColumnConfiguration(columnConfiguration)
 
       if (validatedColumnConfiguration.labelingRules.length) {
         validatedColumnConfigurations.push(validatedColumnConfiguration)
       } else {
-        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`, 2)
+        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
     } catch (error) {
-      logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`, 2)
+      logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`)
 
       if (error instanceof Error && error.message) {
-        logger.error(error.message, 4)
+        logger.error(error.message, 2)
       }
     }
+
+    logger.addBaseIndentation(-2)
   })
 
   logger.addBaseIndentation(-2)
@@ -163,8 +170,6 @@ export default function validateConfig (config: string): Config {
 
 function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
   const validatedLabelingRules: LabelingRule[] = []
-  
-  logger.addBaseIndentation(2)
 
   arr.forEach((labelingRule: any, index: number) => {
     logger.info(`Checking labeling rule at index ${index}`)
@@ -190,8 +195,6 @@ function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
 
     logger.addBaseIndentation(-2)
   })
-
-  logger.addBaseIndentation(-2)
 
   return validatedLabelingRules
 }
@@ -219,24 +222,20 @@ function validateLabelingRule (object: any): LabelingRule {
 
 function validateLabelsArray (arr: any[]): string[] {
   const validatedLabels: string[] = []
-
-  logger.addBaseIndentation(2)
   
   arr.forEach((label: any, index: number) => {
     if (!(typeChecker.isString(label))) {
-      logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`, 2)
+      logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`)
     } else {
       const labelWithoutSurroundingWhitespace = label.trim()
 
       if (!(labelWithoutSurroundingWhitespace.length)) {
-        logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`, 2)
+        logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`)
       } else {
         validatedLabels.push(labelWithoutSurroundingWhitespace)
       }
     }
   })
-
-  logger.addBaseIndentation(-2)
   
   return validatedLabels
 }
