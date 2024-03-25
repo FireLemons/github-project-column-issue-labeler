@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { Config } from '../src/LabelerConfig'
 import { Logger } from '../src/logger'
 import validateConfig from '../src/validateConfig'
 
@@ -6,21 +7,32 @@ const fsPromises = fs.promises
 const logger = new Logger()
 const TEST_FOLDER_PATH = './tests/'
 
+async function listJSONFiles(directoryPath: string) {
+  const fileNames = await fsPromises.readdir(directoryPath)
+
+  return fileNames.filter((fileName) => {
+      return fileName.endsWith('.json')
+  })
+}
+
 async function loadConfig(path: string): Promise<string> {
   const configContents = await fsPromises.readFile(path)
 
   return "" + configContents
 }
 
-async function main() {
-  const testFiles = fsPromises.readdir(TEST_FOLDER_PATH)
-  const configs = (await testFiles).filter(
-    (fileName) => {
-      return fileName.endsWith('.json')
-    }
-  )
+function randomizeOrder(arr: any[]) {
+  arr.sort(() => {
+    return Math.random() < 0.5 ? -1 : 1
+  })
+}
 
-  let configFileContents
+async function main() {
+  const configs = await listJSONFiles(TEST_FOLDER_PATH)
+
+  randomizeOrder(configs)
+
+  let configFileContents: string
 
   for (const configFileName of configs) {
     logger.info(`Config: ${configFileName}`)
@@ -37,7 +49,7 @@ async function main() {
       return
     }
 
-    let config
+    let config: Config
 
     try {
       logger.info('Validating Config')
