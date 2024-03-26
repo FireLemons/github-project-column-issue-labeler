@@ -109,21 +109,28 @@ describe('validateConfig()', () => {
       })
 
       describe('when a column configuration is not an object', () => {
-        test('it prints errors with the index of the invalid element', async () => {
+        const COLUMN_CONFIGURATION_COUNT = 3
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+
+        beforeAll(async () => {
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationsInvalidType.json')
-          const COLUMN_CONFIGURATION_COUNT = 3
 
           validateConfig(configContents.toString())
 
-          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
 
-          expect(consoleWarnCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
-          expect(consoleErrorCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
-
+        test('it prints errors with the index of the invalid element', () => {
           for (let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
             expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${i}\\. Skipping column\\.`))
             expect(consoleErrorCalls[i][0]).toMatch(/Column configuration must be an object/)
+          }
+        })
+
+        test('it indents the error output more than the warning output', () => {
+          for (let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
           }
         })
