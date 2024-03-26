@@ -34,7 +34,7 @@ describe('validateConfig()', () => {
 
   describe('when the config contains all required keys', () => {
     describe('when the github access token is not a string', () => {
-      test('it throws a TypeError with a message describing the config key and correct type', async () => {
+      test('it throws a TypeError specifying the correct type for the github access token', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeGithubAccessToken.json')
   
         expect(() => {
@@ -44,7 +44,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the github access token contains only whitespace', () => {
-      test('it throws a RangeError with a message warning abour the empty github token', async () => {
+      test('it throws a RangeError', async () => {
         const configContents = await fsPromises.readFile('./tests/configEmptyGithubAccessToken.json')
   
         expect(() => {
@@ -54,7 +54,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo owner is not a string', () => {
-      test('it throws a TypeError with a message describing the config key and correct type', async () => {
+      test('it throws a TypeError specifying the correct type for the repo owner', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoOwnerName.json')
 
         expect(() => {
@@ -64,7 +64,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo name is not a string', () => {
-      test('it throws a TypeError with a message describing the config key and correct type', async () => {
+      test('it throws a TypeError specifying the correct type for repo name', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoName.json')
 
         expect(() => {
@@ -109,19 +109,19 @@ describe('validateConfig()', () => {
       })
 
       describe('when a column configuration is not an object', () => {
-        test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
+        test('it prints errors with the index of the invalid element', async () => {
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationsInvalidType.json')
-          const LABELING_RULE_COUNT = 3
+          const COLUMN_CONFIGURATION_COUNT = 3
 
           validateConfig(configContents.toString())
 
           const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
 
-          expect(consoleWarnCalls.length).toBe(LABELING_RULE_COUNT)
-          expect(consoleErrorCalls.length).toBe(LABELING_RULE_COUNT)
+          expect(consoleWarnCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
+          expect(consoleErrorCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
 
-          for (let i = 0; i < LABELING_RULE_COUNT; i++) {
+          for (let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
             expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${i}\\. Skipping column\\.`))
             expect(consoleErrorCalls[i][0]).toMatch(/Column configuration must be an object/)
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
