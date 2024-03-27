@@ -170,7 +170,7 @@ describe('validateConfig()', () => {
           })
         })
 
-        test('the errors are more indented than the warnings', () => {
+        test('it indents the error output more than the warning output', () => {
           const COLUMN_CONFIGURATION_COUNT = 3
 
           for(let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
@@ -179,34 +179,53 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('when all of the column configurations have invalid values for required values', () => {
-        test('it prints errors specifying the index of the invalid element and why that element is invalid', async () => {
+      describe('when a column configuration has invalid values', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+
+        beforeAll(async () => {
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationInvalidValues.json')
-          const COLUMN_CONFIGURATION_COUNT = 4
 
           validateConfig(configContents.toString())
 
-          const consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          const consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
 
-          expect(consoleWarnCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
-          expect(consoleErrorCalls.length).toBe(COLUMN_CONFIGURATION_COUNT)
+        describe('when "columnName" is of the wrong type', () => {
+          test('errors are printed with the index of the invalid column configuration', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
+            expect(consoleErrorCalls[0][0]).toMatch(/Member "columnName" was found not to be a string/)
+          })
+        })
 
-          expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
-          expect(consoleErrorCalls[0][0]).toMatch(/Member "columnName" was found not to be a string/)
-          expect(hasGreaterIndentation(consoleWarnCalls[0][0], consoleErrorCalls[0][0])).toBe(true)
+        describe('when "labelingRules" is of the wrong type', () => {
+          test('errors are printed with the index of the invalid column configuration', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
+            expect(consoleErrorCalls[1][0]).toMatch(/Member "labelingRules" was found not to be an array/)
+          })
+        })
 
-          expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
-          expect(consoleErrorCalls[1][0]).toMatch(/Member "labelingRules" was found not to be an array/)
-          expect(hasGreaterIndentation(consoleWarnCalls[1][0], consoleErrorCalls[1][0])).toBe(true)
+        describe('when "columnName" contains only whitespace', () => {
+          test('errors are printed with the index of the invalid column configuration', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
+            expect(consoleErrorCalls[2][0]).toMatch(/columnName must contain at least one non whitespace character/)
+          })
+        })
 
-          expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
-          expect(consoleErrorCalls[2][0]).toMatch(/columnName must contain at least one non whitespace character/)
-          expect(hasGreaterIndentation(consoleWarnCalls[2][0], consoleErrorCalls[2][0])).toBe(true)
+        describe('when "columnName" is empty string', () => {
+          test('errors are printed with the index of the invalid column configuration', () => {
+            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column configuration from value at index: 3\. Skipping column\./)
+            expect(consoleErrorCalls[3][0]).toMatch(/columnName must contain at least one non whitespace character/)
+          })
+        })
 
-          expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column configuration from value at index: 3\. Skipping column\./)
-          expect(consoleErrorCalls[3][0]).toMatch(/columnName must contain at least one non whitespace character/)
-          expect(hasGreaterIndentation(consoleWarnCalls[3][0], consoleErrorCalls[3][0])).toBe(true)
+        test('it indents the error output more than the warning output', () => {
+          const COLUMN_CONFIGURATION_COUNT = 4
+
+          for(let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
+            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+          }
         })
       })
 
