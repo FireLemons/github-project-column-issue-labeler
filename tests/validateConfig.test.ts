@@ -1,5 +1,6 @@
 import fs from 'fs'
 import validateConfig from '../src/validateConfig'
+import { Config } from '../src/LabelerConfig'
 
 const fsPromises = fs.promises
 
@@ -230,29 +231,77 @@ describe('validateConfig()', () => {
       })
 
       describe('when all of the labeling rules of a column configuration are invalid', () => {
-        const LABELING_RULE_COUNT = 6
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
 
         beforeAll(async () => {
           const configContents = await fsPromises.readFile('./tests/configLabelingRulesInvalidValues.json')
 
-          validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        test('it prints errors specifying the index of the invalid element, why that element is invalid, and what will be done with the element', () => {
-          expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid labeling rule from value at index: 0\. Skipping rule\./)
-          expect(consoleErrorCalls[0][0]).toMatch(/key "action" was not found in the object/)
-          expect(hasGreaterIndentation(consoleWarnCalls[0][0], consoleErrorCalls[0][0])).toBe(true)
+        describe('when the rule is missing both required keys', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid labeling rule from value at index: 0\. Skipping rule\./)
+            expect(consoleErrorCalls[0][0]).toMatch(/key "[a-zA-Z]+" was not found in the object/)
+          })
+        })
 
-          expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
-          expect(consoleErrorCalls[1][0]).toMatch(/key "labels" was not found in the object/)
-          expect(hasGreaterIndentation(consoleWarnCalls[1][0], consoleErrorCalls[1][0])).toBe(true)
-          console.log(consoleWarnCalls)
-          console.log(consoleErrorCalls)
+        describe('when the rule is missing the "labels" key', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
+            expect(consoleErrorCalls[1][0]).toMatch(/key "labels" was not found in the object/)
+          })
+        })
+
+        describe('when the rule is missing the "action" key', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid labeling rule from value at index: 2\. Skipping rule\./)
+            expect(consoleErrorCalls[2][0]).toMatch(/key "action" was not found in the object/)
+          })
+        })
+
+        describe('when the value of "action" is not a string', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid labeling rule from value at index: 3\. Skipping rule\./)
+            expect(consoleErrorCalls[3][0]).toMatch(/Member "action" was found not to be a string/)
+          })
+        })
+
+        describe('when the value of "labels" is not an array', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid labeling rule from value at index: 4\. Skipping rule\./)
+            expect(consoleErrorCalls[4][0]).toMatch(/Member "labels" was found not to be an array/)
+          })
+        })
+
+        describe('when the value of "action" is not supported', () => {
+          it('errors are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[5][0]).toMatch(/Could not make valid labeling rule from value at index: 5\. Skipping rule\./)
+            expect(consoleErrorCalls[5][0]).toMatch(/Labeling action ".+" is not supported. Supported actions are: \["ADD","REMOVE","SET"\]/)
+          })
+        })
+
+        test('it indents the error output more than the warning output', () => {
+          const LABELING_RULE_COUNT = 6
+
+          for(let i = 0; i < LABELING_RULE_COUNT; i++) {
+            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+          }
+        })
+
+        test('it prints a warning that the column configuration will not be used', () => {
+          expect(consoleWarnCalls[6][0]).toMatch(/Column configuration at index: 0 did not contain any valid labeling rules. Skipping column./)
+        })
+
+        test('the validated config will not include the column configuration', () => {
+          expect(validatedConfig['column-label-config'].find((columnConfig) => {
+            return columnConfig.columnName === 'Name'
+          })).toBe(undefined)
         })
       })
     })
