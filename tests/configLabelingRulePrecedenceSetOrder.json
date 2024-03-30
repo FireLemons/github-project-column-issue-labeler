@@ -7,20 +7,16 @@
       "columnName": "Name with whitespace ",
       "labelingRules": [
         {
-          "action": "Add",
+          "action": "Set",
           "labels": ["This should not appear"]
         },
         {
-          "action": "SeT",
-          "labels": ["This should not appear"]
-        },
-        {
-          "action": "Remove",
+          "action": "Set",
           "labels": ["This should not appear"]
         },
         {
           "action": "  Set",
-          "labels": ["This should appear", "🛩 duplicate", "🛩 duplicate", "alphabetically first"]
+          "labels": ["This should appear", "🛩", "alphabetically first"]
         }
       ]
     }

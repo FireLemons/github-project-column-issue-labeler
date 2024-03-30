@@ -1,0 +1,24 @@
+{
+  "access-token": "token",
+  "owner": "repo owner",
+  "repo": "repo name",
+  "column-label-config": [
+    {
+      "columnName": "Name with whitespace ",
+      "labelingRules": [
+        {
+          "action": "Remove",
+          "labels": ["This should not appear"]
+        },
+        {
+          "action": "Set",
+          "labels": ["This should appear", "🛩", "alphabetically first"]
+        },
+        {
+          "action": "Add",
+          "labels": ["This should not appear"]
+        }
+      ]
+    }
+  ]
+}
