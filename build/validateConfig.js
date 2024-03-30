@@ -57,25 +57,53 @@ function determineLabelingRules(rules) {
     }
     else {
         logger.info('Labeling rules list only contains ADD or REMOVE rules');
-        logger.info('Aggregating lables by action');
-        determinedLabelingRules = aggregateLabelsByAction(rules);
+        if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action)) {
+            logger.info('Aggregating lables by action');
+            determinedLabelingRules = aggregateLabelsByAction(rules);
+        }
+        else {
+            determinedLabelingRules = rules;
+        }
     }
     logger.addBaseIndentation(2);
     for (const rule of determinedLabelingRules) {
-        const labelsWithoutDuplicates = filterOutCaseInsensitiveDuplicates(rule.labels);
+        const labelsWithoutDuplicates = removeCaseInsensitiveDuplicates(sortLabels(rule.labels));
         if (labelsWithoutDuplicates.length < rule.labels.length) {
             logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`);
             rule.labels = labelsWithoutDuplicates;
         }
     }
+    const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelerConfig_1.LabelingAction.ADD; });
+    const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelerConfig_1.LabelingAction.REMOVE; });
+    if (addRule && removeRule) {
+        removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels);
+    }
     logger.addBaseIndentation(-2);
     return determinedLabelingRules;
 }
-function filterOutCaseInsensitiveDuplicates(arr) {
-    const sortedArray = arr.toSorted((str1, str2) => str1.localeCompare(str2, undefined, { sensitivity: 'base' }));
+function caseInsensitiveCompare(str1, str2) {
+    return str1.localeCompare(str2, undefined, { sensitivity: 'base' });
+}
+function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
+    let cursor1 = 0, cursor2 = 0;
+    while (cursor1 < sortedArray1.length && cursor2 < sortedArray2.length) {
+        const comparison = caseInsensitiveCompare(sortedArray1[cursor1], sortedArray2[cursor2]);
+        if (comparison < 0) {
+            cursor1++;
+        }
+        else if (comparison > 0) {
+            cursor2++;
+        }
+        else {
+            logger.warn(`Found same label: "${sortedArray1[cursor1]}" in both ADD and REMOVE labeling rules. Removing label.`, 2);
+            sortedArray1.splice(cursor1, 1);
+            sortedArray2.splice(cursor2, 1);
+        }
+    }
+}
+function removeCaseInsensitiveDuplicates(sortedArray) {
     for (let i = 0; i < sortedArray.length - 1; i++) {
-        const currentElement = sortedArray[i];
-        if (currentElement.toUpperCase() === sortedArray[i + 1].toUpperCase()) {
+        if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
             sortedArray.splice(i + 1, 1);
         }
     }
@@ -83,6 +111,9 @@ function filterOutCaseInsensitiveDuplicates(arr) {
 }
 function isLabelingAction(str) {
     return Object.keys(LabelerConfig_1.LabelingAction).includes(str);
+}
+function sortLabels(arr) {
+    return arr.toSorted(caseInsensitiveCompare);
 }
 function validateColumnConfigurationsArray(arr) {
     const validatedColumnConfigurations = [];
