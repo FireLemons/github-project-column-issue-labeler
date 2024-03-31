@@ -15,7 +15,7 @@
           "labels": ["This should not appear"]
         },
         {
-          "action": "  Set",
+          "action": "Set",
           "labels": ["This should appear", "🛩", "alphabetically first"]
         }
       ]
