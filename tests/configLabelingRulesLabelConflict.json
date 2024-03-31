@@ -1,0 +1,20 @@
+{
+  "access-token": "token",
+  "owner": "repo owner",
+  "repo": "repo name",
+  "column-label-config": [
+    {
+      "columnName": "column name",
+      "labelingRules": [
+        {
+          "action": "Remove",
+          "labels": ["ambiguous label conflict"]
+        },
+        {
+          "action": "Add",
+          "labels": ["ambiguous label conflict"]
+        }
+      ]
+    }
+  ]
+}
