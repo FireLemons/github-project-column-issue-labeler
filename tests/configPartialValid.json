@@ -4,7 +4,7 @@
   "repo": "repo name",
   "column-label-config": [
     {
-      "columnName": "Name with whitespace ",
+      "columnName": "column name",
       "labelingRules": [
         {
           "action": "ADD ",
