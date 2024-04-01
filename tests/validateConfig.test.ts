@@ -323,9 +323,43 @@ describe('validateConfig()', () => {
           expect(validatedConfig['column-label-config'][0].labelingRules[0].action).toBe(LabelingAction.SET)
         })
 
-        test('a warning is printed stating that all other labeling rules will not be used', () => {
+        test('a warning is printed stating that only the last "SET" rule will be used', () => {
           const labelingRuleIndexMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
             return /Found SET labeling rule at index: 2/.test(consoleArgs[0])
+          })
+
+          const labelingRuleDeterminationMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
+            return /The column will be using only this rule/.test(consoleArgs[0])
+          })
+
+          expect(labelingRuleIndexMessageIndex).not.toBe(-1)
+          expect(labelingRuleDeterminationMessageIndex).not.toBe(-1)
+          expect(labelingRuleIndexMessageIndex).toBeLessThan(labelingRuleDeterminationMessageIndex)
+          expect(hasGreaterIndentation(consoleInfoCalls[labelingRuleIndexMessageIndex][0], consoleInfoCalls[labelingRuleDeterminationMessageIndex][0])).toBe(true)
+        })
+      })
+
+      describe('when there is a labeling rule with a "SET" action and other rules with different actions', () => {
+        let consoleInfoCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(async () => {
+          const configContents = await fsPromises.readFile('./tests/configLabelingActionPrecedence.json')
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
+        })
+
+        test('only the labeling rule with a "SET" action appears in the validated config', () => {
+          expect(validatedConfig['column-label-config'].length).toBe(1)
+          expect(validatedConfig['column-label-config'][0].labelingRules.length).toBe(1)
+          expect(validatedConfig['column-label-config'][0].labelingRules[0].action).toBe(LabelingAction.SET)
+        })
+
+        test('a warning is printed stating that only SET rule will be used', () => {
+          const labelingRuleIndexMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
+            return /Found SET labeling rule at index: 1/.test(consoleArgs[0])
           })
 
           const labelingRuleDeterminationMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
