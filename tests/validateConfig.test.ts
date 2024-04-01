@@ -1,6 +1,6 @@
 import fs from 'fs'
 import validateConfig from '../src/validateConfig'
-import { Config } from '../src/LabelerConfig'
+import { Config, LabelingAction } from '../src/LabelerConfig'
 
 const fsPromises = fs.promises
 
@@ -15,7 +15,7 @@ function hasGreaterIndentation (expectedLesserIndentationMessage: string, expect
 describe('validateConfig()', () => {
   describe('when config contains invalid json', () => {
     test('it throws an error with a message describing that the file did not contain parsable JSON', async () => {
-      const configContents = await fsPromises.readFile('./tests/configInvalidJSON.json')
+      const configContents = await fsPromises.readFile('./tests/configInvalidJSON.json') // These are in separate files so the json can be syntax highlighted
 
       expect(() => {
         validateConfig(configContents.toString())
@@ -74,7 +74,7 @@ describe('validateConfig()', () => {
       })
     })
 
-    describe('the labeling rules', () => {
+    describe('column-label-config', () => {
       let consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>}
 
       function initializeSpies () {
@@ -302,6 +302,40 @@ describe('validateConfig()', () => {
           expect(validatedConfig['column-label-config'].find((columnConfig) => {
             return columnConfig.columnName === 'Name'
           })).toBe(undefined)
+        })
+      })
+
+      describe('when there are multiple labeling rules with a "SET" action', () => {
+        let consoleInfoCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(async () => {
+          const configContents = await fsPromises.readFile('./tests/configLabelingRulePrecedenceSetOrder.json')
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
+        })
+
+        test('only the last labeling rule with a "SET" action appears in the validated config', () => {
+          expect(validatedConfig['column-label-config'].length).toBe(1)
+          expect(validatedConfig['column-label-config'][0].labelingRules.length).toBe(1)
+          expect(validatedConfig['column-label-config'][0].labelingRules[0].action).toBe(LabelingAction.SET)
+        })
+
+        test('a warning is printed stating that all other labeling rules will not be used', () => {
+          const labelingRuleIndexMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
+            return /Found SET labeling rule at index: 2/.test(consoleArgs[0])
+          })
+
+          const labelingRuleDeterminationMessageIndex = consoleInfoCalls.findIndex((consoleArgs) => {
+            return /The column will be using only this rule/.test(consoleArgs[0])
+          })
+
+          expect(labelingRuleIndexMessageIndex).not.toBe(-1)
+          expect(labelingRuleDeterminationMessageIndex).not.toBe(-1)
+          expect(labelingRuleIndexMessageIndex).toBeLessThan(labelingRuleDeterminationMessageIndex)
+          expect(hasGreaterIndentation(consoleInfoCalls[labelingRuleIndexMessageIndex][0], consoleInfoCalls[labelingRuleDeterminationMessageIndex][0])).toBe(true)
         })
       })
     })
