@@ -14,7 +14,7 @@ function hasGreaterIndentation (expectedLesserIndentationMessage: string, expect
 
 describe('validateConfig()', () => {
   describe('when config contains invalid json', () => {
-    test('it throws an error with a message describing that the file did not contain parsable JSON', async () => {
+    it('throws an error with a message describing that the file did not contain parsable JSON', async () => {
       const configContents = await fsPromises.readFile('./tests/configInvalidJSON.json') // These are in separate files so the json can be syntax highlighted
 
       expect(() => {
@@ -24,7 +24,7 @@ describe('validateConfig()', () => {
   })
 
   describe('when config is missing a required key', () => {
-    test('it throws an error with a message describing that the file is missing a required key', async () => {
+    it('throws an error with a message describing that the file is missing a required key', async () => {
       const configContents = await fsPromises.readFile('./tests/configMissingKey.json')
 
       expect(() => {
@@ -35,7 +35,7 @@ describe('validateConfig()', () => {
 
   describe('when the config contains all required keys', () => {
     describe('when the github access token is not a string', () => {
-      test('it throws a TypeError specifying the correct type for the github access token', async () => {
+      it('throws a TypeError specifying the correct type for the github access token', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeGithubAccessToken.json')
   
         expect(() => {
@@ -45,7 +45,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the github access token contains only whitespace', () => {
-      test('it throws a RangeError', async () => {
+      it('throws a RangeError', async () => {
         const configContents = await fsPromises.readFile('./tests/configEmptyGithubAccessToken.json')
   
         expect(() => {
@@ -55,7 +55,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo owner is not a string', () => {
-      test('it throws a TypeError specifying the correct type for the repo owner', async () => {
+      it('throws a TypeError specifying the correct type for the repo owner', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoOwnerName.json')
 
         expect(() => {
@@ -65,7 +65,7 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo name is not a string', () => {
-      test('it throws a TypeError specifying the correct type for repo name', async () => {
+      it('throws a TypeError specifying the correct type for repo name', async () => {
         const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoName.json')
 
         expect(() => {
@@ -245,48 +245,48 @@ describe('validateConfig()', () => {
         })
 
         describe('when the rule is missing both required keys', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid labeling rule from value at index: 0\. Skipping rule\./)
             expect(consoleErrorCalls[0][0]).toMatch(/key "[a-zA-Z]+" was not found in the object/)
           })
         })
 
         describe('when the rule is missing the "labels" key', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
             expect(consoleErrorCalls[1][0]).toMatch(/key "labels" was not found in the object/)
           })
         })
 
         describe('when the rule is missing the "action" key', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid labeling rule from value at index: 2\. Skipping rule\./)
             expect(consoleErrorCalls[2][0]).toMatch(/key "action" was not found in the object/)
           })
         })
 
         describe('when the value of "action" is not a string', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid labeling rule from value at index: 3\. Skipping rule\./)
             expect(consoleErrorCalls[3][0]).toMatch(/Member "action" was found not to be a string/)
           })
         })
 
         describe('when the value of "labels" is not an array', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid labeling rule from value at index: 4\. Skipping rule\./)
             expect(consoleErrorCalls[4][0]).toMatch(/Member "labels" was found not to be an array/)
           })
         })
 
         describe('when the value of "action" is not supported', () => {
-          it('errors are printed with the index of the invalid labeling rule', () => {
+          test('errors are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[5][0]).toMatch(/Could not make valid labeling rule from value at index: 5\. Skipping rule\./)
             expect(consoleErrorCalls[5][0]).toMatch(/Labeling action ".+" is not supported. Supported actions are: \["ADD","REMOVE","SET"\]/)
           })
         })
 
-        test('it indents the error output more than the warning output', () => {
+        it('indents the error output more than the warning output', () => {
           const LABELING_RULE_COUNT = 6
 
           for(let i = 0; i < LABELING_RULE_COUNT; i++) {
@@ -294,7 +294,7 @@ describe('validateConfig()', () => {
           }
         })
 
-        test('it prints a warning that the column configuration will not be used', () => {
+        it('prints a warning that the column configuration will not be used', () => {
           expect(consoleWarnCalls[6][0]).toMatch(/Column configuration at index: 0 did not contain any valid labeling rules. Skipping column./)
         })
 
@@ -370,6 +370,49 @@ describe('validateConfig()', () => {
           expect(labelingRuleDeterminationMessageIndex).not.toBe(-1)
           expect(labelingRuleIndexMessageIndex).toBeLessThan(labelingRuleDeterminationMessageIndex)
           expect(hasGreaterIndentation(consoleInfoCalls[labelingRuleIndexMessageIndex][0], consoleInfoCalls[labelingRuleDeterminationMessageIndex][0])).toBe(true)
+        })
+      })
+
+      describe('when all the labels of a labeling rule are invalid', () => {
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(async () => {
+          const configContents = await fsPromises.readFile('./tests/configLabelsInvalid.json')
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+        })
+
+        describe('when the label is empty string', () => {
+          test('warnings are printed with the index of the label', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Label at index: 0 must contain at least one non whitespace character\. Removing value\./)
+          })
+        })
+
+        describe('when the label contains only white space', () => {
+          test('warnings are printed with the index of the label', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Label at index: 1 must contain at least one non whitespace character\. Removing value\./)
+          })
+        })
+
+        describe('when the label is not a string', () => {
+          test('warnings are printed with the index of the label', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Label at index: 2 was found not to be a string\. Removing value\./)
+          })
+        })
+
+        test('the parent labeling rule of the invalid labels does not appear in the validated config', () => {
+          const { labelingRules } =  validatedConfig['column-label-config'][0]
+
+          expect(labelingRules.findIndex((rule) => {
+            return rule.action === LabelingAction.ADD
+          })).toBe(-1)
+        })
+
+        test('a warning is printed stating that the labeling rule will not be used', () => {
+          expect(consoleWarnCalls[3][0]).toMatch(/Labeling rule at index: 0 did not contain any valid labels\. Skipping rule\./)
         })
       })
     })

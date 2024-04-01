@@ -8,12 +8,13 @@
       "labelingRules": [
         {
           "action": "ADD",
-          "labels": ["", "    ", 3, {}]
+          "labels": ["", "    ", 3]
+        },
+        {
+          "action": "REMOVE",
+          "labels": ["normal rule"]
         }
       ]
-    },
-    {
-      "columnName": "invalid column"
     }
   ]
 }
