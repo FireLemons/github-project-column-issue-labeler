@@ -4,28 +4,28 @@ import * as typeChecker from './typeChecker'
 
 const logger = new Logger()
 
-function aggregateLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
-  const aggregatedRules: Map<LabelingAction, string[]> = new Map()
+function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
+  const consolidatedLabels: Map<LabelingAction, string[]> = new Map()
 
   for(const rule of rules) {
     const {action} = rule
-    if (aggregatedRules.has(action)) {
-      aggregatedRules.get(action)!.push(...rule.labels)
+    if (consolidatedLabels.has(action)) {
+      consolidatedLabels.get(action)!.push(...rule.labels)
     } else {
-      aggregatedRules.set(action, [...rule.labels]) 
+      consolidatedLabels.set(action, [...rule.labels]) 
     }
   }
 
-  const aggregatedLabelingRules: LabelingRule[] = []
+  const consolidatedLabelingRules: LabelingRule[] = []
 
-  for (const [action, labels] of aggregatedRules) {
-    aggregatedLabelingRules.push({
+  for (const [action, labels] of consolidatedLabels) {
+    consolidatedLabelingRules.push({
       action: action,
       labels: labels
     })
   }
 
-  return aggregatedLabelingRules
+  return consolidatedLabelingRules
 }
 
 function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
@@ -41,8 +41,8 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     logger.info('Labeling rules list only contains ADD or REMOVE rules')
 
     if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action) ) {
-      logger.info('Aggregating lables by action')
-      determinedLabelingRules = aggregateLabelsByAction(rules)
+      logger.info('Filtering duplicate lables by action')
+      determinedLabelingRules = getUniqueLabelsByAction(rules)
     } else {
       determinedLabelingRules = rules
     }

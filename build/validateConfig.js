@@ -27,25 +27,25 @@ const logger_1 = require("./logger");
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const logger = new logger_1.Logger();
-function aggregateLabelsByAction(rules) {
-    const aggregatedRules = new Map();
+function getUniqueLabelsByAction(rules) {
+    const consolidatedLabels = new Map();
     for (const rule of rules) {
         const { action } = rule;
-        if (aggregatedRules.has(action)) {
-            aggregatedRules.get(action).push(...rule.labels);
+        if (consolidatedLabels.has(action)) {
+            consolidatedLabels.get(action).push(...rule.labels);
         }
         else {
-            aggregatedRules.set(action, [...rule.labels]);
+            consolidatedLabels.set(action, [...rule.labels]);
         }
     }
-    const aggregatedLabelingRules = [];
-    for (const [action, labels] of aggregatedRules) {
-        aggregatedLabelingRules.push({
+    const consolidatedLabelingRules = [];
+    for (const [action, labels] of consolidatedLabels) {
+        consolidatedLabelingRules.push({
             action: action,
             labels: labels
         });
     }
-    return aggregatedLabelingRules;
+    return consolidatedLabelingRules;
 }
 function determineLabelingRules(rules) {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelerConfig_1.LabelingAction.SET);
@@ -58,8 +58,8 @@ function determineLabelingRules(rules) {
     else {
         logger.info('Labeling rules list only contains ADD or REMOVE rules');
         if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action)) {
-            logger.info('Aggregating lables by action');
-            determinedLabelingRules = aggregateLabelsByAction(rules);
+            logger.info('Filtering duplicate lables by action');
+            determinedLabelingRules = getUniqueLabelsByAction(rules);
         }
         else {
             determinedLabelingRules = rules;
