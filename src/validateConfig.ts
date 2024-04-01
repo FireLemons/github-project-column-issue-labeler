@@ -34,7 +34,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
 
   if (lastSetRuleIndex >= 0) {
     logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`)
-    logger.info('The column will be using only this rule')
+    logger.info('The column will be using only this rule', 2)
 
     determinedLabelingRules = [rules[lastSetRuleIndex]]
   } else {
