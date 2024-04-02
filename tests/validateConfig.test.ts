@@ -1,6 +1,7 @@
 import fs from 'fs'
 import validateConfig from '../src/validateConfig'
-import { Config, LabelingAction } from '../src/LabelerConfig'
+import { Config, LabelingAction, LabelingRule } from '../src/LabelerConfig'
+import exp from 'constants'
 
 const fsPromises = fs.promises
 
@@ -413,6 +414,81 @@ describe('validateConfig()', () => {
 
         test('a warning is printed stating that the labeling rule will not be used', () => {
           expect(consoleWarnCalls[3][0]).toMatch(/Labeling rule at index: 0 did not contain any valid labels\. Skipping rule\./)
+        })
+      })
+
+      describe('when a column configuration does not contain SET labeling rules', () => {
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(async () => {
+          const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsorted.json')
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+        })
+
+        describe('when there are multiple ADD labeling rules', () => {
+          let addRule: LabelingRule | undefined
+
+          beforeAll(() => {
+            addRule = validatedConfig['column-label-config'][0].labelingRules.find((labelingRule) => {
+              return labelingRule.action === LabelingAction.ADD
+            })
+          })
+
+          test('all of the unique labels between all of the ADD rules are combined under a single rule', () => {
+            expect(addRule).not.toBe(undefined)
+            expect(addRule?.labels.length).toBe(3)
+          })
+
+          test('the lables of the ADD rule are sorted alphabetically', () => {
+            const addRuleLabels = addRule?.labels
+
+            expect(addRuleLabels?.findIndex((label) => {
+              return label.localeCompare('Duplicate Label', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(0)
+
+            expect(addRuleLabels?.findIndex((label) => {
+              return label.localeCompare('Help Wanted', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(1)
+
+            expect(addRuleLabels?.findIndex((label) => {
+              return label.localeCompare('New', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(2)
+          })
+        })
+
+        describe('when there are multiple REMOVE labeling rules', () => {
+          let removeRule: LabelingRule | undefined
+
+          beforeAll(() => {
+            removeRule = validatedConfig['column-label-config'][0].labelingRules.find((labelingRule) => {
+              return labelingRule.action === LabelingAction.REMOVE
+            })
+          })
+
+          test('all of the unique labels between all of the REMOVE rules are combined under a single rule', () => {
+            expect(removeRule).not.toBe(undefined)
+            expect(removeRule?.labels.length).toBe(3)
+          })
+
+          test('the lables of the REMOVE rule are sorted alphabetically', () => {
+            const removeRuleLabels = removeRule?.labels
+
+            expect(removeRuleLabels?.findIndex((label) => {
+              return label.localeCompare('Completed', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(0)
+
+            expect(removeRuleLabels?.findIndex((label) => {
+              return label.localeCompare('Completed 1', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(1)
+
+            expect(removeRuleLabels?.findIndex((label) => {
+              return label.localeCompare('Duplicate emoji 🐌', undefined, {sensitivity: 'base'}) === 0
+            })).toBe(2)
+          })
         })
       })
     })
