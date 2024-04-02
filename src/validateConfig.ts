@@ -12,7 +12,7 @@ function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
     if (consolidatedLabels.has(action)) {
       consolidatedLabels.get(action)!.push(...rule.labels)
     } else {
-      consolidatedLabels.set(action, [...rule.labels]) 
+      consolidatedLabels.set(action, [...rule.labels])
     }
   }
 
@@ -95,9 +95,12 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string
 }
 
 function removeCaseInsensitiveDuplicates (sortedArray: string[]): string[] {
-  for (let i = 0; i < sortedArray.length - 1; i++) {
+  let i = 0
+  while(i < sortedArray.length - 1) {
     if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
       sortedArray.splice(i + 1, 1)
+    } else {
+      i++
     }
   }
 

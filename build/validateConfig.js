@@ -102,9 +102,13 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedA
     }
 }
 function removeCaseInsensitiveDuplicates(sortedArray) {
-    for (let i = 0; i < sortedArray.length - 1; i++) {
+    let i = 0;
+    while (i < sortedArray.length - 1) {
         if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
             sortedArray.splice(i + 1, 1);
+        }
+        else {
+            i++;
         }
     }
     return sortedArray;
