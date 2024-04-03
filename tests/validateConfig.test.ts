@@ -490,6 +490,35 @@ describe('validateConfig()', () => {
             })).toBe(2)
           })
         })
+
+        describe('when an ADD and REMOVE rule contain the same label', () => {
+          beforeAll(async () => {
+            const configContents = await fsPromises.readFile('./tests/configLabelingRulesLabelConflict.json')
+  
+            validatedConfig = validateConfig(configContents.toString())
+
+            consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          })
+
+          test('the label does not appear in the validated config', () => {
+            const columnConfiguration = validatedConfig['column-label-config'][0]
+            const addRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
+            const removeRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
+
+            expect(addRule?.labels.length).toBe(1)
+            expect(removeRule?.labels.length).toBe(1)
+
+            if (addRule && removeRule) {
+              for(let label of addRule.labels) {
+                expect(removeRule.labels.find((removeLabel) => { return label.localeCompare(removeLabel, undefined, {sensitivity: 'base'}) === 0 })).toBe(undefined)
+              }
+            }
+          })
+
+          test('a warning is printed stating that the label will be removed from both rules', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Found same label: "ambiguous label conflict" in both ADD and REMOVE labeling rules\. Removing label\./)
+          })
+        })
       })
     })
   })
