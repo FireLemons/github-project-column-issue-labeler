@@ -8,11 +8,11 @@
       "labelingRules": [
         {
           "action": "Remove",
-          "labels": ["ambiguous label conflict"]
+          "labels": ["ambiguous label conflict", "Label 1"]
         },
         {
           "action": "Add",
-          "labels": ["ambiguous label conflict"]
+          "labels": ["ambiguous label conflict", "Label 2"]
         }
       ]
     }
