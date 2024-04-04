@@ -2,6 +2,6 @@
   "access-token": "token",
   "owner": "repo owner",
   "repo": {},
-  "column-label-config": [
+  "columnLabelConfig": [
   ]
 }

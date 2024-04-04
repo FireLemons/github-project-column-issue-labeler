@@ -7,7 +7,7 @@ export interface Config {
   'access-token': string
   owner: string
   repo: string
-  'column-label-config': ColumnConfiguration []
+  columnLabelConfig: ColumnConfiguration []
 }
 
 export enum LabelingAction {

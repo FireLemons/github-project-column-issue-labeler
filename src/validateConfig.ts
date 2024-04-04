@@ -189,7 +189,7 @@ export default function validateConfig (config: string): Config {
   typeChecker.validateObjectMember(configAsObject, 'access-token', typeChecker.Type.string)
   typeChecker.validateObjectMember(configAsObject, 'owner', typeChecker.Type.string)
   typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.string)
-  typeChecker.validateObjectMember(configAsObject, 'column-label-config', typeChecker.Type.array)
+  typeChecker.validateObjectMember(configAsObject, 'columnLabelConfig', typeChecker.Type.array)
 
   const trimmedGithubAccessToken = configAsObject['access-token'].trim()
 
@@ -201,7 +201,7 @@ export default function validateConfig (config: string): Config {
     'access-token': trimmedGithubAccessToken,
     owner: configAsObject['owner'].trim(),
     repo: configAsObject['repo'].trim(),
-    'column-label-config': validateColumnConfigurationsArray(configAsObject['column-label-config'])
+    columnLabelConfig: validateColumnConfigurationsArray(configAsObject.columnLabelConfig)
   }
 }
 

@@ -2,17 +2,17 @@
   "access-token": "token",
   "owner": "repo owner",
   "repo": "repo name",
-  "column-label-config": [
+  "columnLabelConfig": [
     {
-      "columnName": "column name",
+      "columnName": "valid column",
       "labelingRules": [
         {
-          "action": "ADD ",
+          "action": "Add",
           "labels": ["Help Wanted", "New"]
         },
         {
-          "action": "ReMovE",
-          "labels": ["Done ", "   Completed", "", 4, "     "]
+          "action": "Remove",
+          "labels": ["Done", "Completed", "", 4, "     "]
         },
         {
           "action": "invalid action",

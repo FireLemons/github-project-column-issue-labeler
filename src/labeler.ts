@@ -36,9 +36,10 @@ async function main() {
     logger.info('Validating Config')
     config = validateConfig(configFileContents)
 
-    if (!(config['column-label-config'].length)) {
+    if (!(config.columnLabelConfig.length)) {
       logger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
+
       return
     }
 
@@ -47,14 +48,14 @@ async function main() {
   } catch (error) {
     if (error instanceof Error && error.message) {
       logger.error('Failed to validate config')
-      logger.error(error.message)
+      logger.error(error.message, 2)
       process.exitCode = 1
     }
 
     return
   }
 
-  let githubAPIClient
+  /*let githubAPIClient
   let githubDataFetcher
 
   try {
@@ -100,7 +101,7 @@ async function main() {
       }
 
       return
-    }
+    }*/
   }
 
 module.exports = main
