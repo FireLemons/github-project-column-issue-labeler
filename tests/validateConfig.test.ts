@@ -30,7 +30,7 @@ describe('validateConfig()', () => {
 
       expect(() => {
         validateConfig(configContents.toString())
-      }).toThrow(new ReferenceError(`key "access-token" was not found in the object`))
+      }).toThrow(new ReferenceError(`key "accessToken" was not found in the object`))
     })
   })
 
@@ -41,7 +41,7 @@ describe('validateConfig()', () => {
   
         expect(() => {
           validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "access-token" was found not to be a string`))
+        }).toThrow(new TypeError(`Member "accessToken" was found not to be a string`))
       })
     })
 

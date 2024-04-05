@@ -173,16 +173,16 @@ function validateConfig(config) {
     if (!(typeChecker.isObject(configAsObject))) {
         throw new TypeError('The config must be an object');
     }
-    typeChecker.validateObjectMember(configAsObject, 'access-token', typeChecker.Type.string);
+    typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string);
     typeChecker.validateObjectMember(configAsObject, 'owner', typeChecker.Type.string);
     typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.string);
     typeChecker.validateObjectMember(configAsObject, 'columnLabelConfig', typeChecker.Type.array);
-    const trimmedGithubAccessToken = configAsObject['access-token'].trim();
+    const trimmedGithubAccessToken = configAsObject.accessToken.trim();
     if (!(trimmedGithubAccessToken.length)) {
         throw new RangeError('The github access token cannot be empty or contain only whitespace');
     }
     return {
-        'access-token': trimmedGithubAccessToken,
+        accessToken: trimmedGithubAccessToken,
         owner: configAsObject['owner'].trim(),
         repo: configAsObject['repo'].trim(),
         columnLabelConfig: validateColumnConfigurationsArray(configAsObject.columnLabelConfig)

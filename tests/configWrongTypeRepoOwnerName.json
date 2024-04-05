@@ -1,5 +1,5 @@
 {
-  "access-token": "token",
+  "accessToken": "token",
   "owner": [],
   "repo": "repo name",
   "columnLabelConfig": [

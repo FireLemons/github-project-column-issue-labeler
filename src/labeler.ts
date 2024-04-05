@@ -55,12 +55,12 @@ async function main() {
     return
   }
 
-  /*let githubAPIClient
+  let githubAPIClient
   let githubDataFetcher
 
   try {
     logger.info('Initializing github API accessors')
-    githubAPIClient = new GithubAPIClient(config['access-token'], config.repo, config.owner)
+    githubAPIClient = new GithubAPIClient(config.accessToken, config.repo, config.owner)
     githubDataFetcher = new GithubDataFetcher(githubAPIClient)
   } catch (error) {
     if (error instanceof Error && error.message) {
@@ -101,7 +101,7 @@ async function main() {
       }
 
       return
-    }*/
+    }
   }
 
 module.exports = main

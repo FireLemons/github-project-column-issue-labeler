@@ -4,7 +4,7 @@ export interface ColumnConfiguration {
 }
 
 export interface Config {
-  'access-token': string
+  accessToken: string
   owner: string
   repo: string
   columnLabelConfig: ColumnConfiguration []
