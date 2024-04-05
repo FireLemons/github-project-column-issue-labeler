@@ -2,13 +2,13 @@
   "accessToken": "token",
   "owner": "repo owner",
   "repo": "repo name",
-  "columnLabelConfig": [
+  "columns": [
     {
       "columnName": "valid column",
       "labelingRules": [
         {
           "action": "Add",
-          "labels": ["Help Wanted", "New"]
+          "labels": ["Help Wanted"]
         },
         {
           "action": "Remove",
@@ -16,7 +16,7 @@
         },
         {
           "action": "invalid action",
-          "labels": ["a", "b"]
+          "labels": ["invalid label 1", "invalid label 2"]
         }
       ]
     },

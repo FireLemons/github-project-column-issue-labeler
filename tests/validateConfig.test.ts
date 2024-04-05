@@ -75,7 +75,7 @@ describe('validateConfig()', () => {
       })
     })
 
-    describe('columnLabelConfig', () => {
+    describe('columns', () => {
       let consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>}
 
       function initializeSpies () {
@@ -100,13 +100,13 @@ describe('validateConfig()', () => {
         deactivateSpies()
       })
 
-      describe('when the columnLabelConfig is not an array', () => {
+      describe('when the columns is not an array', () => {
         test('it throws a TypeError with a message describing the config key and correct type', async () => {
           const configContents = await fsPromises.readFile('./tests/configWrongTypeLabelingRules.json')
   
           expect(() => {
             validateConfig(configContents.toString())
-          }).toThrow(new TypeError(`Member "columnLabelConfig" was found not to be an array`))
+          }).toThrow(new TypeError(`Member "columns" was found not to be an array`))
         })
       })
 
@@ -300,7 +300,7 @@ describe('validateConfig()', () => {
         })
 
         test('the validated config will not include the column configuration', () => {
-          expect(validatedConfig.columnLabelConfig.find((columnConfig) => {
+          expect(validatedConfig.columns.find((columnConfig) => {
             return columnConfig.columnName === 'Name'
           })).toBe(undefined)
         })
@@ -319,9 +319,9 @@ describe('validateConfig()', () => {
         })
 
         test('only the last labeling rule with a "SET" action appears in the validated config', () => {
-          expect(validatedConfig.columnLabelConfig.length).toBe(1)
-          expect(validatedConfig.columnLabelConfig[0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columnLabelConfig[0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns.length).toBe(1)
+          expect(validatedConfig.columns[0].labelingRules.length).toBe(1)
+          expect(validatedConfig.columns[0].labelingRules[0].action).toBe(LabelingAction.SET)
         })
 
         test('a warning is printed stating that only the last "SET" rule will be used', () => {
@@ -353,9 +353,9 @@ describe('validateConfig()', () => {
         })
 
         test('only the labeling rule with a "SET" action appears in the validated config', () => {
-          expect(validatedConfig.columnLabelConfig.length).toBe(1)
-          expect(validatedConfig.columnLabelConfig[0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columnLabelConfig[0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns.length).toBe(1)
+          expect(validatedConfig.columns[0].labelingRules.length).toBe(1)
+          expect(validatedConfig.columns[0].labelingRules[0].action).toBe(LabelingAction.SET)
         })
 
         test('a warning is printed stating that only SET rule will be used', () => {
@@ -405,7 +405,7 @@ describe('validateConfig()', () => {
         })
 
         test('the parent labeling rule of the invalid labels does not appear in the validated config', () => {
-          const { labelingRules } =  validatedConfig.columnLabelConfig[0]
+          const { labelingRules } =  validatedConfig.columns[0]
 
           expect(labelingRules.findIndex((rule) => {
             return rule.action === LabelingAction.ADD
@@ -433,7 +433,7 @@ describe('validateConfig()', () => {
           let addRule: LabelingRule | undefined
 
           beforeAll(() => {
-            addRule = validatedConfig.columnLabelConfig[0].labelingRules.find((labelingRule) => {
+            addRule = validatedConfig.columns[0].labelingRules.find((labelingRule) => {
               return labelingRule.action === LabelingAction.ADD
             })
           })
@@ -464,7 +464,7 @@ describe('validateConfig()', () => {
           let removeRule: LabelingRule | undefined
 
           beforeAll(() => {
-            removeRule = validatedConfig.columnLabelConfig[0].labelingRules.find((labelingRule) => {
+            removeRule = validatedConfig.columns[0].labelingRules.find((labelingRule) => {
               return labelingRule.action === LabelingAction.REMOVE
             })
           })
@@ -501,7 +501,7 @@ describe('validateConfig()', () => {
           })
 
           test('the label does not appear in the validated config', () => {
-            const columnConfiguration = validatedConfig.columnLabelConfig[0]
+            const columnConfiguration = validatedConfig.columns[0]
             const addRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
             const removeRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
 

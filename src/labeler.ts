@@ -36,7 +36,7 @@ async function main() {
     logger.info('Validating Config')
     config = validateConfig(configFileContents)
 
-    if (!(config.columnLabelConfig.length)) {
+    if (!(config.columns.length)) {
       logger.error('Could not find any valid actions to perform from the configuration')
       process.exitCode = 1
 
