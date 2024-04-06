@@ -1,5 +1,5 @@
 export interface ColumnConfiguration {
-  columnName: string
+  name: string
   labelingRules: LabelingRule[]
 }
 

@@ -165,10 +165,10 @@ describe('validateConfig()', () => {
           })
         })
 
-        describe('when "columnName" is missing', () => {
+        describe('when "name" is missing', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
             expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/key "columnName" was not found in the object/)
+            expect(consoleErrorCalls[2][0]).toMatch(/key "name" was not found in the object/)
           })
         })
 
@@ -194,10 +194,10 @@ describe('validateConfig()', () => {
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        describe('when "columnName" is of the wrong type', () => {
+        describe('when "name" is of the wrong type', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/Member "columnName" was found not to be a string/)
+            expect(consoleErrorCalls[0][0]).toMatch(/Member "name" was found not to be a string/)
           })
         })
 
@@ -208,17 +208,17 @@ describe('validateConfig()', () => {
           })
         })
 
-        describe('when "columnName" contains only whitespace', () => {
+        describe('when "name" contains only whitespace', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
             expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/columnName must contain at least one non whitespace character/)
+            expect(consoleErrorCalls[2][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
-        describe('when "columnName" is empty string', () => {
+        describe('when "name" is empty string', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
             expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column configuration from value at index: 3\. Skipping column\./)
-            expect(consoleErrorCalls[3][0]).toMatch(/columnName must contain at least one non whitespace character/)
+            expect(consoleErrorCalls[3][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
@@ -301,7 +301,7 @@ describe('validateConfig()', () => {
 
         test('the validated config will not include the column configuration', () => {
           expect(validatedConfig.columns.find((columnConfig) => {
-            return columnConfig.columnName === 'Name'
+            return columnConfig.name === 'Name'
           })).toBe(undefined)
         })
       })

@@ -150,15 +150,15 @@ function validateColumnConfiguration(object) {
     if (!typeChecker.isObject(object)) {
         throw new TypeError('Column configuration must be an object');
     }
-    typeChecker.validateObjectMember(object, 'columnName', typeChecker.Type.string);
-    const validatedColumnName = object['columnName'].trim();
-    if (!(validatedColumnName.length)) {
-        throw new ReferenceError('columnName must contain at least one non whitespace character');
+    typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string);
+    const validatedName = object['name'].trim();
+    if (!(validatedName.length)) {
+        throw new ReferenceError('name must contain at least one non whitespace character');
     }
     typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array);
     const validatedLabelingRules = validateLabelingRulesArray(object['labelingRules']);
     return {
-        columnName: validatedColumnName,
+        name: validatedName,
         labelingRules: determineLabelingRules(validatedLabelingRules)
     };
 }

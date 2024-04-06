@@ -155,12 +155,12 @@ function validateColumnConfiguration (object: any): ColumnConfiguration {
     throw new TypeError('Column configuration must be an object')
   }
 
-  typeChecker.validateObjectMember(object, 'columnName', typeChecker.Type.string)
+  typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string)
 
-  const validatedColumnName = object['columnName'].trim()
+  const validatedName = object['name'].trim()
 
-  if (!(validatedColumnName.length)) {
-    throw new ReferenceError('columnName must contain at least one non whitespace character')
+  if (!(validatedName.length)) {
+    throw new ReferenceError('name must contain at least one non whitespace character')
   }
 
   typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array)
@@ -168,7 +168,7 @@ function validateColumnConfiguration (object: any): ColumnConfiguration {
   const validatedLabelingRules = validateLabelingRulesArray(object['labelingRules'])
 
   return {
-    columnName: validatedColumnName,
+    name: validatedName,
     labelingRules: determineLabelingRules(validatedLabelingRules)
   }
 }

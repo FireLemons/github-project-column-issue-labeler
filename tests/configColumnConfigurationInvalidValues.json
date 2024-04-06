@@ -4,19 +4,19 @@
     "repo": "repo name",
     "columns": [
         {
-          "columnName": 3,
+          "name": 3,
           "labelingRules": []
         },
         {
-          "columnName": "Name",
+          "name": "Name",
           "labelingRules": 3
         },
         {
-          "columnName": "                 ",
+          "name": "                 ",
           "labelingRules": []
         },
         {
-          "columnName": "",
+          "name": "",
           "labelingRules": []
         }
       ]

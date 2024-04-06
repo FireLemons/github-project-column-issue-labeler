@@ -8,7 +8,7 @@
         "b": "b"
       },
       {
-        "columnName": "String"
+        "name": "String"
       },
       {
         "labelingRules": []

@@ -4,7 +4,7 @@
   "repo": "repo name",
   "columns": [
     {
-      "columnName": "column name",
+      "name": "column name",
       "labelingRules": [
         {
           "action": "AdD",
