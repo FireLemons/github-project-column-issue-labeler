@@ -9,7 +9,7 @@
     "lint": "npx ts-standard",
     "start": "node ./index.js",
     "test": "npx jest",
-    "test:config-validation": "npx ts-node tests/validateConfigIndentationManualVerification.ts"
+    "test:validation-indentation": "npx ts-node tests/validateConfigIndentationManualVerification.ts"
   },
   "repository": {
     "type": "git",
