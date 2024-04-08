@@ -1,6 +1,6 @@
 import fs from 'fs'
 import validateConfig from '../src/validateConfig'
-import { Config, LabelingAction, LabelingRule } from '../src/LabelerConfig'
+import { Config, LabelingAction, LabelingRule, isShallowColumn } from '../src/LabelerConfig'
 import exp from 'constants'
 
 const fsPromises = fs.promises
@@ -535,8 +535,18 @@ describe('validateConfig()', () => {
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
 
-        it('will not contain the invalid column', () => {})
-        it('will contain the valid column', () => {})
+        it('will not contain the invalid column', () => {
+          expect(validatedConfig.columns.find((column) => {
+            return column.name === 'invalid column'
+          })).toBe(undefined)
+        })
+
+        it('will contain the valid column', () => {
+          expect(validatedConfig.columns.find((column) => {
+            return column.name === 'valid column' && isShallowColumn(column)
+          })).not.toBe(undefined)
+        })
+
         it('will not contain the invalid labeling rule', () => {})
         it('will contain the valid labeling rule', () => {})
         it('will not contain the invalid labels', () => {})
