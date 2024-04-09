@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { Config } from '../src/LabelerConfig'
 import { Logger } from '../src/logger'
-import validateConfig from '../src/validateConfig'
+import { validateConfig } from '../src/validateConfig'
 
 const fsPromises = fs.promises
 const logger = new Logger()
