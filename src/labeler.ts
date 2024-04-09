@@ -4,7 +4,7 @@ import { GithubDataFetcher } from './githubDataFetcher'
 import { Logger } from './logger'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
-import validateConfig from './validateConfig'
+import { validateConfig } from './validateConfig'
 
 const fsPromises = fs.promises
 const logger = new Logger()

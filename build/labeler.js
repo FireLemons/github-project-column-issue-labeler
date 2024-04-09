@@ -7,7 +7,7 @@ const fs_1 = __importDefault(require("fs"));
 const githubAPIClient_1 = require("./githubAPIClient");
 const githubDataFetcher_1 = require("./githubDataFetcher");
 const logger_1 = require("./logger");
-const validateConfig_1 = __importDefault(require("./validateConfig"));
+const validateConfig_1 = require("./validateConfig");
 const fsPromises = fs_1.default.promises;
 const logger = new logger_1.Logger();
 async function loadConfig() {
@@ -30,7 +30,7 @@ async function main() {
     let config;
     try {
         logger.info('Validating Config');
-        config = (0, validateConfig_1.default)(configFileContents);
+        config = (0, validateConfig_1.validateConfig)(configFileContents);
         if (!(config.columns.length)) {
             logger.error('Could not find any valid actions to perform from the configuration');
             process.exitCode = 1;

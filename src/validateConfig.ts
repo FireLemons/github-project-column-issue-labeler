@@ -71,7 +71,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   return determinedLabelingRules
 }
 
-function caseInsensitiveCompare (str1: string, str2: string): number{
+export function caseInsensitiveCompare (str1: string, str2: string): number{
   return str1.localeCompare(str2, undefined, {sensitivity: 'base'})
 }
 
@@ -173,7 +173,7 @@ function validateColumnConfiguration (object: any): ColumnConfiguration {
   }
 }
 
-export default function validateConfig (config: string): Config {
+export function validateConfig (config: string): Config {
   let configAsObject
 
   try {

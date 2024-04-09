@@ -1,6 +1,6 @@
 import fs from 'fs'
-import validateConfig from '../src/validateConfig'
-import { Config, LabelingAction, LabelingRule, isShallowColumn } from '../src/LabelerConfig'
+import { validateConfig, caseInsensitiveCompare } from '../src/validateConfig'
+import { Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
 import exp from 'constants'
 
 const fsPromises = fs.promises
@@ -447,15 +447,15 @@ describe('validateConfig()', () => {
             const addRuleLabels = addRule?.labels
 
             expect(addRuleLabels?.findIndex((label) => {
-              return label.localeCompare('Duplicate Label', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'Duplicate Label') === 0
             })).toBe(0)
 
             expect(addRuleLabels?.findIndex((label) => {
-              return label.localeCompare('Help Wanted', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'Help Wanted') === 0
             })).toBe(1)
 
             expect(addRuleLabels?.findIndex((label) => {
-              return label.localeCompare('New', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'New') === 0
             })).toBe(2)
           })
         })
@@ -478,15 +478,15 @@ describe('validateConfig()', () => {
             const removeRuleLabels = removeRule?.labels
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return label.localeCompare('Completed', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'Completed') === 0
             })).toBe(0)
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return label.localeCompare('Completed 1', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'Completed 1') === 0
             })).toBe(1)
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return label.localeCompare('Duplicate emoji 🐌', undefined, {sensitivity: 'base'}) === 0
+              return caseInsensitiveCompare(label, 'Duplicate emoji 🐌') === 0
             })).toBe(2)
           })
         })
@@ -510,7 +510,7 @@ describe('validateConfig()', () => {
 
             if (addRule && removeRule) {
               for(let label of addRule.labels) {
-                expect(removeRule.labels.find((removeLabel) => { return label.localeCompare(removeLabel, undefined, {sensitivity: 'base'}) === 0 })).toBe(undefined)
+                expect(removeRule.labels.find((removeLabel) => { return caseInsensitiveCompare(label, removeLabel) === 0 })).toBe(undefined)
               }
             }
           })
@@ -543,12 +543,36 @@ describe('validateConfig()', () => {
 
         it('will contain the valid column', () => {
           expect(validatedConfig.columns.find((column) => {
-            return column.name === 'valid column' && isShallowColumn(column)
+            return isShallowColumn(column) && column.name === 'valid column'
           })).not.toBe(undefined)
         })
 
-        it('will not contain the invalid labeling rule', () => {})
-        it('will contain the valid labeling rule', () => {})
+        it('will not contain the invalid labeling rule', () => {
+          const parentColumn = validatedConfig.columns[0]
+
+          expect(parentColumn).toBeTruthy()
+
+          expect(parentColumn.labelingRules.find((rule) => {
+            return isShallowLabelingRule(rule) && rule.labels.find((label) => {
+              return caseInsensitiveCompare(label, 'invalid label 1') === 0 || caseInsensitiveCompare(label, 'invalid label 2') === 0
+            })
+          })).toBe(undefined)
+        })
+
+        it('will contain the valid labeling rules', () => {
+          const parentColumn = validatedConfig.columns[0]
+
+          expect(parentColumn).toBeTruthy()
+
+          expect(parentColumn.labelingRules.find((rule) => {
+            return isShallowLabelingRule(rule) && rule.action === LabelingAction.ADD
+          })).not.toBe(undefined)
+
+          expect(parentColumn.labelingRules.find((rule) => {
+            return isShallowLabelingRule(rule) && rule.action === LabelingAction.REMOVE
+          })).not.toBe(undefined)
+        })
+
         it('will not contain the invalid labels', () => {})
         it('will contain the valid labels', () => {})
       })

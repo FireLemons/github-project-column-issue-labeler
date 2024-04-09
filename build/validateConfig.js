@@ -23,6 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateConfig = exports.caseInsensitiveCompare = void 0;
 const logger_1 = require("./logger");
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
@@ -84,6 +85,7 @@ function determineLabelingRules(rules) {
 function caseInsensitiveCompare(str1, str2) {
     return str1.localeCompare(str2, undefined, { sensitivity: 'base' });
 }
+exports.caseInsensitiveCompare = caseInsensitiveCompare;
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
     let cursor1 = 0, cursor2 = 0;
     while (cursor1 < sortedArray1.length && cursor2 < sortedArray2.length) {
@@ -188,7 +190,7 @@ function validateConfig(config) {
         columns: validateColumnConfigurationsArray(configAsObject.columns)
     };
 }
-exports.default = validateConfig;
+exports.validateConfig = validateConfig;
 function validateLabelingRulesArray(arr) {
     const validatedLabelingRules = [];
     arr.forEach((labelingRule, index) => {
