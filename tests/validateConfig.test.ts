@@ -573,8 +573,51 @@ describe('validateConfig()', () => {
           })).not.toBe(undefined)
         })
 
-        it('will not contain the invalid labels', () => {})
-        it('will contain the valid labels', () => {})
+        it('will not contain the invalid labels', () => {
+          const parentColumn = validatedConfig.columns[0]
+
+          expect(parentColumn).toBeTruthy()
+          expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
+
+          const allLabels = parentColumn.labelingRules.reduce<string[]>((accumulator, currentVal) => {
+            accumulator.push(...currentVal.labels)
+
+            return accumulator
+          }, [])
+
+          expect(allLabels.find((label) => {
+            return label in {
+              '': null,
+              4: null,
+              '     ': null
+            }
+          })).toBe(undefined)
+        })
+
+        it('will contain the valid labels', () => {
+          const parentColumn = validatedConfig.columns[0]
+
+          expect(parentColumn).toBeTruthy()
+          expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
+
+          const allLabels = parentColumn.labelingRules.reduce<string[]>((accumulator, currentVal) => {
+            accumulator.push(...currentVal.labels)
+
+            return accumulator
+          }, [])
+
+          expect(allLabels.find((label) => {
+            return caseInsensitiveCompare(label, 'Completed') === 0
+          })).not.toBe(undefined)
+
+          expect(allLabels.find((label) => {
+            return caseInsensitiveCompare(label, 'Done') === 0
+          })).not.toBe(undefined)
+
+          expect(allLabels.find((label) => {
+            return caseInsensitiveCompare(label, 'Help Wanted') === 0
+          })).not.toBe(undefined)
+        })
       })
     })
   })
