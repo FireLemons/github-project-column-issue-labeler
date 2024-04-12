@@ -10,6 +10,7 @@
     "src/labeler.ts",
     "src/logger.ts",
     "src/typeChecker.ts",
+    "src/util.ts",
     "src/validateConfig.ts"
   ]
 }

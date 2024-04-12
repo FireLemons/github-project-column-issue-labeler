@@ -1,7 +1,7 @@
 import fs from 'fs'
-import { validateConfig, caseInsensitiveCompare } from '../src/validateConfig'
+import { validateConfig } from '../src/validateConfig'
 import { Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
-import exp from 'constants'
+import { caseInsensitiveCompare, isCaseInsensitiveEqual } from '../src/util'
 
 const fsPromises = fs.promises
 
@@ -447,15 +447,15 @@ describe('validateConfig()', () => {
             const addRuleLabels = addRule?.labels
 
             expect(addRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'Duplicate Label') === 0
+              return isCaseInsensitiveEqual(label, 'Duplicate Label')
             })).toBe(0)
 
             expect(addRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'Help Wanted') === 0
+              return isCaseInsensitiveEqual(label, 'Help Wanted')
             })).toBe(1)
 
             expect(addRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'New') === 0
+              return isCaseInsensitiveEqual(label, 'New')
             })).toBe(2)
           })
         })
@@ -478,15 +478,15 @@ describe('validateConfig()', () => {
             const removeRuleLabels = removeRule?.labels
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'Completed') === 0
+              return isCaseInsensitiveEqual(label, 'Completed')
             })).toBe(0)
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'Completed 1') === 0
+              return isCaseInsensitiveEqual(label, 'Completed 1')
             })).toBe(1)
 
             expect(removeRuleLabels?.findIndex((label) => {
-              return caseInsensitiveCompare(label, 'Duplicate emoji 🐌') === 0
+              return isCaseInsensitiveEqual(label, 'Duplicate emoji 🐌')
             })).toBe(2)
           })
         })
@@ -510,7 +510,7 @@ describe('validateConfig()', () => {
 
             if (addRule && removeRule) {
               for(let label of addRule.labels) {
-                expect(removeRule.labels.find((removeLabel) => { return caseInsensitiveCompare(label, removeLabel) === 0 })).toBe(undefined)
+                expect(removeRule.labels.find((removeLabel) => { return isCaseInsensitiveEqual(label, removeLabel) })).toBe(undefined)
               }
             }
           })
@@ -522,17 +522,12 @@ describe('validateConfig()', () => {
       })
 
       describe('when there are invalid parts of the config that are not required', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
-        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
         beforeAll(async () => {
           const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
 
           validatedConfig = validateConfig(configContents.toString())
-
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
-          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
 
         it('will not contain the invalid column', () => {
@@ -554,7 +549,7 @@ describe('validateConfig()', () => {
 
           expect(parentColumn.labelingRules.find((rule) => {
             return isShallowLabelingRule(rule) && rule.labels.find((label) => {
-              return caseInsensitiveCompare(label, 'invalid label 1') === 0 || caseInsensitiveCompare(label, 'invalid label 2') === 0
+              return isCaseInsensitiveEqual(label, 'invalid label 1') || isCaseInsensitiveEqual(label, 'invalid label 2')
             })
           })).toBe(undefined)
         })
@@ -607,16 +602,54 @@ describe('validateConfig()', () => {
           }, [])
 
           expect(allLabels.find((label) => {
-            return caseInsensitiveCompare(label, 'Completed') === 0
+            return isCaseInsensitiveEqual(label, 'Completed')
           })).not.toBe(undefined)
 
           expect(allLabels.find((label) => {
-            return caseInsensitiveCompare(label, 'Done') === 0
+            return isCaseInsensitiveEqual(label, 'Done')
           })).not.toBe(undefined)
 
           expect(allLabels.find((label) => {
-            return caseInsensitiveCompare(label, 'Help Wanted') === 0
+            return isCaseInsensitiveEqual(label, 'Help Wanted')
           })).not.toBe(undefined)
+        })
+      })
+
+      describe('when there are many labels for a labeling action', () => {
+        describe('for ADD and REMOVE actions', () => {
+          let validatedConfig: Config
+
+          beforeAll(async () => {
+            const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
+
+            validatedConfig = validateConfig(configContents.toString())
+          })
+
+          it('removes the duplicates', () => {
+
+          })
+
+          it('sorts the labels alphabetically', () => {
+
+          })
+        })
+
+        describe('for a SET action', () => {
+          let validatedConfig: Config
+
+          beforeAll(async () => {
+            const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
+
+            validatedConfig = validateConfig(configContents.toString())
+          })
+
+          it('removes the duplicates', () => {
+
+          })
+
+          it('sorts the labels alphabetically', () => {
+
+          })
         })
       })
     })

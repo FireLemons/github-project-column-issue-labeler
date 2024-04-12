@@ -23,10 +23,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateConfig = exports.caseInsensitiveCompare = void 0;
+exports.validateConfig = void 0;
 const logger_1 = require("./logger");
 const LabelerConfig_1 = require("./LabelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
+const util_1 = require("./util");
 const logger = new logger_1.Logger();
 function getUniqueLabelsByAction(rules) {
     const consolidatedLabels = new Map();
@@ -68,7 +69,7 @@ function determineLabelingRules(rules) {
     }
     logger.addBaseIndentation(2);
     for (const rule of determinedLabelingRules) {
-        const labelsWithoutDuplicates = removeCaseInsensitiveDuplicates(sortLabels(rule.labels));
+        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicates)((0, util_1.caseInsensitiveSort)(rule.labels));
         if (labelsWithoutDuplicates.length < rule.labels.length) {
             logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`);
             rule.labels = labelsWithoutDuplicates;
@@ -82,14 +83,10 @@ function determineLabelingRules(rules) {
     logger.addBaseIndentation(-2);
     return determinedLabelingRules;
 }
-function caseInsensitiveCompare(str1, str2) {
-    return str1.localeCompare(str2, undefined, { sensitivity: 'base' });
-}
-exports.caseInsensitiveCompare = caseInsensitiveCompare;
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
     let cursor1 = 0, cursor2 = 0;
     while (cursor1 < sortedArray1.length && cursor2 < sortedArray2.length) {
-        const comparison = caseInsensitiveCompare(sortedArray1[cursor1], sortedArray2[cursor2]);
+        const comparison = (0, util_1.caseInsensitiveCompare)(sortedArray1[cursor1], sortedArray2[cursor2]);
         if (comparison < 0) {
             cursor1++;
         }
@@ -103,23 +100,8 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedA
         }
     }
 }
-function removeCaseInsensitiveDuplicates(sortedArray) {
-    let i = 0;
-    while (i < sortedArray.length - 1) {
-        if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
-            sortedArray.splice(i + 1, 1);
-        }
-        else {
-            i++;
-        }
-    }
-    return sortedArray;
-}
 function isLabelingAction(str) {
     return Object.keys(LabelerConfig_1.LabelingAction).includes(str);
-}
-function sortLabels(arr) {
-    return arr.toSorted(caseInsensitiveCompare);
 }
 function validateColumnConfigurationsArray(arr) {
     const validatedColumnConfigurations = [];

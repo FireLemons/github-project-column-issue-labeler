@@ -1,6 +1,7 @@
 import { Logger } from './logger'
 import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './LabelerConfig'
 import * as typeChecker from './typeChecker'
+import { caseInsensitiveCompare, caseInsensitiveSort, removeCaseInsensitiveDuplicates } from './util'
 
 const logger = new Logger()
 
@@ -51,7 +52,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   logger.addBaseIndentation(2)
 
   for (const rule of determinedLabelingRules) {
-    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicates(sortLabels(rule.labels))
+    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicates(caseInsensitiveSort(rule.labels))
 
     if (labelsWithoutDuplicates.length < rule.labels.length) {
       logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`)
@@ -69,10 +70,6 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   logger.addBaseIndentation(-2)
 
   return determinedLabelingRules
-}
-
-export function caseInsensitiveCompare (str1: string, str2: string): number{
-  return str1.localeCompare(str2, undefined, {sensitivity: 'base'})
 }
 
 function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string[], sortedArray2: string[]) {
@@ -94,25 +91,8 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string
   }
 }
 
-function removeCaseInsensitiveDuplicates (sortedArray: string[]): string[] {
-  let i = 0
-  while(i < sortedArray.length - 1) {
-    if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
-      sortedArray.splice(i + 1, 1)
-    } else {
-      i++
-    }
-  }
-
-  return sortedArray
-}
-
 function isLabelingAction (str: string): str is LabelingAction {
   return Object.keys(LabelingAction).includes(str)
-}
-
-function sortLabels(arr: string[]): string[] {
-  return arr.toSorted(caseInsensitiveCompare)
 }
 
 function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
