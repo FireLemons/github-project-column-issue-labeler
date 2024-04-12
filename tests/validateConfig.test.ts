@@ -679,17 +679,39 @@ describe('validateConfig()', () => {
           let validatedConfig: Config
 
           beforeAll(async () => {
-            const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
+            const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedSet.json')
 
             validatedConfig = validateConfig(configContents.toString())
           })
 
           it('removes the duplicates', () => {
+            const parentColumn = validatedConfig.columns[0]
+            const labels = parentColumn.labelingRules[0].labels
 
+            expect(labels).not.toBeFalsy()
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Duplicate Label')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Help Wanted')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'New')
+            }).length).toBe(1)
           })
 
           it('sorts the labels alphabetically', () => {
+            const parentColumn = validatedConfig.columns[0]
+            const { labels } = parentColumn.labelingRules[0]
 
+            expect(labels.length).toBeGreaterThan(1)
+
+            for (let i = 0; i < labels.length - 1; i++) {
+              expect(caseInsensitiveCompare(labels[i], labels[i + 1])).toBe(-1)
+            }
           })
         })
       })
