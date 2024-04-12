@@ -422,7 +422,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
-          const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsorted.json')
+          const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedAddRemove.json')
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -620,13 +620,40 @@ describe('validateConfig()', () => {
           let validatedConfig: Config
 
           beforeAll(async () => {
-            const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
+            const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedAddRemove.json')
 
             validatedConfig = validateConfig(configContents.toString())
           })
 
           it('removes the duplicates', () => {
+            const parentColumn = validatedConfig.columns[0]
+            const labels = parentColumn.labelingRules[0].labels.concat(parentColumn.labelingRules[1].labels)
 
+            expect(labels).not.toBeFalsy()
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Completed')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Completed 1')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Duplicate Label')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Duplicate emoji 🐌')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'Help Wanted')
+            }).length).toBe(1)
+
+            expect(labels.filter((label) => {
+              return isCaseInsensitiveEqual(label.trim(), 'New')
+            }).length).toBe(1)
           })
 
           it('sorts the labels alphabetically', () => {
