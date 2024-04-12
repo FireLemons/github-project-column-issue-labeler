@@ -2,8 +2,12 @@ export function caseInsensitiveCompare (str1: string, str2: string): number{
   return str1.localeCompare(str2, undefined, {sensitivity: 'base'})
 }
 
-export function caseInsensitiveSort(arr: string[]): string[] {
+export function caseInsensitiveAlphabetization(arr: string[]): string[] {
   return arr.toSorted(caseInsensitiveCompare)
+}
+
+export function hasTrailingWhitespace(str: string): boolean {
+  return str.trim() === str
 }
 
 export function isCaseInsensitiveEqual(str1: string, str2: string): boolean {

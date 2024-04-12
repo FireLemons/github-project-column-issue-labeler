@@ -1,14 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeCaseInsensitiveDuplicates = exports.isCaseInsensitiveEqual = exports.caseInsensitiveSort = exports.caseInsensitiveCompare = void 0;
+exports.removeCaseInsensitiveDuplicates = exports.isCaseInsensitiveEqual = exports.hasTrailingWhitespace = exports.caseInsensitiveAlphabetization = exports.caseInsensitiveCompare = void 0;
 function caseInsensitiveCompare(str1, str2) {
     return str1.localeCompare(str2, undefined, { sensitivity: 'base' });
 }
 exports.caseInsensitiveCompare = caseInsensitiveCompare;
-function caseInsensitiveSort(arr) {
+function caseInsensitiveAlphabetization(arr) {
     return arr.toSorted(caseInsensitiveCompare);
 }
-exports.caseInsensitiveSort = caseInsensitiveSort;
+exports.caseInsensitiveAlphabetization = caseInsensitiveAlphabetization;
+function hasTrailingWhitespace(str) {
+    return str.trim() === str;
+}
+exports.hasTrailingWhitespace = hasTrailingWhitespace;
 function isCaseInsensitiveEqual(str1, str2) {
     return caseInsensitiveCompare(str1, str2) === 0;
 }

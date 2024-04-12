@@ -69,7 +69,7 @@ function determineLabelingRules(rules) {
     }
     logger.addBaseIndentation(2);
     for (const rule of determinedLabelingRules) {
-        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicates)((0, util_1.caseInsensitiveSort)(rule.labels));
+        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicates)((0, util_1.caseInsensitiveAlphabetization)(rule.labels));
         if (labelsWithoutDuplicates.length < rule.labels.length) {
             logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`);
             rule.labels = labelsWithoutDuplicates;
