@@ -657,7 +657,21 @@ describe('validateConfig()', () => {
           })
 
           it('sorts the labels alphabetically', () => {
+            const parentColumn = validatedConfig.columns[0]
 
+            expect(parentColumn.labelingRules.find((labelingRule) => {
+              return labelingRule.labels.length > 1
+            })).not.toBeFalsy()
+
+            for (let labelingRule of parentColumn.labelingRules) {
+              const { labels } = labelingRule
+
+              expect(labels.length).toBeGreaterThan(1)
+
+              for (let i = 0; i < labels.length - 1; i++) {
+                expect(caseInsensitiveCompare(labels[i], labels[i + 1])).toBe(-1)
+              }
+            }
           })
         })
 
