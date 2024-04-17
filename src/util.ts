@@ -7,7 +7,7 @@ export function caseInsensitiveAlphabetization(arr: string[]): string[] {
 }
 
 export function hasTrailingWhitespace(str: string): boolean {
-  return str.trim() === str
+  return str.trim() !== str
 }
 
 export function isCaseInsensitiveEqual(str1: string, str2: string): boolean {

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { validateConfig } from '../src/validateConfig'
 import { Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
-import { caseInsensitiveCompare, isCaseInsensitiveEqual } from '../src/util'
+import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
 const fsPromises = fs.promises
 
@@ -712,6 +712,91 @@ describe('validateConfig()', () => {
             for (let i = 0; i < labels.length - 1; i++) {
               expect(caseInsensitiveCompare(labels[i], labels[i + 1])).toBe(-1)
             }
+          })
+        })
+      })
+    })
+
+    describe('trailing whitespace values', () => {
+      let validatedConfig: Config
+
+      beforeAll(async () => {
+        const configContents = await fsPromises.readFile('./tests/configWhitespace.json')
+
+        validatedConfig = validateConfig(configContents.toString())
+      })
+
+      describe('the github access token', () => {
+        it('does not contain trailing whitespace', () => {
+          expect(hasTrailingWhitespace(validatedConfig.accessToken)).toBeFalsy()
+        })
+      })
+
+      describe('the repo owner', () => {
+        it('does not contain trailing whitespace', () => {
+          expect(hasTrailingWhitespace(validatedConfig.owner)).toBeFalsy()
+        })
+      })
+
+      describe('the repo name', () => {
+        it('does not contain trailing whitespace', () => {
+          expect(hasTrailingWhitespace(validatedConfig.repo)).toBeFalsy()
+        })
+      })
+
+      describe('columns', () => {
+        describe('the column name', () => {
+          it('does not contain trailing whitespace', () => {
+            const { columns } = validatedConfig
+
+            expect(columns.length).toBeGreaterThan(0)
+
+            for(let column of columns) {
+              expect(hasTrailingWhitespace(column.name)).toBe(false)
+            }
+          })
+        })
+
+        describe('the labeling rules of a column', () => {
+          describe('the action of the labeling rule', () => {
+            it('does not contain trailing whitespace', () => {
+              const { columns } = validatedConfig
+
+              expect(columns.length).toBeGreaterThan(0)
+
+              for(let column of columns) {
+                const { labelingRules } = column
+
+                expect(labelingRules.length).toBeGreaterThan(0)
+
+                for(let labelingRule of labelingRules) {
+                  expect(hasTrailingWhitespace(labelingRule.action)).toBe(false)
+                }
+              }
+            })
+          })
+
+          describe('the labels of a labeling rule', () => {
+            test('the whitespace for each label is trimmed', () => {
+              const { columns } = validatedConfig
+
+              expect(columns.length).toBeGreaterThan(0)
+
+              for(let column of columns) {
+                const { labelingRules } = column
+                expect(labelingRules.length).toBeGreaterThan(0)
+
+                for(let labelingRule of labelingRules) {
+                  const { labels } = labelingRule
+
+                  expect(labels.length).toBeGreaterThan(0)
+
+                  for(let label of labels) {
+                    expect(hasTrailingWhitespace(label)).toBe(false)
+                  }
+                }
+              }
+            })
           })
         })
       })

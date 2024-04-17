@@ -10,7 +10,7 @@ function caseInsensitiveAlphabetization(arr) {
 }
 exports.caseInsensitiveAlphabetization = caseInsensitiveAlphabetization;
 function hasTrailingWhitespace(str) {
-    return str.trim() === str;
+    return str.trim() !== str;
 }
 exports.hasTrailingWhitespace = hasTrailingWhitespace;
 function isCaseInsensitiveEqual(str1, str2) {
