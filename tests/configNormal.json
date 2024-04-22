@@ -1,0 +1,37 @@
+{
+  "accessToken": "access token",
+  "owner": "repo owner",
+  "repo": "repo name",
+  "columns": [
+    {
+      "name": "to do",
+      "labelingRules": [
+        {
+          "action": "add",
+          "labels": ["hacktoberfest"]
+        },
+        {
+          "action": "add",
+          "labels": ["todo", "help wanted"]
+        },
+        {
+          "action": "remove",
+          "labels": ["🐌", "Completed"]
+        }
+      ]
+    },
+    {
+      "name": "completed",
+      "labelingRules": [
+        {
+          "action": "remove",
+          "labels": ["hacktoberfest"]
+        },
+        {
+          "action": "remove",
+          "labels": ["todo", "help wanted"]
+        }
+      ]
+    }
+  ]
+}

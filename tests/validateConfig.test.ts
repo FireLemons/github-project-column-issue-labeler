@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { validateConfig } from '../src/validateConfig'
-import { Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
+import { ColumnConfiguration, Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
 const fsPromises = fs.promises
@@ -11,6 +11,18 @@ function countSpaceIndentationOfLoggerMessage (text: string): number {
 
 function hasGreaterIndentation (expectedLesserIndentationMessage: string, expectedGreaterIndentationMessage: string): boolean {
   return countSpaceIndentationOfLoggerMessage(expectedGreaterIndentationMessage) - countSpaceIndentationOfLoggerMessage(expectedLesserIndentationMessage) === 2
+}
+
+const consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>} = {
+  info: jest.spyOn(console, 'info'),
+  warn: jest.spyOn(console, 'warn'),
+  error: jest.spyOn(console, 'error')
+}
+
+function resetSpies () {
+  for (const consoleLoggingFunctionName in consoleLoggingFunctionSpies) {
+    consoleLoggingFunctionSpies[consoleLoggingFunctionName].mockReset()
+  }
 }
 
 describe('validateConfig()', () => {
@@ -76,31 +88,7 @@ describe('validateConfig()', () => {
     })
 
     describe('columns', () => {
-      let consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>}
-
-      function initializeSpies () {
-        consoleLoggingFunctionSpies = {
-          info: jest.spyOn(console, 'info'),
-          warn: jest.spyOn(console, 'warn'),
-          error: jest.spyOn(console, 'error')
-        }
-      }
-
-      function deactivateSpies () {
-        for (const consoleLoggingFunctionName in consoleLoggingFunctionSpies) {
-          consoleLoggingFunctionSpies[consoleLoggingFunctionName].mockReset()
-        }
-      }
-
-      beforeEach(() => {
-        initializeSpies()
-      })
-
-      afterEach(() => {
-        deactivateSpies()
-      })
-
-      describe('when the columns is not an array', () => {
+      describe('when columns is not an array', () => {
         test('it throws a TypeError with a message describing the config key and correct type', async () => {
           const configContents = await fsPromises.readFile('./tests/configWrongTypeLabelingRules.json')
   
@@ -116,6 +104,7 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationsInvalidType.json')
 
           validateConfig(configContents.toString())
@@ -143,6 +132,7 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationMissingKeys.json')
 
           validateConfig(configContents.toString())
@@ -186,6 +176,7 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configColumnConfigurationInvalidValues.json')
 
           validateConfig(configContents.toString())
@@ -237,6 +228,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configLabelingRulesInvalidValues.json')
 
           validatedConfig = validateConfig(configContents.toString())
@@ -311,6 +303,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configLabelingRulePrecedenceSetOrder.json')
 
           validatedConfig = validateConfig(configContents.toString())
@@ -345,6 +338,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configLabelingActionPrecedence.json')
 
           validatedConfig = validateConfig(configContents.toString())
@@ -379,6 +373,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configLabelsInvalid.json')
 
           validatedConfig = validateConfig(configContents.toString())
@@ -422,6 +417,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(async () => {
+          resetSpies()
           const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedAddRemove.json')
 
           validatedConfig = validateConfig(configContents.toString())
@@ -469,6 +465,10 @@ describe('validateConfig()', () => {
             })
           })
 
+          afterAll(() => {
+            resetSpies()
+          })
+
           test('all of the unique labels between all of the REMOVE rules are combined under a single rule', () => {
             expect(removeRule).not.toBe(undefined)
             expect(removeRule?.labels.length).toBe(3)
@@ -493,6 +493,7 @@ describe('validateConfig()', () => {
 
         describe('when an ADD and REMOVE rule contain the same label', () => {
           beforeAll(async () => {
+            resetSpies()
             const configContents = await fsPromises.readFile('./tests/configLabelingRulesLabelConflict.json')
   
             validatedConfig = validateConfig(configContents.toString())
@@ -797,6 +798,70 @@ describe('validateConfig()', () => {
                 }
               }
             })
+          })
+        })
+      })
+    })
+
+    describe('a normal config', () => {
+      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+      let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+      let validatedConfig: Config
+
+      beforeAll(async () => {
+        resetSpies()
+        const configContents = await fsPromises.readFile('./tests/configNormal.json')
+
+        validatedConfig = validateConfig(configContents.toString())
+
+        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+      })
+
+      it('does not print warnings', () => {
+        expect(consoleWarnCalls.length).toBe(0)
+      })
+
+      it('does not print errors', () => {
+        expect(consoleErrorCalls.length).toBe(0)
+      })
+
+      describe('the config information', () => {
+        it('includes the access key', () => {
+          expect(validatedConfig.accessToken).toBe('access token')
+        })
+
+        it('includes the repo owner', () => {
+          expect(validatedConfig.owner).toBe('repo owner')
+        })
+
+        it('includes the repo name', () => {
+          expect(validatedConfig.repo).toBe('repo name')
+        })
+
+        describe('columns', () => {
+          let columns: ColumnConfiguration[] 
+
+          beforeAll(() => {
+            columns = validatedConfig.columns
+          })
+
+          it('includes all columns', () => {
+            expect(columns.find((column) => {
+              return column.name === 'to do'
+            })).not.toBe(undefined)
+
+            expect(columns.find((column) => {
+              return column.name === 'completed'
+            })).not.toBe(undefined)
+          })
+
+          it('includes the correct labeling rule(s) for each column', () => {
+            
+          })
+
+          describe('the labeling rules', () => {
+
           })
         })
       })
