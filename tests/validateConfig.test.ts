@@ -840,28 +840,73 @@ describe('validateConfig()', () => {
         })
 
         describe('columns', () => {
-          let columns: ColumnConfiguration[] 
+          let columns: ColumnConfiguration[]
+          let toDoColumn: ColumnConfiguration | undefined
+          let completedColumn: ColumnConfiguration | undefined
 
           beforeAll(() => {
             columns = validatedConfig.columns
           })
 
           it('includes all columns', () => {
-            expect(columns.find((column) => {
+            toDoColumn = columns.find((column) => {
               return column.name === 'to do'
-            })).not.toBe(undefined)
+            })
 
-            expect(columns.find((column) => {
+            completedColumn = columns.find((column) => {
               return column.name === 'completed'
-            })).not.toBe(undefined)
-          })
+            })
 
-          it('includes the correct labeling rule(s) for each column', () => {
-            
+            expect(toDoColumn).not.toBe(undefined)
+            expect(completedColumn).not.toBe(undefined)
           })
 
           describe('the labeling rules', () => {
+            let toDoAddLabelingRule: LabelingRule | undefined
+            let toDoRemoveLabelingRule: LabelingRule | undefined
+            let completedRemoveLabelingRule: LabelingRule | undefined
 
+            it('includes the correct labeling rule(s) for each column', () => {
+              if (toDoColumn) {
+                toDoAddLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
+                  return labelingRule.action === LabelingAction.ADD
+                })
+
+                toDoRemoveLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
+                  return labelingRule.action === LabelingAction.REMOVE
+                })
+
+                expect(toDoAddLabelingRule).not.toBe(undefined)
+                expect(toDoRemoveLabelingRule).not.toBe(undefined)
+              }
+
+              if (completedColumn) {
+                completedRemoveLabelingRule = completedColumn.labelingRules.find((labelingRule) => {
+                  return labelingRule.action === LabelingAction.REMOVE
+                })
+
+                expect(completedRemoveLabelingRule).not.toBe(undefined)
+              }
+            })
+
+            it('includes the correct labels for each labeling rule', () => {
+              if (toDoAddLabelingRule) {
+                expect(toDoAddLabelingRule.labels.includes('hacktoberfest')).toBe(true)
+                expect(toDoAddLabelingRule.labels.includes('todo')).toBe(true)
+                expect(toDoAddLabelingRule.labels.includes('help wanted')).toBe(true)
+              }
+
+              if (toDoRemoveLabelingRule) {
+                expect(toDoRemoveLabelingRule.labels.includes('Completed')).toBe(true)
+                expect(toDoRemoveLabelingRule.labels.includes('🐌')).toBe(true)
+              }
+
+              if (completedRemoveLabelingRule) {
+                expect(completedRemoveLabelingRule.labels.includes('hacktoberfest')).toBe(true)
+                expect(completedRemoveLabelingRule.labels.includes('todo')).toBe(true)
+                expect(completedRemoveLabelingRule.labels.includes('help wanted')).toBe(true)
+              }
+            }) 
           })
         })
       })
