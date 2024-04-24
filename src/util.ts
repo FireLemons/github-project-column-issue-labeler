@@ -1,9 +1,9 @@
-export function caseInsensitiveCompare (str1: string, str2: string): number{
-  return str1.localeCompare(str2, undefined, {sensitivity: 'base'})
-}
-
 export function caseInsensitiveAlphabetization(arr: string[]): string[] {
   return arr.toSorted(caseInsensitiveCompare)
+}
+
+export function caseInsensitiveCompare (str1: string, str2: string): number{
+  return str1.localeCompare(str2, undefined, {sensitivity: 'base'})
 }
 
 export function hasTrailingWhitespace(str: string): boolean {
