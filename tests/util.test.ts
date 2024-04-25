@@ -7,7 +7,26 @@ import {
 } from '../src/util'
 
 describe('caseInsensitiveAlphabetization()', () => {
+  it ('alphabetizes an array of stings', () => {
+    function makeShuffledArray(arr: any[]) { // https://en.wikipedia.org/wiki/Fisher-Yates_shuffle#The_modern_algorithm
+      const arrCopy = arr.slice()
 
+      for (let i = arrCopy.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1))
+        let temp = arrCopy[i]
+        arrCopy[i] = arrCopy[j]
+        arrCopy[j] = temp
+      }
+
+      return arrCopy
+    }
+
+    const alphabetArray = ['A', 'b', 'C', 'd', 'E', 'f', 'G', 'h', 'I', 'j', 'K', 'l', 'M', 'n', 'O', 'p', 'Q', 'r', 'S', 't', 'U', 'v', 'W', 'x', 'Y', 'z']
+    const shuffledArray = makeShuffledArray(alphabetArray)
+
+    expect(shuffledArray).not.toEqual(alphabetArray)
+    expect(caseInsensitiveAlphabetization(shuffledArray)).toEqual(alphabetArray)
+  })
 })
 
 describe('caseInsensitiveCompare()', () => {
