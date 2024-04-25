@@ -35,7 +35,13 @@ describe('hasTrailingWhitespace()', () => {
 })
 
 describe('isCaseInsensitiveEqual()', () => {
+  it('returns true when both arguments contain the same letters in the same order', () => {
+    expect(isCaseInsensitiveEqual('AzZ', 'azz')).toBe(true)
+  })
 
+  it('returns false when both arguments do not contain the same letters in the same order', () => {
+    expect(isCaseInsensitiveEqual('AzZ', ' azz')).toBe(false)
+  })
 })
 
 describe('removeCaseInsensitiveDuplicates()', () => {
