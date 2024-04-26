@@ -14,7 +14,7 @@ export function isCaseInsensitiveEqual(str1: string, str2: string): boolean {
   return caseInsensitiveCompare(str1, str2) === 0
 }
 
-export function removeCaseInsensitiveDuplicates (sortedArray: string[]): string[] {
+export function removeCaseInsensitiveDuplicatesFromSortedArray (sortedArray: string[]): string[] {
   let i = 0
   while(i < sortedArray.length - 1) {
     if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {

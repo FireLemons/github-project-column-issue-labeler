@@ -3,7 +3,7 @@ import {
   caseInsensitiveCompare,
   hasTrailingWhitespace,
   isCaseInsensitiveEqual,
-  removeCaseInsensitiveDuplicates
+  removeCaseInsensitiveDuplicatesFromSortedArray
 } from '../src/util'
 
 describe('caseInsensitiveAlphabetization()', () => {
@@ -63,6 +63,22 @@ describe('isCaseInsensitiveEqual()', () => {
   })
 })
 
-describe('removeCaseInsensitiveDuplicates()', () => {
+describe('removeCaseInsensitiveDuplicatesFromSortedArray()', () => {
+  it('removes duplicate words from an array, ignoring their case', () => {
+    const originalWords = ['AaAa', 'bAnM', 'RtIl', 'GmSl']
+    const words = originalWords.slice()
 
+    for (let i = 0; i < 5; i++) {
+      const selectedIndex = Math.floor(Math.random() * 4)
+      const randomWord = words[selectedIndex]
+
+      words.splice(selectedIndex + 1, 0, Math.floor(Math.random() * 2) ? randomWord.toLowerCase() : randomWord.toUpperCase())
+    }
+
+    expect(words.length).toBeGreaterThan(4)
+
+    removeCaseInsensitiveDuplicatesFromSortedArray(words)
+
+    expect(words).toEqual(originalWords)
+  })
 })

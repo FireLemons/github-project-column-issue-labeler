@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeCaseInsensitiveDuplicates = exports.isCaseInsensitiveEqual = exports.hasTrailingWhitespace = exports.caseInsensitiveCompare = exports.caseInsensitiveAlphabetization = void 0;
+exports.removeCaseInsensitiveDuplicatesFromSortedArray = exports.isCaseInsensitiveEqual = exports.hasTrailingWhitespace = exports.caseInsensitiveCompare = exports.caseInsensitiveAlphabetization = void 0;
 function caseInsensitiveAlphabetization(arr) {
     return arr.toSorted(caseInsensitiveCompare);
 }
@@ -17,7 +17,7 @@ function isCaseInsensitiveEqual(str1, str2) {
     return caseInsensitiveCompare(str1, str2) === 0;
 }
 exports.isCaseInsensitiveEqual = isCaseInsensitiveEqual;
-function removeCaseInsensitiveDuplicates(sortedArray) {
+function removeCaseInsensitiveDuplicatesFromSortedArray(sortedArray) {
     let i = 0;
     while (i < sortedArray.length - 1) {
         if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
@@ -29,4 +29,4 @@ function removeCaseInsensitiveDuplicates(sortedArray) {
     }
     return sortedArray;
 }
-exports.removeCaseInsensitiveDuplicates = removeCaseInsensitiveDuplicates;
+exports.removeCaseInsensitiveDuplicatesFromSortedArray = removeCaseInsensitiveDuplicatesFromSortedArray;

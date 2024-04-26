@@ -1,7 +1,7 @@
 import { Logger } from './logger'
 import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './LabelerConfig'
 import * as typeChecker from './typeChecker'
-import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicates } from './util'
+import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicatesFromSortedArray } from './util'
 
 const logger = new Logger()
 
@@ -52,7 +52,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   logger.addBaseIndentation(2)
 
   for (const rule of determinedLabelingRules) {
-    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicates(caseInsensitiveAlphabetization(rule.labels))
+    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(rule.labels))
 
     if (labelsWithoutDuplicates.length < rule.labels.length) {
       logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`)
