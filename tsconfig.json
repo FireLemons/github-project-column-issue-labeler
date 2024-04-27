@@ -5,7 +5,7 @@
   },
   "files": [
     "src/githubAPIClient.ts",
-    "src/githubDataFetcher.ts",
+    "src/githubGraphQLPageAssembler.ts",
     "src/githubObjects.ts",
     "src/labeler.ts",
     "src/logger.ts",
