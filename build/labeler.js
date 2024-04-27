@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const githubAPIClient_1 = require("./githubAPIClient");
-const githubDataFetcher_1 = require("./githubDataFetcher");
+const githubGraphQLPageAssembler_1 = require("./githubGraphQLPageAssembler");
 const logger_1 = require("./logger");
 const validateConfig_1 = require("./validateConfig");
 const fsPromises = fs_1.default.promises;
@@ -52,7 +52,7 @@ async function main() {
     try {
         logger.info('Initializing github API accessors');
         githubAPIClient = new githubAPIClient_1.GithubAPIClient(config.accessToken, config.repo, config.owner);
-        githubDataFetcher = new githubDataFetcher_1.GithubDataFetcher(githubAPIClient);
+        githubDataFetcher = new githubGraphQLPageAssembler_1.GithubGraphQLPageAssembler(githubAPIClient);
     }
     catch (error) {
         if (error instanceof Error && error.message) {

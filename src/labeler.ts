@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { GithubAPIClient } from './githubAPIClient'
-import { GithubDataFetcher } from './githubDataFetcher'
+import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
 import { Logger } from './logger'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
@@ -61,7 +61,7 @@ async function main() {
   try {
     logger.info('Initializing github API accessors')
     githubAPIClient = new GithubAPIClient(config.accessToken, config.repo, config.owner)
-    githubDataFetcher = new GithubDataFetcher(githubAPIClient)
+    githubDataFetcher = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
     if (error instanceof Error && error.message) {
       logger.error('Failed to initialize github API accessors', 2)

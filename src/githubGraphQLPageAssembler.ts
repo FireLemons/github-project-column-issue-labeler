@@ -9,7 +9,7 @@ interface Issue {
   columnName?: string
 }
 
-export class GithubDataFetcher {
+export class GithubGraphQLPageAssembler {
   githubAPIClient: GithubAPIClient
 
   constructor (githubAPIClient: GithubAPIClient) {

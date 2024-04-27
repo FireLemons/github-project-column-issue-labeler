@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { validateConfig } from '../src/validateConfig'
-import { ColumnConfiguration, Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/LabelerConfig'
+import { ColumnConfiguration, Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/labelerConfig'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
 const fsPromises = fs.promises

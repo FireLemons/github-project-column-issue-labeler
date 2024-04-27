@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GithubDataFetcher = void 0;
+exports.GithubGraphQLPageAssembler = void 0;
 const githubObjects_1 = require("./githubObjects");
 const logger_1 = require("./logger");
 const logger = new logger_1.Logger();
-class GithubDataFetcher {
+class GithubGraphQLPageAssembler {
     githubAPIClient;
     constructor(githubAPIClient) {
         this.githubAPIClient = githubAPIClient;
@@ -41,4 +41,4 @@ class GithubDataFetcher {
         return issues;
     }
 }
-exports.GithubDataFetcher = GithubDataFetcher;
+exports.GithubGraphQLPageAssembler = GithubGraphQLPageAssembler;

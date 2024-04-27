@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { Config } from '../src/LabelerConfig'
+import { Config } from '../src/labelerConfig'
 import { Logger } from '../src/logger'
 import { validateConfig } from '../src/validateConfig'
 

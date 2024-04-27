@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateConfig = void 0;
 const logger_1 = require("./logger");
-const LabelerConfig_1 = require("./LabelerConfig");
+const labelerConfig_1 = require("./labelerConfig");
 const typeChecker = __importStar(require("./typeChecker"));
 const util_1 = require("./util");
 const logger = new logger_1.Logger();
@@ -50,7 +50,7 @@ function getUniqueLabelsByAction(rules) {
     return consolidatedLabelingRules;
 }
 function determineLabelingRules(rules) {
-    const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelerConfig_1.LabelingAction.SET);
+    const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === labelerConfig_1.LabelingAction.SET);
     let determinedLabelingRules;
     if (lastSetRuleIndex >= 0) {
         logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`);
@@ -75,8 +75,8 @@ function determineLabelingRules(rules) {
             rule.labels = labelsWithoutDuplicates;
         }
     }
-    const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelerConfig_1.LabelingAction.ADD; });
-    const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelerConfig_1.LabelingAction.REMOVE; });
+    const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === labelerConfig_1.LabelingAction.ADD; });
+    const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === labelerConfig_1.LabelingAction.REMOVE; });
     if (addRule && removeRule) {
         removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels);
     }
@@ -101,7 +101,7 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedA
     }
 }
 function isLabelingAction(str) {
-    return Object.keys(LabelerConfig_1.LabelingAction).includes(str);
+    return Object.keys(labelerConfig_1.LabelingAction).includes(str);
 }
 function validateColumnConfigurationsArray(arr) {
     const validatedColumnConfigurations = [];
@@ -205,7 +205,7 @@ function validateLabelingRule(object) {
     typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
     const formattedAction = object['action'].toUpperCase().trim();
     if (!isLabelingAction(formattedAction)) {
-        throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelerConfig_1.LabelingAction))}`);
+        throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(labelerConfig_1.LabelingAction))}`);
     }
     typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
     return {

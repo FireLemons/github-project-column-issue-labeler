@@ -1,5 +1,5 @@
 import { Logger } from './logger'
-import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './LabelerConfig'
+import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './labelerConfig'
 import * as typeChecker from './typeChecker'
 import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicatesFromSortedArray } from './util'
 
