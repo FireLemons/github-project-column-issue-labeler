@@ -48,11 +48,11 @@ async function main() {
         return;
     }
     let githubAPIClient;
-    let githubDataFetcher;
+    let githubGraphQLPageAssembler;
     try {
         logger.info('Initializing github API accessors');
         githubAPIClient = new githubAPIClient_1.GithubAPIClient(config.accessToken, config.repo, config.owner);
-        githubDataFetcher = new githubGraphQLPageAssembler_1.GithubGraphQLPageAssembler(githubAPIClient);
+        githubGraphQLPageAssembler = new githubGraphQLPageAssembler_1.GithubGraphQLPageAssembler(githubAPIClient);
     }
     catch (error) {
         if (error instanceof Error && error.message) {
@@ -65,7 +65,7 @@ async function main() {
     logger.info('Initialized github API accessors');
     try {
         logger.info('Fetching issues with labels and associated column data...');
-        githubDataFetcher.fetchAllIssues()
+        githubGraphQLPageAssembler.fetchAllIssues()
             .then((response) => {
             logger.info('Fetched issues with labels and associated column data', 2);
             logger.info(JSON.stringify(response, null, 2), 4);

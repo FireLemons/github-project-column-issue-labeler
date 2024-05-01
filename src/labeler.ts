@@ -56,12 +56,12 @@ async function main() {
   }
 
   let githubAPIClient
-  let githubDataFetcher
+  let githubGraphQLPageAssembler
 
   try {
     logger.info('Initializing github API accessors')
     githubAPIClient = new GithubAPIClient(config.accessToken, config.repo, config.owner)
-    githubDataFetcher = new GithubGraphQLPageAssembler(githubAPIClient)
+    githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
     if (error instanceof Error && error.message) {
       logger.error('Failed to initialize github API accessors', 2)
@@ -76,7 +76,7 @@ async function main() {
 
   try {
       logger.info('Fetching issues with labels and associated column data...')
-      githubDataFetcher.fetchAllIssues()
+      githubGraphQLPageAssembler.fetchAllIssues()
       .then(
         (response) => {
           logger.info('Fetched issues with labels and associated column data', 2)
