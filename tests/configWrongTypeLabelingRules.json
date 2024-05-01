@@ -1,6 +1,0 @@
-{
-  "accessToken": "token",
-  "owner": "repo owner",
-  "repo": "repo name",
-  "columns": "not supposed to be a string"
-}

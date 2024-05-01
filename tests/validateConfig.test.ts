@@ -27,8 +27,11 @@ function resetSpies () {
 
 describe('validateConfig()', () => {
   describe('when config contains invalid json', () => {
-    it('throws an error with a message describing that the file did not contain parsable JSON', async () => {
-      const configContents = await fsPromises.readFile('./tests/configInvalidJSON.json') // These are in separate files so the json can be syntax highlighted
+    it('throws an error with a message describing that the file did not contain parsable JSON', () => {
+      const configContents = `
+        {
+          keyWithoutQuotes: "value"
+        }`
 
       expect(() => {
         validateConfig(configContents.toString())
@@ -37,8 +40,14 @@ describe('validateConfig()', () => {
   })
 
   describe('when config is missing a required key', () => {
-    it('throws an error with a message describing that the file is missing a required key', async () => {
-      const configContents = await fsPromises.readFile('./tests/configMissingKey.json')
+    it('throws an error with a message describing that the file is missing a required key', () => {
+      const configContents = JSON.stringify({
+        "wrong-name-for-github-token": "token",
+        "owner": "repo owner",
+        "repo": "repo name",
+        "columns": [
+        ]
+      })
 
       expect(() => {
         validateConfig(configContents.toString())
@@ -48,8 +57,14 @@ describe('validateConfig()', () => {
 
   describe('when the config contains all required keys', () => {
     describe('when the github access token is not a string', () => {
-      it('throws a TypeError specifying the correct type for the github access token', async () => {
-        const configContents = await fsPromises.readFile('./tests/configWrongTypeGithubAccessToken.json')
+      it('throws a TypeError specifying the correct type for the github access token', () => {
+        const configContents = JSON.stringify({
+          "accessToken": 3,
+          "owner": "repo owner",
+          "repo": "repo name",
+          "columns": [
+          ]
+        })
   
         expect(() => {
           validateConfig(configContents.toString())
@@ -58,8 +73,14 @@ describe('validateConfig()', () => {
     })
 
     describe('when the github access token contains only whitespace', () => {
-      it('throws a RangeError', async () => {
-        const configContents = await fsPromises.readFile('./tests/configEmptyGithubAccessToken.json')
+      it('throws a RangeError', () => {
+        const configContents = JSON.stringify({
+          "accessToken": " ",
+          "owner": "repo owner",
+          "repo": "repo name",
+          "columns": [
+          ]
+        })
   
         expect(() => {
           validateConfig(configContents.toString())
@@ -68,8 +89,14 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo owner is not a string', () => {
-      it('throws a TypeError specifying the correct type for the repo owner', async () => {
-        const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoOwnerName.json')
+      it('throws a TypeError specifying the correct type for the repo owner', () => {
+        const configContents = JSON.stringify({
+          "accessToken": "token",
+          "owner": [],
+          "repo": "repo name",
+          "columns": [
+          ]
+        })
 
         expect(() => {
           validateConfig(configContents.toString())
@@ -78,8 +105,14 @@ describe('validateConfig()', () => {
     })
 
     describe('when the repo name is not a string', () => {
-      it('throws a TypeError specifying the correct type for repo name', async () => {
-        const configContents = await fsPromises.readFile('./tests/configWrongTypeRepoName.json')
+      it('throws a TypeError specifying the correct type for repo name', () => {
+        const configContents = JSON.stringify({
+          "accessToken": "token",
+          "owner": "repo owner",
+          "repo": {},
+          "columns": [
+          ]
+        })
 
         expect(() => {
           validateConfig(configContents.toString())
@@ -88,9 +121,43 @@ describe('validateConfig()', () => {
     })
 
     describe('columns', () => {
+      const configLabelDuplicationAndUnsortedAddRemove = JSON.stringify({
+        "accessToken": "token",
+        "owner": "repo owner",
+        "repo": "repo name",
+        "columns": [
+          {
+            "name": "column name",
+            "labelingRules": [
+              {
+                "action": "AdD",
+                "labels": ["Duplicate Label", "New", "Duplicate Label"]
+              },
+              {
+                "action": "ADD ",
+                "labels": ["DuplIcate LaBeL    ", "Help Wanted"]
+              },
+              {
+                "action": "ReMovE",
+                "labels": ["Duplicate emoji 🐌 ", "   Completed"]
+              },
+              {
+                "action": "ReMOVE",
+                "labels": ["DupliCAte Emoji 🐌", "Completed 1"]
+              }
+            ]
+          }
+        ]
+      })
+
       describe('when columns is not an array', () => {
-        test('it throws a TypeError with a message describing the config key and correct type', async () => {
-          const configContents = await fsPromises.readFile('./tests/configWrongTypeLabelingRules.json')
+        test('it throws a TypeError with a message describing the config key and correct type', () => {
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": "not supposed to be a string"
+          })
   
           expect(() => {
             validateConfig(configContents.toString())
@@ -103,9 +170,18 @@ describe('validateConfig()', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationsInvalidType.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              3,
+              [],
+              null
+            ]
+          })
 
           validateConfig(configContents.toString())
 
@@ -131,9 +207,25 @@ describe('validateConfig()', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationMissingKeys.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "a": 3,
+                "b": "b"
+              },
+              {
+                "name": "String"
+              },
+              {
+                "labelingRules": []
+              }
+            ]
+          })
 
           validateConfig(configContents.toString())
 
@@ -175,9 +267,31 @@ describe('validateConfig()', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configColumnConfigurationInvalidValues.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": 3,
+                "labelingRules": []
+              },
+              {
+                "name": "Name",
+                "labelingRules": 3
+              },
+              {
+                "name": "                 ",
+                "labelingRules": []
+              },
+              {
+                "name": "",
+                "labelingRules": []
+              }
+            ]
+          })
 
           validateConfig(configContents.toString())
 
@@ -227,9 +341,42 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configLabelingRulesInvalidValues.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": "column name",
+                "labelingRules": [
+                  {
+                  },
+                  {
+                    "action": "ADD"
+                  },
+                  {
+                    "labels": ["a", "b", "c"]
+                  },
+                  {
+                    "action": 3,
+                    "labels": ["a", "b", "c"]
+                  },
+                  {
+                    "action": "ADD",
+                    "labels": {
+                      "a": "a"
+                    }
+                  },
+                  {
+                    "action": "Unsupported Action",
+                    "labels": ["a", "b", "c"]
+                  }
+                ]
+              }
+            ]
+          })
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -302,9 +449,32 @@ describe('validateConfig()', () => {
         let consoleInfoCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configLabelingRulePrecedenceSetOrder.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": "column name",
+                "labelingRules": [
+                  {
+                    "action": "Set",
+                    "labels": ["This should not appear"]
+                  },
+                  {
+                    "action": "Set",
+                    "labels": ["This should not appear"]
+                  },
+                  {
+                    "action": "Set",
+                    "labels": ["This should appear", "🛩", "alphabetically first"]
+                  }
+                ]
+              }
+            ]
+          })
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -337,9 +507,32 @@ describe('validateConfig()', () => {
         let consoleInfoCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configLabelingActionPrecedence.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": "column name",
+                "labelingRules": [
+                  {
+                    "action": "Remove",
+                    "labels": ["This should not appear"]
+                  },
+                  {
+                    "action": "Set",
+                    "labels": ["This should appear", "🛩", "alphabetically first"]
+                  },
+                  {
+                    "action": "Add",
+                    "labels": ["This should not appear"]
+                  }
+                ]
+              }
+            ]
+          })
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -372,9 +565,28 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configLabelsInvalid.json')
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": "column name",
+                "labelingRules": [
+                  {
+                    "action": "ADD",
+                    "labels": ["", "    ", 3]
+                  },
+                  {
+                    "action": "REMOVE",
+                    "labels": ["normal rule"]
+                  }
+                ]
+              }
+            ]
+          })
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -416,9 +628,9 @@ describe('validateConfig()', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
-        beforeAll(async () => {
+        beforeAll(() => {
           resetSpies()
-          const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedAddRemove.json')
+          const configContents = configLabelDuplicationAndUnsortedAddRemove
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -492,9 +704,28 @@ describe('validateConfig()', () => {
         })
 
         describe('when an ADD and REMOVE rule contain the same label', () => {
-          beforeAll(async () => {
+          beforeAll(() => {
             resetSpies()
-            const configContents = await fsPromises.readFile('./tests/configLabelingRulesLabelConflict.json')
+            const configContents = JSON.stringify({
+              "accessToken": "token",
+              "owner": "repo owner",
+              "repo": "repo name",
+              "columns": [
+                {
+                  "name": "column name",
+                  "labelingRules": [
+                    {
+                      "action": "Remove",
+                      "labels": ["ambiguous label conflict", "Label 1"]
+                    },
+                    {
+                      "action": "Add",
+                      "labels": ["ambiguous label conflict", "Label 2"]
+                    }
+                  ]
+                }
+              ]
+            })
   
             validatedConfig = validateConfig(configContents.toString())
 
@@ -525,8 +756,34 @@ describe('validateConfig()', () => {
       describe('when there are invalid parts of the config that are not required', () => {
         let validatedConfig: Config
 
-        beforeAll(async () => {
-          const configContents = await fsPromises.readFile('./tests/configPartialValid.json')
+        beforeAll(() => {
+          const configContents = JSON.stringify({
+            "accessToken": "token",
+            "owner": "repo owner",
+            "repo": "repo name",
+            "columns": [
+              {
+                "name": "valid column",
+                "labelingRules": [
+                  {
+                    "action": "Add",
+                    "labels": ["Help Wanted"]
+                  },
+                  {
+                    "action": "Remove",
+                    "labels": ["Done", "Completed", "", 4, "     "]
+                  },
+                  {
+                    "action": "invalid action",
+                    "labels": ["invalid label 1", "invalid label 2"]
+                  }
+                ]
+              },
+              {
+                "name": "invalid column"
+              }
+            ]
+          })
 
           validatedConfig = validateConfig(configContents.toString())
         })
@@ -620,8 +877,8 @@ describe('validateConfig()', () => {
         describe('for ADD and REMOVE actions', () => {
           let validatedConfig: Config
 
-          beforeAll(async () => {
-            const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedAddRemove.json')
+          beforeAll(() => {
+            const configContents = configLabelDuplicationAndUnsortedAddRemove
 
             validatedConfig = validateConfig(configContents.toString())
           })
@@ -679,8 +936,23 @@ describe('validateConfig()', () => {
         describe('for a SET action', () => {
           let validatedConfig: Config
 
-          beforeAll(async () => {
-            const configContents = await fsPromises.readFile('./tests/configLabelDuplicationAndUnsortedSet.json')
+          beforeAll(() => {
+            const configContents = JSON.stringify({
+              "accessToken": "token",
+              "owner": "repo owner",
+              "repo": "repo name",
+              "columns": [
+                {
+                  "name": "column name",
+                  "labelingRules": [
+                    {
+                      "action": "SET ",
+                      "labels": ["DuplIcate LaBeL    ", "Help Wanted", "Duplicate Label", "New", "Duplicate Label"]
+                    }
+                  ]
+                }
+              ]
+            })
 
             validatedConfig = validateConfig(configContents.toString())
           })
@@ -721,8 +993,31 @@ describe('validateConfig()', () => {
     describe('trailing whitespace values', () => {
       let validatedConfig: Config
 
-      beforeAll(async () => {
-        const configContents = await fsPromises.readFile('./tests/configWhitespace.json')
+      beforeAll(() => {
+        const configContents = JSON.stringify({
+          "accessToken": " access token ",
+          "owner": " repo owner ",
+          "repo": " repo name ",
+          "columns": [
+            {
+              "name": " column name ",
+              "labelingRules": [
+                {
+                  "action": " add ",
+                  "labels": ["label ", " label 2", " label 3 "]
+                },
+                {
+                  "action": "add",
+                  "labels": [" label ", "label 2 ", " label 3 "]
+                },
+                {
+                  "action": " remove ",
+                  "labels": [" 🐌 ", "   Completed"]
+                }
+              ]
+            }
+          ]
+        })
 
         validatedConfig = validateConfig(configContents.toString())
       })
@@ -808,9 +1103,45 @@ describe('validateConfig()', () => {
       let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
       let validatedConfig: Config
 
-      beforeAll(async () => {
+      beforeAll(() => {
         resetSpies()
-        const configContents = await fsPromises.readFile('./tests/configNormal.json')
+        const configContents = JSON.stringify({
+          "accessToken": "access token",
+          "owner": "repo owner",
+          "repo": "repo name",
+          "columns": [
+            {
+              "name": "to do",
+              "labelingRules": [
+                {
+                  "action": "add",
+                  "labels": ["hacktoberfest"]
+                },
+                {
+                  "action": "add",
+                  "labels": ["todo", "help wanted"]
+                },
+                {
+                  "action": "remove",
+                  "labels": ["🐌", "Completed"]
+                }
+              ]
+            },
+            {
+              "name": "completed",
+              "labelingRules": [
+                {
+                  "action": "remove",
+                  "labels": ["hacktoberfest"]
+                },
+                {
+                  "action": "remove",
+                  "labels": ["todo", "help wanted"]
+                }
+              ]
+            }
+          ]
+        })
 
         validatedConfig = validateConfig(configContents.toString())
 
