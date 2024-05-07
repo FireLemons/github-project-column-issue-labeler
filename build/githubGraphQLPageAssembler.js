@@ -10,7 +10,8 @@ class GithubGraphQLPageAssembler {
         this.githubAPIClient = githubAPIClient;
     }
     async fetchAllIssues() {
-        logger.info('Fetching Issues', 2);
+        logger.addBaseIndentation(2);
+        logger.info('Fetching Issues');
         let cursor;
         let issues;
         let issuePageResponse;
@@ -31,13 +32,14 @@ class GithubGraphQLPageAssembler {
             catch (error) {
                 if (issuePageResponse.repository) {
                     let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page';
-                    logger.warn('Encountered errors while fetching ' + pageMessageIndex, 2);
+                    logger.warn('Encountered errors while fetching ' + pageMessageIndex);
                 }
                 else {
                     throw error;
                 }
             }
         } while (!(issues.isLastPage()));
+        logger.addBaseIndentation(-2);
         return issues;
     }
 }

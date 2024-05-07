@@ -1,13 +1,8 @@
 import { GithubAPIClient, IssuePageResponse } from './githubAPIClient'
-import { IssueWithChildPages, Label, GraphQLPage } from './githubObjects'
+import { Issue, Label, GraphQLPage } from './githubObjects'
 import { Logger } from './logger'
 
 const logger = new Logger()
-
-interface Issue {
-  labels: Label
-  columnName?: string
-}
 
 export class GithubGraphQLPageAssembler {
   githubAPIClient: GithubAPIClient
@@ -16,10 +11,11 @@ export class GithubGraphQLPageAssembler {
     this.githubAPIClient = githubAPIClient
   }
 
-  async fetchAllIssues (): Promise<GraphQLPage<IssueWithChildPages>> {
-    logger.info('Fetching Issues', 2)
+  async fetchAllIssues (): Promise<GraphQLPage<Issue>> {
+    logger.addBaseIndentation(2)
+    logger.info('Fetching Issues')
     let cursor
-    let issues!: GraphQLPage<IssueWithChildPages>
+    let issues!: GraphQLPage<Issue>
     let issuePageResponse!: IssuePageResponse
 
     do {
@@ -27,7 +23,7 @@ export class GithubGraphQLPageAssembler {
         issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor)
 
         if (issuePageResponse) {
-          const issuePage = new GraphQLPage<IssueWithChildPages>(issuePageResponse.repository?.issues)
+          const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues)
           cursor = issuePage.getEndCursor()
 
           if (!issues) {
@@ -39,13 +35,14 @@ export class GithubGraphQLPageAssembler {
       } catch (error) {
         if (issuePageResponse.repository) {
           let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page'
-          logger.warn('Encountered errors while fetching ' + pageMessageIndex, 2)
+          logger.warn('Encountered errors while fetching ' + pageMessageIndex)
         } else {
           throw error
         }
       }
     } while (!(issues.isLastPage()))
 
+    logger.addBaseIndentation(-2)
     return issues
   }
 }

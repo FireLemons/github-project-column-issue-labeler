@@ -1,36 +1,25 @@
 import * as TypeChecker from './typeChecker'
 
-interface ColumnName {
-  name?: string
+interface FieldValues {
+  name?: string // Column Name
 }
 
-interface projectItem {
-  fieldValues: GraphQLPage<ColumnName>
+interface ProjectItem {
+  fieldValues: GraphQLPage<FieldValues>
 }
 
-export interface IssueWithChildPages {
+export interface Issue {
   id: string
+  number: number
   labels: GraphQLPage<Label>
-  projectItems: GraphQLPage<ColumnName>
+  projectItems: GraphQLPage<ProjectItem>
 }
 
 export interface Label {
   name: string
 }
 
-export interface GraphQLPage<T> {
-  edges: [
-    {
-      node: T
-    }
-  ]
-  pageInfo: {
-    endCursor: string
-    hasNextPage: boolean
-  }
-}
-
-function isGraphQLPage (object: any): object is GraphQLPage<any> {
+function isGraphQLPage (object: any): boolean {
   if (!(TypeChecker.isObject(object))) {
     return false
   }
@@ -56,7 +45,17 @@ function isGraphQLPage (object: any): object is GraphQLPage<any> {
 }
 
 export class GraphQLPage<T> {
-  page: GraphQLPage<T>
+  page: {
+    edges: [
+      {
+        node: T
+      }
+    ]
+    pageInfo: {
+      endCursor: string
+      hasNextPage: boolean
+    }
+  }
 
   constructor (pageObject: any) {
     if (!(isGraphQLPage(pageObject))) {
