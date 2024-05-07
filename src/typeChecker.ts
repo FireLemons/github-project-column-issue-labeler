@@ -5,6 +5,7 @@ interface objectWithKeys {
 export enum Type {
   array = 'array',
   boolean = 'boolean',
+  number = 'number',
   object = 'object',
   string = 'string'
 }
@@ -37,6 +38,12 @@ export function validateObjectMember(obj: objectWithKeys, key: string, type: Typ
       }
 
       break;
+    case Type.number:
+      if (isNaN(member)) {
+        throw new TypeError(`Member "${key}" was found not to be a number`)
+      }
+
+      break;
     case Type.object:
       if (!isObject(member)) {
         throw new TypeError(`Member "${key}" was found not to be an object`)
@@ -48,5 +55,7 @@ export function validateObjectMember(obj: objectWithKeys, key: string, type: Typ
       }
 
       break;
+    default:
+      throw new RangeError('Param type unsupported')
   }
 }

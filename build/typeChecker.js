@@ -5,6 +5,7 @@ var Type;
 (function (Type) {
     Type["array"] = "array";
     Type["boolean"] = "boolean";
+    Type["number"] = "number";
     Type["object"] = "object";
     Type["string"] = "string";
 })(Type || (exports.Type = Type = {}));
@@ -32,6 +33,11 @@ function validateObjectMember(obj, key, type) {
                 throw new TypeError(`Member "${key}" was found not to be a boolean`);
             }
             break;
+        case Type.number:
+            if (isNaN(member)) {
+                throw new TypeError(`Member "${key}" was found not to be a number`);
+            }
+            break;
         case Type.object:
             if (!isObject(member)) {
                 throw new TypeError(`Member "${key}" was found not to be an object`);
@@ -42,6 +48,8 @@ function validateObjectMember(obj, key, type) {
                 throw new TypeError(`Member "${key}" was found not to be a string`);
             }
             break;
+        default:
+            throw new RangeError('Param type unsupported');
     }
 }
 exports.validateObjectMember = validateObjectMember;
