@@ -30,7 +30,7 @@ class GithubAPIClient {
       fragment issuePage on IssueConnection {
         edges {
           node {
-            id
+            number
             labels (first: $pageSizeLabel) {
               ...labelPage
             }
@@ -89,8 +89,37 @@ class GithubAPIClient {
             pageSizeLabel: LABEL_PAGE_SIZE,
             pageSizeProjectField: FIELD_VALUE_PAGE_SIZE,
             pageSizeProjectItem: PROJECT_ITEM_PAGE_SIZE,
-            ownerName: this.repoOwnerName,
             repoName: this.repoName,
+            repoOwnerName: this.repoOwnerName
+        });
+    }
+    fetchIssueLabelPage(cursor, issueNumber) {
+        return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String!, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
+      repository(name: $repoName, owner: $repoOwnerName){
+        issue(number: $issueNumber){
+          labels(after: $cursor, first: $pageSize){
+            ...labelPage
+          }
+        }
+      }
+    }
+    
+    fragment labelPage on LabelConnection {
+      edges{
+        node{
+          name
+        }
+      }
+      pageInfo{
+        hasNextPage
+        endCursor
+      }
+    }`, {
+            "cursor": cursor,
+            "issueNumber": issueNumber,
+            "pageSize": MAX_PAGE_SIZE,
+            "repoName": this.repoName,
+            "repoOwnerName": this.repoOwnerName
         });
     }
 }
