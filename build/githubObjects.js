@@ -23,36 +23,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GraphQLPage = void 0;
+exports.Issue = exports.GraphQLPage = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
-function isGraphQLPage(object) {
-    if (!(TypeChecker.isObject(object))) {
-        return false;
-    }
-    try {
-        TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array);
-        TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object);
-        TypeChecker.validateObjectMember(object['pageInfo'], 'endCursor', TypeChecker.Type.string);
-        TypeChecker.validateObjectMember(object['pageInfo'], 'hasNextPage', TypeChecker.Type.boolean);
-    }
-    catch (error) {
-        return false;
-    }
-    for (const edge of object['edges']) {
-        try {
-            TypeChecker.validateObjectMember(edge, 'node', TypeChecker.Type.object);
-        }
-        catch (error) {
-            return false;
-        }
-    }
-    return true;
-}
 class GraphQLPage {
     page;
     constructor(pageObject) {
         if (!(isGraphQLPage(pageObject))) {
-            throw new TypeError('Param pageObject is not an instance of a GraphQLPage');
+            throw new TypeError('Param pageObject does not match a graphQL page');
         }
         this.page = pageObject;
     }
@@ -77,3 +54,54 @@ class GraphQLPage {
     }
 }
 exports.GraphQLPage = GraphQLPage;
+class Issue {
+    issue;
+    constructor(issueObject) {
+        if (!(isIssue(issueObject))) {
+            throw new TypeError('Param issueObject does not match a github issue object');
+        }
+        this.issue = issueObject;
+    }
+}
+exports.Issue = Issue;
+function isGraphQLPage(object) {
+    if (!(TypeChecker.isObject(object))) {
+        return false;
+    }
+    try {
+        TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array);
+        TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object);
+        TypeChecker.validateObjectMember(object['pageInfo'], 'endCursor', TypeChecker.Type.string);
+        TypeChecker.validateObjectMember(object['pageInfo'], 'hasNextPage', TypeChecker.Type.boolean);
+    }
+    catch (error) {
+        return false;
+    }
+    for (const edge of object['edges']) {
+        try {
+            TypeChecker.validateObjectMember(edge, 'node', TypeChecker.Type.object);
+        }
+        catch (error) {
+            return false;
+        }
+    }
+    return true;
+}
+function isIssue(object) {
+    if (!(TypeChecker.isObject(object))) {
+        return false;
+    }
+    try {
+        TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string);
+        TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number);
+        TypeChecker.validateObjectMember(object, 'labels', TypeChecker.Type.object);
+        TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object);
+    }
+    catch (error) {
+        return false;
+    }
+    if (!(isGraphQLPage(object.labels) && isGraphQLPage(object.projectItems))) {
+        return false;
+    }
+    return true;
+}
