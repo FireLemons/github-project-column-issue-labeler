@@ -1,11 +1,11 @@
 import * as TypeChecker from './typeChecker'
 
-interface FieldValues {
-  name?: string // Column Name
+interface FieldValue {
+  name: string // Column Name
 }
 
 interface ProjectItem {
-  fieldValues: GraphQLPage<FieldValues>
+  fieldValues: GraphQLPage<FieldValue>
 }
 
 export interface Label {
@@ -34,16 +34,18 @@ export class GraphQLPage<T> {
   }
 
   appendPage (page: GraphQLPage<T>) {
-    this.page.edges.push(...page.getEdges())
+    this.page.edges.push(...page.#getEdges())
     this.page.pageInfo = page.getPageInfo()
-  }
-
-  getEdges () {
-    return this.page.edges
   }
 
   getEndCursor () {
     return this.page.pageInfo.endCursor
+  }
+
+  getNodeArray () {
+    return this.page.edges.map((edge) => {
+      return edge.node
+    })
   }
 
   getPageNodes (): T[] {
@@ -56,6 +58,10 @@ export class GraphQLPage<T> {
 
   isLastPage () {
     return !(this.page.pageInfo.hasNextPage)
+  }
+
+  #getEdges () {
+    return this.page.edges
   }
 }
 
@@ -72,8 +78,37 @@ export class Issue {
       throw new TypeError('Param issueObject does not match a github issue object')
     }
 
+    // Init label page
+    // Init projectItemPage
+
     this.issue = issueObject
   }
+
+  findColumnName () {
+
+  }
+
+  getId () {
+    return this.issue.id
+  }
+
+  getLabels () {
+
+  }
+
+  getNumber () {
+    return this.issue.number
+  }
+}
+
+function isFieldValue (object: any): boolean {
+  try {
+    TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string)
+  } catch (error) {
+    return false
+  }
+
+  return true
 }
 
 function isGraphQLPage (object: any): boolean {
@@ -120,4 +155,24 @@ function isIssue (object: any): boolean {
   }
 
   return true
+}
+
+function isLabel (object: any): boolean {
+  try {
+    TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string)
+  } catch (error) {
+    return false
+  }
+
+  return true
+}
+
+function isProjectItem (object: any): boolean {
+  try {
+    TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object)
+  } catch (error) {
+    return false
+  }
+
+  return isGraphQLPage(object.fieldValues)
 }

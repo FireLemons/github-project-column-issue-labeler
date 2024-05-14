@@ -34,14 +34,16 @@ class GraphQLPage {
         this.page = pageObject;
     }
     appendPage(page) {
-        this.page.edges.push(...page.getEdges());
+        this.page.edges.push(...page.#getEdges());
         this.page.pageInfo = page.getPageInfo();
-    }
-    getEdges() {
-        return this.page.edges;
     }
     getEndCursor() {
         return this.page.pageInfo.endCursor;
+    }
+    getNodeArray() {
+        return this.page.edges.map((edge) => {
+            return edge.node;
+        });
     }
     getPageNodes() {
         return this.page.edges.map(edge => edge.node);
@@ -52,6 +54,9 @@ class GraphQLPage {
     isLastPage() {
         return !(this.page.pageInfo.hasNextPage);
     }
+    #getEdges() {
+        return this.page.edges;
+    }
 }
 exports.GraphQLPage = GraphQLPage;
 class Issue {
@@ -60,10 +65,31 @@ class Issue {
         if (!(isIssue(issueObject))) {
             throw new TypeError('Param issueObject does not match a github issue object');
         }
+        // Init label page
+        // Init projectItemPage
         this.issue = issueObject;
+    }
+    findColumnName() {
+    }
+    getId() {
+        return this.issue.id;
+    }
+    getLabels() {
+    }
+    getNumber() {
+        return this.issue.number;
     }
 }
 exports.Issue = Issue;
+function isFieldValue(object) {
+    try {
+        TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string);
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
 function isGraphQLPage(object) {
     if (!(TypeChecker.isObject(object))) {
         return false;
@@ -104,4 +130,22 @@ function isIssue(object) {
         return false;
     }
     return true;
+}
+function isLabel(object) {
+    try {
+        TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string);
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
+function isProjectItem(object) {
+    try {
+        TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object);
+    }
+    catch (error) {
+        return false;
+    }
+    return isGraphQLPage(object.fieldValues);
 }
