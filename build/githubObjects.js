@@ -51,6 +51,9 @@ class GraphQLPage {
     getPageInfo() {
         return this.page.pageInfo;
     }
+    isEmpty() {
+        return this.#getEdges().length === 0;
+    }
     isLastPage() {
         return !(this.page.pageInfo.hasNextPage);
     }

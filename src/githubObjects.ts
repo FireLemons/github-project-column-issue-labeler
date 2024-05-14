@@ -14,11 +14,10 @@ export interface Label {
 
 export class GraphQLPage<T> {
   page: {
-    edges: [
-      {
+    edges: {
         node: T
-      }
-    ]
+    }[]
+
     pageInfo: {
       endCursor: string
       hasNextPage: boolean
@@ -54,6 +53,10 @@ export class GraphQLPage<T> {
 
   getPageInfo () {
     return this.page.pageInfo
+  }
+
+  isEmpty () {
+    return this.#getEdges().length === 0
   }
 
   isLastPage () {
