@@ -1,15 +1,23 @@
 import * as TypeChecker from './typeChecker'
 
-interface FieldValue {
+interface Constructable<T> {
+  new (...args: any[]): T;
+}
+
+class FieldValue {
   name: string // Column Name
-}
 
-interface ProjectItem {
-  fieldValues: GraphQLPage<FieldValue>
-}
+  constructor (fieldValuePOJO: any) {
+    if (!isFieldValue(fieldValuePOJO)) {
+      throw new TypeError('Param fieldValuePOJO does not match a field value object')
+    }
 
-export interface Label {
-  name: string
+    this.name = fieldValuePOJO.name
+  }
+
+  getName () {
+    return this.name
+  }
 }
 
 export class GraphQLPage<T> {
@@ -24,17 +32,21 @@ export class GraphQLPage<T> {
     }
   }
 
-  constructor (pageObject: any) {
-    if (!(isGraphQLPage(pageObject))) {
-      throw new TypeError('Param pageObject does not match a graphQL page')
+  constructor (pagePOJO: any) {
+    if (!(isGraphQLPage(pagePOJO))) {
+      throw new TypeError('Param pagePOJO does not match a graphQL page')
     }
 
-    this.page = pageObject
+    this.page = pagePOJO
   }
 
   appendPage (page: GraphQLPage<T>) {
-    this.page.edges.push(...page.#getEdges())
+    this.page.edges.push(...page.getEdges())
     this.page.pageInfo = page.getPageInfo()
+  }
+
+  getEdges () {
+    return this.page.edges
   }
 
   getEndCursor () {
@@ -56,15 +68,11 @@ export class GraphQLPage<T> {
   }
 
   isEmpty () {
-    return this.#getEdges().length === 0
+    return this.getEdges().length === 0
   }
 
   isLastPage () {
     return !(this.page.pageInfo.hasNextPage)
-  }
-
-  #getEdges () {
-    return this.page.edges
   }
 }
 
@@ -72,19 +80,30 @@ export class Issue {
   issue: {
     id: string
     number: number
-    labels: GraphQLPage<Label>
+    labels?: GraphQLPage<Label>
     projectItems: GraphQLPage<ProjectItem>
   }
 
-  constructor (issueObject: any) {
-    if (!(isIssue(issueObject))) {
-      throw new TypeError('Param issueObject does not match a github issue object')
+  constructor (issuePOJO: any) {
+    if (!(isIssue(issuePOJO))) {
+      throw new TypeError('Param issuePOJO does not match a github issue object')
     }
 
-    // Init label page
-    // Init projectItemPage
+    try {
+      issuePOJO.labels = new GraphQLPage(issuePOJO.labels)
+      initializeNodes(Label, issuePOJO.labels)
+    } catch (error) {
+      issuePOJO.labels = undefined
+    }
 
-    this.issue = issueObject
+    try {
+      issuePOJO.projectItemPage = new GraphQLPage(issuePOJO.projectItemPage)
+      initializeNodes(ProjectItem, issuePOJO.projectItemPage)
+    } catch (error) {
+      throw new ReferenceError(`The project item page for issue with id:${issuePOJO.id} could not be initialized`)
+    }
+
+    this.issue = issuePOJO
   }
 
   findColumnName () {
@@ -101,6 +120,77 @@ export class Issue {
 
   getNumber () {
     return this.issue.number
+  }
+}
+
+export class Label {
+  name: string
+
+  constructor (labelPOJO: any) {
+    if (!isLabel(labelPOJO)) {
+      throw new TypeError('Param labelPOJO does not match a label object')
+    }
+
+    this.name = labelPOJO.name
+  }
+
+  getName () {
+    return this.name
+  }
+}
+
+class ProjectItem {
+  columnName?: string
+  fieldValues: GraphQLPage<FieldValue>
+
+  constructor (projectItemPOJO: any) {
+    if (!isProjectItem(projectItemPOJO)) {
+      TypeError('Param projectItemPOJO does not match a project item object')
+    }
+
+    try {
+      projectItemPOJO.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues)
+      initializeNodes(FieldValue, projectItemPOJO.projectItemPage)
+    } catch (error) {
+      throw new ReferenceError(`The field value page could not be initialized`)
+    }
+
+    this.fieldValues = projectItemPOJO.fieldValues
+  }
+
+  findColumnName () {
+    if (this.columnName) {
+      return this.columnName
+    }
+
+    const columnNameList = this.fieldValues.getNodeArray()
+
+    if (columnNameList.length) {
+      this.columnName = columnNameList[0].getName()
+
+      return this.columnName
+    } else if (this.fieldValues.isLastPage()) {
+      throw new ReferenceError('Failed to find column name when searching incomplete field value pages')
+    }
+
+    return null
+  }
+}
+
+function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
+  let i = 0
+  const edges = graphQLPage.getEdges()
+
+  while (i < edges.length) {
+    try {
+      edges[i] = {
+        node: new GithubObjectClass(edges[i].node)
+      }
+
+      i++
+    } catch (error) {
+      edges.splice(i, 1)
+    }
   }
 }
 

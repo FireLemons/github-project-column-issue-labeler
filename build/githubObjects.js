@@ -23,19 +23,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Issue = exports.GraphQLPage = void 0;
+exports.Label = exports.Issue = exports.GraphQLPage = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
+class FieldValue {
+    name; // Column Name
+    constructor(fieldValuePOJO) {
+        if (!isFieldValue(fieldValuePOJO)) {
+            throw new TypeError('Param fieldValuePOJO does not match a field value object');
+        }
+        this.name = fieldValuePOJO.name;
+    }
+    getName() {
+        return this.name;
+    }
+}
 class GraphQLPage {
     page;
-    constructor(pageObject) {
-        if (!(isGraphQLPage(pageObject))) {
-            throw new TypeError('Param pageObject does not match a graphQL page');
+    constructor(pagePOJO) {
+        if (!(isGraphQLPage(pagePOJO))) {
+            throw new TypeError('Param pagePOJO does not match a graphQL page');
         }
-        this.page = pageObject;
+        this.page = pagePOJO;
     }
     appendPage(page) {
-        this.page.edges.push(...page.#getEdges());
+        this.page.edges.push(...page.getEdges());
         this.page.pageInfo = page.getPageInfo();
+    }
+    getEdges() {
+        return this.page.edges;
     }
     getEndCursor() {
         return this.page.pageInfo.endCursor;
@@ -52,25 +67,34 @@ class GraphQLPage {
         return this.page.pageInfo;
     }
     isEmpty() {
-        return this.#getEdges().length === 0;
+        return this.getEdges().length === 0;
     }
     isLastPage() {
         return !(this.page.pageInfo.hasNextPage);
-    }
-    #getEdges() {
-        return this.page.edges;
     }
 }
 exports.GraphQLPage = GraphQLPage;
 class Issue {
     issue;
-    constructor(issueObject) {
-        if (!(isIssue(issueObject))) {
-            throw new TypeError('Param issueObject does not match a github issue object');
+    constructor(issuePOJO) {
+        if (!(isIssue(issuePOJO))) {
+            throw new TypeError('Param issuePOJO does not match a github issue object');
         }
-        // Init label page
-        // Init projectItemPage
-        this.issue = issueObject;
+        try {
+            issuePOJO.labels = new GraphQLPage(issuePOJO.labels);
+            initializeNodes(Label, issuePOJO.labels);
+        }
+        catch (error) {
+            issuePOJO.labels = undefined;
+        }
+        try {
+            issuePOJO.projectItemPage = new GraphQLPage(issuePOJO.projectItemPage);
+            initializeNodes(ProjectItem, issuePOJO.projectItemPage);
+        }
+        catch (error) {
+            throw new ReferenceError(`The project item page for issue with id:${issuePOJO.id} could not be initialized`);
+        }
+        this.issue = issuePOJO;
     }
     findColumnName() {
     }
@@ -84,6 +108,65 @@ class Issue {
     }
 }
 exports.Issue = Issue;
+class Label {
+    name;
+    constructor(labelPOJO) {
+        if (!isLabel(labelPOJO)) {
+            throw new TypeError('Param labelPOJO does not match a label object');
+        }
+        this.name = labelPOJO.name;
+    }
+    getName() {
+        return this.name;
+    }
+}
+exports.Label = Label;
+class ProjectItem {
+    columnName;
+    fieldValues;
+    constructor(projectItemPOJO) {
+        if (!isProjectItem(projectItemPOJO)) {
+            TypeError('Param projectItemPOJO does not match a project item object');
+        }
+        try {
+            projectItemPOJO.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
+            initializeNodes(FieldValue, projectItemPOJO.projectItemPage);
+        }
+        catch (error) {
+            throw new ReferenceError(`The field value page could not be initialized`);
+        }
+        this.fieldValues = projectItemPOJO.fieldValues;
+    }
+    findColumnName() {
+        if (this.columnName) {
+            return this.columnName;
+        }
+        const columnNameList = this.fieldValues.getNodeArray();
+        if (columnNameList.length) {
+            this.columnName = columnNameList[0].getName();
+            return this.columnName;
+        }
+        else if (this.fieldValues.isLastPage()) {
+            throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
+        }
+        return null;
+    }
+}
+function initializeNodes(GithubObjectClass, graphQLPage) {
+    let i = 0;
+    const edges = graphQLPage.getEdges();
+    while (i < edges.length) {
+        try {
+            edges[i] = {
+                node: new GithubObjectClass(edges[i].node)
+            };
+            i++;
+        }
+        catch (error) {
+            edges.splice(i, 1);
+        }
+    }
+}
 function isFieldValue(object) {
     try {
         TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string);
