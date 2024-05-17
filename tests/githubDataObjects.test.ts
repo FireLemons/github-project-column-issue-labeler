@@ -1,6 +1,6 @@
-import { GraphQLPage, IssueWithChildPages } from '../src/githubObjects'
+import { GraphQLPage, Issue } from '../src/githubObjects'
 
-const columnNamePage = {
+const fieldValuePOJOPage = {
   edges: [
     {
       node: {}
@@ -12,11 +12,11 @@ const columnNamePage = {
   }
 }
 
-const projectItemPage = {
+const projectPOJOItemPage = {
   edges: [
     {
       node: {
-        fieldValues: columnNamePage
+        fieldValues: fieldValuePOJOPage
       }
     }
   ],
@@ -26,7 +26,7 @@ const projectItemPage = {
   }
 }
 
-const labelPage = {
+const labelPOJOPage = {
   edges: [
     {
       node: {
@@ -40,13 +40,13 @@ const labelPage = {
   }
 }
 
-const issuePage = {
+const issuePOJOPage = {
   edges: [
     {
       node: {
-        id: "id string",
-        labels: labelPage,
-        projectItems: projectItemPage
+        number: 1,
+        labels: labelPOJOPage,
+        projectItems: projectPOJOItemPage
       }
     }
   ],
@@ -77,16 +77,16 @@ describe('The GraphQLPage class', () => {
     })
 
     test('it throws an error when passed almost a page object', () => {
-      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePage)
+      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePOJOPage)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
       expect(() => {
-        new GraphQLPage<IssueWithChildPages>(nearlyPageObject)
+        new GraphQLPage<Issue>(nearlyPageObject)
       }).toThrow(TypeError)
     })
 
     test('does not throw an error when passed a page', () => {
-      const normalPage = structuredClone(projectItemPage)
+      const normalPage = structuredClone(projectPOJOItemPage)
 
       expect(() => {
         new GraphQLPage(normalPage)
