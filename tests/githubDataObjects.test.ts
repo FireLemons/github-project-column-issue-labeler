@@ -1,9 +1,16 @@
 import { GraphQLPage, Issue } from '../src/githubObjects'
 
+const fieldValuePOJO = {
+  "name": "Todo"
+}
+
 const fieldValuePOJOPage = {
   edges: [
     {
       node: {}
+    },
+    {
+      node: fieldValuePOJO
     }
   ],
   pageInfo: {
@@ -12,12 +19,30 @@ const fieldValuePOJOPage = {
   }
 }
 
+const labelPOJO = {
+  name: "help wanted"
+}
+
+const labelPOJOPage = {
+  edges: [
+    {
+      node: labelPOJO
+    }
+  ],
+  pageInfo: {
+    endCursor: "MQ",
+    hasNextPage: true
+  }
+}
+
+const projectItemPOJO = {
+  fieldValues: fieldValuePOJOPage
+}
+
 const projectPOJOItemPage = {
   edges: [
     {
-      node: {
-        fieldValues: fieldValuePOJOPage
-      }
+      node: projectItemPOJO
     }
   ],
   pageInfo: {
@@ -26,28 +51,16 @@ const projectPOJOItemPage = {
   }
 }
 
-const labelPOJOPage = {
-  edges: [
-    {
-      node: {
-        name: "help wanted"
-      }
-    }
-  ],
-  pageInfo: {
-    endCursor: "MQ",
-    hasNextPage: true
-  }
+const issuePOJO =  {
+  number: 1,
+  labels: labelPOJOPage,
+  projectItems: projectPOJOItemPage
 }
 
 const issuePOJOPage = {
   edges: [
     {
-      node: {
-        number: 1,
-        labels: labelPOJOPage,
-        projectItems: projectPOJOItemPage
-      }
+      node: issuePOJO
     }
   ],
   pageInfo: {
