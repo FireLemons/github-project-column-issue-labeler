@@ -4,7 +4,7 @@ interface Constructable<T> {
   new (...args: any[]): T;
 }
 
-class FieldValue {
+export class FieldValue {
   name: string // Column Name
 
   constructor (fieldValuePOJO: any) {
@@ -139,7 +139,7 @@ export class Label {
   }
 }
 
-class ProjectItem {
+export class ProjectItem {
   columnName?: string
   fieldValues: GraphQLPage<FieldValue>
 
@@ -177,7 +177,7 @@ class ProjectItem {
   }
 }
 
-function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
+export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
   let i = 0
   const edges = graphQLPage.getEdges()
 

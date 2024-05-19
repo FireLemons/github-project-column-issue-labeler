@@ -30,7 +30,7 @@ const labelPOJOPage = {
     }
   ],
   pageInfo: {
-    endCursor: "MQ",
+    endCursor: "UjLu&s>'NWO+eo_Z|Cg(",
     hasNextPage: true
   }
 }
@@ -119,7 +119,7 @@ describe('The GraphQLPage class', () => {
       }).toThrow(TypeError)
     })
 
-    test('it throws an error when passed an object not matching the structure of a page', () => {
+    test('it throws an error when passed an object not matching a graphQL page', () => {
       const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePOJOPage)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
@@ -139,45 +139,72 @@ describe('The GraphQLPage class', () => {
 
   describe('getEdges()', () => {
     it('returns the edges of the graphQL page', () => {
+      const page = new GraphQLPage(labelPOJOPage)
 
+      expect(page.getEdges()).toBe(labelPOJOPage.edges)
     })
   })
 
   describe('getEndCursor()', () => {
     it('returns the end cursor of the graphQL page', () => {
+      const page = new GraphQLPage(labelPOJOPage)
 
+      expect(page.getEndCursor()).toBe(labelPOJOPage.pageInfo.endCursor)
     })
   })
 
   describe('getNodeArray()', () => {
     it('returns the nodes of the graphQL page as an array', () => {
-      
+      const page = new GraphQLPage(fieldValuePOJOPage)
+
+      expect(page.getNodeArray()).toEqual([
+        {},
+        fieldValuePOJO
+      ])
     })
   })
 
   describe('getPageInfo()', () => {
     it('returns the page info of the graphQL page', () => {
-      
+      const page = new GraphQLPage(labelPOJOPage)
+
+      expect(page.getPageInfo()).toBe(labelPOJOPage.pageInfo)
     })
   })
 
   describe('isEmpty()', () => {
     it('returns true if the page does not have nodes', () => {
-      
+      const labelPOJOPageCopy = structuredClone(labelPOJOPage)
+
+      labelPOJOPageCopy.edges = []
+
+      const labelPage = new GraphQLPage(labelPOJOPageCopy)
+
+      expect(labelPage.isEmpty()).toBeTruthy()
     })
 
     it('returns false if the page has nodes', () => {
-      
+      const labelPage = new GraphQLPage(labelPOJOPage)
+
+      expect(labelPage.isEmpty()).toBeFalsy()
     })
   })
 
   describe('isLastPage()', () => {
     it('returns true if the pageInfo indicates the page is the last page', () => {
-      
+      const labelPOJOPageCopy = structuredClone(labelPOJOPage)
+
+      labelPOJOPageCopy.pageInfo.hasNextPage = false
+
+      const labelPage = new GraphQLPage(labelPOJOPageCopy)
+
+      expect(labelPage.isLastPage()).toBeTruthy()
     })
 
     it('returns false if the pageInfo indicates the page is not the last page', () => {
-      
+      const labelPage = new GraphQLPage(labelPOJOPage)
+
+      expect(labelPage.isLastPage()).toBeFalsy()
     })
   })
 })

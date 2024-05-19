@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Label = exports.Issue = exports.GraphQLPage = void 0;
+exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPage = exports.FieldValue = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
 class FieldValue {
     name; // Column Name
@@ -37,6 +37,7 @@ class FieldValue {
         return this.name;
     }
 }
+exports.FieldValue = FieldValue;
 class GraphQLPage {
     page;
     constructor(pagePOJO) {
@@ -152,6 +153,7 @@ class ProjectItem {
         return null;
     }
 }
+exports.ProjectItem = ProjectItem;
 function initializeNodes(GithubObjectClass, graphQLPage) {
     let i = 0;
     const edges = graphQLPage.getEdges();
@@ -167,6 +169,7 @@ function initializeNodes(GithubObjectClass, graphQLPage) {
         }
     }
 }
+exports.initializeNodes = initializeNodes;
 function isFieldValue(object) {
     try {
         TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string);
