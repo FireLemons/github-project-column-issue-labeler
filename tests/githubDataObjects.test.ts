@@ -69,6 +69,16 @@ const issuePOJOPage = {
   }
 }
 
+describe('The FieldValue class', () => {
+  describe('constructor', () => {
+    
+  })
+
+  describe('getName()', () => {
+
+  })
+})
+
 describe('The GraphQLPage class', () => {
   describe('constructor', () => {
     test('it throws an error when not passed an object', () => {
@@ -89,7 +99,7 @@ describe('The GraphQLPage class', () => {
       }).toThrow(TypeError)
     })
 
-    test('it throws an error when passed almost a page object', () => {
+    test('it throws an error when passed an object not matching the structure of a page', () => {
       const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePOJOPage)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
@@ -106,4 +116,74 @@ describe('The GraphQLPage class', () => {
       }).not.toThrow(TypeError)
     })
   })
+
+  describe('getEdges()', () => {
+    
+  })
+
+  describe('getEndCursor()', () => {
+    
+  })
+
+  describe('getNodeArray()', () => {
+    
+  })
+
+  describe('getPageInfo()', () => {
+    
+  })
+
+  describe('isEmpty()', () => {
+    
+  })
+
+  describe('isLastPage()', () => {
+    
+  })
+})
+
+describe('The Issue class', () => {
+  describe('constructor', () => {
+
+  })
+
+  describe('findColumnName()', () => {
+
+  })
+
+  describe('getId()', () => {
+
+  })
+  
+  describe('getLabels()', () => {
+
+  })
+
+  describe('getNumber()', () => {
+
+  })
+})
+
+describe('The Label class', () => {
+  describe('constructor', () => {
+
+  })
+
+  describe('getName()', () => {
+
+  })
+})
+
+describe('The ProjectItem class', () => {
+  describe('constructor', () => {
+
+  })
+
+  describe('findColumnName()', () => {
+
+  })
+})
+
+describe('initializeNodes()', () => {
+
 })
