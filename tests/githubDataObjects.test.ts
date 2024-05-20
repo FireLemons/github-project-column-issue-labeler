@@ -39,7 +39,7 @@ const projectItemPOJO = {
   fieldValues: fieldValuePOJOPage
 }
 
-const projectPOJOItemPage = {
+const projectItemPOJOPage = {
   edges: [
     {
       node: projectItemPOJO
@@ -54,7 +54,7 @@ const projectPOJOItemPage = {
 const issuePOJO =  {
   number: 1,
   labels: labelPOJOPage,
-  projectItems: projectPOJOItemPage
+  projectItems: projectItemPOJOPage
 }
 
 const issuePOJOPage = {
@@ -129,7 +129,7 @@ describe('The GraphQLPage class', () => {
     })
 
     test('does not throw an error when passed a page', () => {
-      const normalPage = structuredClone(projectPOJOItemPage)
+      const normalPage = structuredClone(projectItemPOJOPage)
 
       expect(() => {
         new GraphQLPage(normalPage)
@@ -212,23 +212,49 @@ describe('The GraphQLPage class', () => {
 describe('The Issue class', () => {
   describe('constructor', () => {
     it('throws an error when passed a non object value', () => {
-      
+      expect(() => {
+        new Issue(2)
+      }).toThrow()
     })
 
     it('throws an error when passed an object not matching an issue', () => {
-      
+      expect(() => {
+        new Issue({
+          number: 1,
+          labels: 'wrong type for labels value',
+          projectItems: projectItemPOJOPage
+        })
+      }).toThrow()
     })
 
     it('throws an error when passed an issue object with an invalid project item page', () => {
-      
+      expect(() => {
+        new Issue({
+          number: 1,
+          labels: labelPOJOPage,
+          projectItems: {
+            pageInfo: null
+          }
+        })
+      }).toThrow()
     })
 
     it('successfully constructs the Issue when passed a valid object', () => {
-      
+      expect(() => {
+        new Issue(issuePOJO)
+      }).not.toThrow()
     })
 
     it('successfully constructs the Issue when passed an issue object with an invalid label page', () => {
-      
+      expect(() => {
+        new Issue({
+          number: 1,
+          labels: {
+            pageInfo: null
+          },
+          projectItems: projectItemPOJOPage
+        })
+      }).not.toThrow()
     })
   })
 
@@ -242,12 +268,6 @@ describe('The Issue class', () => {
     })
 
     it('returns true if the column name could be found', () => {
-      
-    })
-  })
-
-  describe('getId()', () => {
-    it('returns the id of the Issue instance', () => {
       
     })
   })
