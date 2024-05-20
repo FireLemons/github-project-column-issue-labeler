@@ -237,10 +237,6 @@ function isIssue (object: any): boolean {
     return false
   }
 
-  if (!(isGraphQLPage(object.labels) && isGraphQLPage(object.projectItems))) {
-    return false
-  }
-
   return true
 }
 
@@ -261,5 +257,5 @@ function isProjectItem (object: any): boolean {
     return false
   }
 
-  return isGraphQLPage(object.fieldValues)
+  return true
 }

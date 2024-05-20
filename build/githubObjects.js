@@ -211,9 +211,6 @@ function isIssue(object) {
     catch (error) {
         return false;
     }
-    if (!(isGraphQLPage(object.labels) && isGraphQLPage(object.projectItems))) {
-        return false;
-    }
     return true;
 }
 function isLabel(object) {
@@ -232,5 +229,5 @@ function isProjectItem(object) {
     catch (error) {
         return false;
     }
-    return isGraphQLPage(object.fieldValues);
+    return true;
 }
