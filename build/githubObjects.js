@@ -89,18 +89,15 @@ class Issue {
             issuePOJO.labels = undefined;
         }
         try {
-            issuePOJO.projectItemPage = new GraphQLPage(issuePOJO.projectItemPage);
-            initializeNodes(ProjectItem, issuePOJO.projectItemPage);
+            issuePOJO.projectItems = new GraphQLPage(issuePOJO.projectItems);
+            initializeNodes(ProjectItem, issuePOJO.projectItems);
         }
         catch (error) {
-            throw new ReferenceError(`The project item page for issue with id:${issuePOJO.id} could not be initialized`);
+            throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
         this.issue = issuePOJO;
     }
     findColumnName() {
-    }
-    getId() {
-        return this.issue.id;
     }
     getLabels() {
     }
@@ -207,7 +204,6 @@ function isIssue(object) {
         return false;
     }
     try {
-        TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string);
         TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number);
         TypeChecker.validateObjectMember(object, 'labels', TypeChecker.Type.object);
         TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object);
