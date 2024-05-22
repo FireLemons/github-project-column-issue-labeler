@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, Issue } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, Issue, Label } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -327,15 +327,21 @@ describe('The Issue class', () => {
 describe('The Label class', () => {
   describe('constructor', () => {
     it('throws an error when passed a non object value', () => {
-      
+      expect(() => {
+        new Label(3)
+      }).toThrow()
     })
 
     it('throws an error when passed an object not matching a label', () => {
-      
+      expect(() => {
+        new Label({})
+      }).toThrow()
     })
 
     it('successfully constructs the Label when passed a valid object', () => {
-      
+      expect(() => {
+        new Label(labelPOJO)
+      }).not.toThrow()
     })
   })
 
