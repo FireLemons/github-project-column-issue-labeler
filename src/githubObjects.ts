@@ -88,21 +88,25 @@ export class Issue {
       throw new TypeError('Param issuePOJO does not match a github issue object')
     }
 
+    const issueState: any = {
+      number: issuePOJO.number
+    }
+
     try {
-      issuePOJO.labels = new GraphQLPage(issuePOJO.labels)
-      initializeNodes(Label, issuePOJO.labels)
+      issueState.labels = new GraphQLPage(issuePOJO.labels)
+      initializeNodes(Label, issueState.labels)
     } catch (error) {
       issuePOJO.labels = undefined
     }
 
     try {
-      issuePOJO.projectItems = new GraphQLPage(issuePOJO.projectItems)
-      initializeNodes(ProjectItem, issuePOJO.projectItems)
+      issueState.projectItems = new GraphQLPage(issuePOJO.projectItems)
+      initializeNodes(ProjectItem, issueState.projectItems)
     } catch (error) {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.issue = issuePOJO
+    this.issue = issueState
   }
 
   findColumnName () {
@@ -110,7 +114,13 @@ export class Issue {
   }
 
   getLabels () {
+    if (this.issue.labels) {
+      return this.issue.labels.getNodeArray().map((label: Label) => {
+        return label.getName()
+      })
+    }
 
+    return null
   }
 
   getNumber () {
