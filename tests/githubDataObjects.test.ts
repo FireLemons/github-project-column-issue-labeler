@@ -1,7 +1,7 @@
 import { FieldValue, GraphQLPage, Issue } from '../src/githubObjects'
 
 const fieldValuePOJO = {
-  "name": "AnSVq5a_ibi2E*M<|/>'"
+  name: 'AnSVq5a_ibi2E*M<|/>'
 }
 
 const fieldValuePOJOPage = {
@@ -14,13 +14,13 @@ const fieldValuePOJOPage = {
     }
   ],
   pageInfo: {
-    endCursor: "MQ",
+    endCursor: 'MQ',
     hasNextPage: true
   }
 }
 
 const labelPOJO = {
-  name: "help wanted"
+  name: '5~hg?<[kjHwGhUII-p:'
 }
 
 const labelPOJOPage = {
@@ -30,7 +30,7 @@ const labelPOJOPage = {
     }
   ],
   pageInfo: {
-    endCursor: "UjLu&s>'NWO+eo_Z|Cg(",
+    endCursor: 'UjLu&s>NWO+eo_Z|Cg(',
     hasNextPage: true
   }
 }
@@ -46,13 +46,13 @@ const projectItemPOJOPage = {
     }
   ],
   pageInfo: {
-    endCursor: "MQ",
+    endCursor: 'MQ',
     hasNextPage: false
   }
 }
 
 const issuePOJO =  {
-  number: 1,
+  number: 1009,
   labels: labelPOJOPage,
   projectItems: projectItemPOJOPage
 }
@@ -64,8 +64,22 @@ const issuePOJOPage = {
     }
   ],
   pageInfo: {
-    endCursor: "cursor",
+    endCursor: 'cursor',
     hasNextPage: true
+  }
+}
+
+function addNodes (page: any, nodes: any[] | any) {
+  if (Array.isArray(nodes)) {
+    page.edges.push(...nodes.map((node) => {
+      return {
+        node: node
+      }
+    }))
+  } else {
+    page.edges.push({
+      node: nodes
+    })
   }
 }
 
@@ -274,13 +288,38 @@ describe('The Issue class', () => {
   
   describe('getLabels()', () => {
     it('returns the labels of the Issue instance as an array', () => {
-      
+      const issuePOJOCopy = structuredClone(issuePOJO)
+
+      addNodes(issuePOJOCopy.labels, [
+        {
+          name: 'jC8?&U0V`Cch4)II/10#'
+        },
+        {
+          name: 'lA0$,&jb.>d<Hi3{*[B'
+        }
+      ])
+
+      const issue = new Issue(issuePOJOCopy)
+
+      expect(issue.getLabels()).toEqual(expect.arrayContaining(['jC8?&U0V`Cch4)II/10#', 'lA0$,&jb.>d<Hi3{*[B', '5~hg?<[kjHwGhUII-p:']))
+    })
+
+    it('returns null when the label page cannot be initialized', () => {
+      const issuePOJOCopy: any = structuredClone(issuePOJO)
+
+      issuePOJOCopy.labels = {}
+
+      const issue = new Issue(issuePOJOCopy)
+
+      expect(issue.getLabels()).toBe(null)
     })
   })
 
   describe('getNumber()', () => {
     it('returns the number of the Issue instance', () => {
-      
+      const issue = new Issue(issuePOJO)
+
+      expect(issue.getNumber()).toBe(issuePOJO.number)
     })
   })
 })
