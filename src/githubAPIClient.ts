@@ -98,6 +98,10 @@ export class GithubAPIClient {
       fragment projectItemPage on ProjectV2ItemConnection {
         edges {
           node {
+            project {
+              title
+            }
+
             fieldValues (first: $pageSizeProjectField) {
               ...projectFieldPage
             }
