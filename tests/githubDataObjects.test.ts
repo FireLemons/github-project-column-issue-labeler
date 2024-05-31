@@ -347,7 +347,9 @@ describe('The Label class', () => {
 
   describe('getName()', () => {
     it('returns the name of the Label instance', () => {
-      
+      const label = new Label(labelPOJO)
+
+      expect(label.getName()).toBe(labelPOJO.name)
     })
   })
 })
