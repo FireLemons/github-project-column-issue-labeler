@@ -77,6 +77,7 @@ class GraphQLPage {
 exports.GraphQLPage = GraphQLPage;
 class Issue {
     issue;
+    columnNameSearchCursors;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
@@ -101,6 +102,7 @@ class Issue {
         this.issue = issueState;
     }
     findColumnName() {
+        const projectItems = this.issue.projectItems.getNodeArray();
     }
     getLabels() {
         if (this.issue.labels) {
@@ -131,18 +133,19 @@ exports.Label = Label;
 class ProjectItem {
     columnName;
     fieldValues;
+    projectName;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
             TypeError('Param projectItemPOJO does not match a project item object');
         }
+        this.projectName = projectItemPOJO.project.title;
         try {
-            projectItemPOJO.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
+            this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
             initializeNodes(FieldValue, projectItemPOJO.projectItemPage);
         }
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);
         }
-        this.fieldValues = projectItemPOJO.fieldValues;
     }
     findColumnName() {
         if (this.columnName) {
@@ -157,6 +160,9 @@ class ProjectItem {
             throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
         }
         return null;
+    }
+    getProjectName() {
+        return this.projectName;
     }
 }
 exports.ProjectItem = ProjectItem;
@@ -234,6 +240,9 @@ function isLabel(object) {
 function isProjectItem(object) {
     try {
         TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object);
+        TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object);
+        const { project } = object;
+        TypeChecker.validateObjectMember(project, 'title', TypeChecker.Type.string);
     }
     catch (error) {
         return false;

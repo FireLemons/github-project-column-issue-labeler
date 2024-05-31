@@ -83,6 +83,14 @@ export class Issue {
     projectItems: GraphQLPage<ProjectItem>
   }
 
+  columnNameSearchCursors?: {
+    lastSearchedProjectItemIndex?: number
+    projectItemsWithUnsearchedFieldValues?: {
+      projectItem: ProjectItem
+      lastSearchedFieldValueIndex: number
+    }[]
+  }
+
   constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
       throw new TypeError('Param issuePOJO does not match a github issue object')
@@ -110,6 +118,8 @@ export class Issue {
   }
 
   findColumnName () {
+    const projectItems = this.issue.projectItems.getNodeArray()
+
 
   }
 
@@ -147,20 +157,21 @@ export class Label {
 export class ProjectItem {
   columnName?: string
   fieldValues: GraphQLPage<FieldValue>
+  projectName: string
 
   constructor (projectItemPOJO: any) {
     if (!isProjectItem(projectItemPOJO)) {
       TypeError('Param projectItemPOJO does not match a project item object')
     }
 
+    this.projectName = projectItemPOJO.project.title
+
     try {
-      projectItemPOJO.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues)
+      this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues)
       initializeNodes(FieldValue, projectItemPOJO.projectItemPage)
     } catch (error) {
       throw new ReferenceError(`The field value page could not be initialized`)
     }
-
-    this.fieldValues = projectItemPOJO.fieldValues
   }
 
   findColumnName () {
@@ -179,6 +190,10 @@ export class ProjectItem {
     }
 
     return null
+  }
+
+  getProjectName () {
+    return this.projectName
   }
 }
 
@@ -263,6 +278,11 @@ function isLabel (object: any): boolean {
 function isProjectItem (object: any): boolean {
   try {
     TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object)
+    TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object)
+
+    const { project } = object
+
+    TypeChecker.validateObjectMember(project, 'title', TypeChecker.Type.string)
   } catch (error) {
     return false
   }

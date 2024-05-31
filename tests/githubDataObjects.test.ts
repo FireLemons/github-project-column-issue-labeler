@@ -384,6 +384,12 @@ describe('The ProjectItem class', () => {
       
     })
   })
+
+  describe('getProjectName()', () => {
+    it('returns the name of the ProjectItem\'s parent project', () => {
+
+    })
+  })
 })
 
 describe('initializeNodes()', () => {
