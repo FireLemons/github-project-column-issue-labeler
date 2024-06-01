@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, Issue, Label } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, Issue, Label, ProjectItem } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -36,7 +36,10 @@ const labelPOJOPage = {
 }
 
 const projectItemPOJO = {
-  fieldValues: fieldValuePOJOPage
+  fieldValues: fieldValuePOJOPage,
+  project: {
+    title: 'y%O/"!D%ZvpvkD$2cw_W'
+  },
 }
 
 const projectItemPOJOPage = {
@@ -88,13 +91,13 @@ describe('The FieldValue class', () => {
     it('throws an error when passed a non object value', () => {
       expect(() => {
         new FieldValue(3)
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed an object not matching a field value', () => {
       expect(() => {
         new FieldValue({})
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('successfully constructs the FieldValue when passed a valid object', () => {
@@ -228,7 +231,7 @@ describe('The Issue class', () => {
     it('throws an error when passed a non object value', () => {
       expect(() => {
         new Issue(2)
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed an object not matching an issue', () => {
@@ -238,7 +241,7 @@ describe('The Issue class', () => {
           labels: 'wrong type for labels value',
           projectItems: projectItemPOJOPage
         })
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed an issue object with an invalid project item page', () => {
@@ -250,7 +253,7 @@ describe('The Issue class', () => {
             pageInfo: null
           }
         })
-      }).toThrow()
+      }).toThrow(ReferenceError)
     })
 
     it('successfully constructs the Issue when passed a valid object', () => {
@@ -329,13 +332,13 @@ describe('The Label class', () => {
     it('throws an error when passed a non object value', () => {
       expect(() => {
         new Label(3)
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed an object not matching a label', () => {
       expect(() => {
         new Label({})
-      }).toThrow()
+      }).toThrow(TypeError)
     })
 
     it('successfully constructs the Label when passed a valid object', () => {
@@ -357,19 +360,31 @@ describe('The Label class', () => {
 describe('The ProjectItem class', () => {
   describe('constructor', () => {
     it('throws an error when passed a non object value', () => {
-      
+      expect(() => {
+        new ProjectItem(3)
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed an object not matching a project item', () => {
-      
+      expect(() => {
+        new ProjectItem({})
+      }).toThrow(TypeError)
     })
 
     it('throws an error when passed a project item object with an invalid field value page', () => {
-      
+      const projectItemPOJOCopy: any = structuredClone(projectItemPOJO)
+
+      projectItemPOJOCopy.fieldValues = {}
+
+      expect(() => {
+        new ProjectItem(projectItemPOJOCopy)
+      }).toThrow(ReferenceError)
     })
 
     it('successfully constructs the ProjectItem when passed a valid object', () => {
-      
+      expect(() => {
+        new ProjectItem(projectItemPOJO)
+      }).not.toThrow()
     })
   })
 
@@ -389,7 +404,9 @@ describe('The ProjectItem class', () => {
 
   describe('getProjectName()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
+      const projectItem = new ProjectItem(projectItemPOJO)
 
+      expect(projectItem.getProjectName()).toBe(projectItemPOJO.project.title)
     })
   })
 })

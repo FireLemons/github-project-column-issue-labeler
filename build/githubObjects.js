@@ -141,7 +141,7 @@ class ProjectItem {
         this.projectName = projectItemPOJO.project.title;
         try {
             this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
-            initializeNodes(FieldValue, projectItemPOJO.projectItemPage);
+            initializeNodes(FieldValue, this.fieldValues);
         }
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);
