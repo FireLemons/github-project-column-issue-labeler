@@ -74,12 +74,14 @@ class GithubAPIClient {
       fragment projectItemPage on ProjectV2ItemConnection {
         edges {
           node {
-            project {
-              title
-            }
+            databaseId
 
             fieldValues (first: $pageSizeProjectField) {
               ...projectFieldPage
+            }
+
+            project {
+              title
             }
           }
         },

@@ -77,6 +77,7 @@ class GraphQLPage {
 exports.GraphQLPage = GraphQLPage;
 class Issue {
     issue;
+    columnName;
     columnNameSearchCursors;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
@@ -99,10 +100,25 @@ class Issue {
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
+        this.columnNameSearchCursors = {
+            lastUnsearchedProjectItemIndex: 0,
+            projectItemsWithUnsearchedFieldValues: []
+        };
         this.issue = issueState;
     }
     findColumnName() {
         const projectItems = this.issue.projectItems.getNodeArray();
+        for (let i = this.columnNameSearchCursors.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
+            try {
+                const columnName = projectItems[i].findColumnName();
+                if (columnName) {
+                    this.columnName = columnName;
+                }
+            }
+            catch (error) {
+                this.columnNameSearchCursors.projectItemsWithUnsearchedFieldValues;
+            }
+        }
     }
     getLabels() {
         if (this.issue.labels) {
@@ -132,13 +148,14 @@ class Label {
 exports.Label = Label;
 class ProjectItem {
     columnName;
+    databaseId;
     fieldValues;
+    firstUnsearchedFieldValueIndex;
     projectName;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
-            TypeError('Param projectItemPOJO does not match a project item object');
+            throw new TypeError('Param projectItemPOJO does not match a project item object');
         }
-        this.projectName = projectItemPOJO.project.title;
         try {
             this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
             initializeNodes(FieldValue, this.fieldValues);
@@ -146,6 +163,9 @@ class ProjectItem {
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);
         }
+        this.databaseId = projectItemPOJO.databaseId;
+        this.firstUnsearchedFieldValueIndex = 0;
+        this.projectName = projectItemPOJO.project.title;
     }
     findColumnName() {
         if (this.columnName) {
@@ -156,10 +176,13 @@ class ProjectItem {
             this.columnName = columnNameList[0].getName();
             return this.columnName;
         }
-        else if (this.fieldValues.isLastPage()) {
+        else if (!(this.fieldValues.isLastPage())) {
             throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
         }
         return null;
+    }
+    getId() {
+        return this.databaseId;
     }
     getProjectName() {
         return this.projectName;
@@ -229,6 +252,9 @@ function isIssue(object) {
     return true;
 }
 function isLabel(object) {
+    if (!(TypeChecker.isObject(object))) {
+        return false;
+    }
     try {
         TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string);
     }
@@ -238,7 +264,11 @@ function isLabel(object) {
     return true;
 }
 function isProjectItem(object) {
+    if (!(TypeChecker.isObject(object))) {
+        return false;
+    }
     try {
+        TypeChecker.validateObjectMember(object, 'databaseId', TypeChecker.Type.number);
         TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object);
         TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object);
         const { project } = object;
