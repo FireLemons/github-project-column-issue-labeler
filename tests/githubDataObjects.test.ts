@@ -36,6 +36,7 @@ const labelPOJOPage = {
 }
 
 const projectItemPOJO = {
+  databaseId: 65248239,
   fieldValues: fieldValuePOJOPage,
   project: {
     title: 'y%O/"!D%ZvpvkD$2cw_W'
@@ -227,6 +228,14 @@ describe('The GraphQLPage class', () => {
 })
 
 describe('The Issue class', () => {
+  beforeEach(() => { // The Issue constructor mutates the projectItemPOJO sub-object. This avoids the mutation persisting through to other tests
+    projectItemPOJOPage.edges[0].node = structuredClone(projectItemPOJO)
+  })
+
+  afterEach(() => {
+    projectItemPOJOPage.edges[0].node = projectItemPOJO
+  })
+
   describe('constructor', () => {
     it('throws an error when passed a non object value', () => {
       expect(() => {
@@ -383,28 +392,43 @@ describe('The ProjectItem class', () => {
 
     it('successfully constructs the ProjectItem when passed a valid object', () => {
       expect(() => {
-        new ProjectItem(projectItemPOJO)
+        new ProjectItem(structuredClone(projectItemPOJO))
       }).not.toThrow()
     })
   })
 
   describe('findColumnName()', () => {
-    it('returns false if the column name could not be found with complete pages', () => {
-      
+    it('returns null if the column name could not be found with complete pages', () => {
+      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
+
+      projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false
+      projectItemPOJOCopy.fieldValues.edges.splice(1, 1)
+
+      const projectItem = new ProjectItem(projectItemPOJOCopy)
+
+      expect(projectItem.findColumnName()).toBe(null)
     })
 
     it('throws an error if the could name could not be found with incomplete pages', () => {
-      
+      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
     })
 
     it('returns true if the column name could be found', () => {
-      
+      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
+    })
+  })
+
+  describe('getId()', () => {
+    it('returns the id of the project item', () => {
+      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
+
+      expect(projectItem.getId()).toBe(projectItemPOJO.databaseId)
     })
   })
 
   describe('getProjectName()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
-      const projectItem = new ProjectItem(projectItemPOJO)
+      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
 
       expect(projectItem.getProjectName()).toBe(projectItemPOJO.project.title)
     })
@@ -413,7 +437,7 @@ describe('The ProjectItem class', () => {
 
 describe('initializeNodes()', () => {
   it('converts all valid nodes to instances of the class parameter', () => {
-      
+    
   })
 
   it('discards edges containing nodes that could not be instantiated', () => {
