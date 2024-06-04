@@ -410,11 +410,25 @@ describe('The ProjectItem class', () => {
     })
 
     it('throws an error if the could name could not be found with incomplete pages', () => {
-      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
+      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
+
+      projectItemPOJOCopy.fieldValues.edges.splice(1, 1)
+
+      const projectItem = new ProjectItem(projectItemPOJOCopy)
+
+      expect(() => {
+        projectItem.findColumnName()
+      }).toThrow(ReferenceError)
     })
 
     it('returns true if the column name could be found', () => {
-      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
+      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
+
+      projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false
+
+      const projectItem = new ProjectItem(projectItemPOJOCopy)
+
+      expect(projectItem.findColumnName()).toBe(fieldValuePOJO.name)
     })
   })
 
