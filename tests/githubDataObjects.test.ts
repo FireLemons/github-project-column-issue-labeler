@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, Issue, Label, ProjectItem } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, Issue, Label, ProjectItem, initializeNodes } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -451,10 +451,54 @@ describe('The ProjectItem class', () => {
 
 describe('initializeNodes()', () => {
   it('converts all valid nodes to instances of the class parameter', () => {
-    
+    const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+    const fieldValuePOJO2 = {
+      name: '+=Xh(TZCqK}e\@]O1s[@'
+    }
+
+    fieldValuePOJOPageCopy.edges.push({
+      node: fieldValuePOJO2
+    })
+
+    const graphQLPage = new GraphQLPage(fieldValuePOJOPageCopy)
+
+    initializeNodes(FieldValue, graphQLPage)
+
+    const instantiatedNodes = graphQLPage.getNodeArray()
+
+    expect(instantiatedNodes.find((node) => {
+      return node instanceof FieldValue && node.getName() === fieldValuePOJO.name
+    })).not.toBe(undefined)
+
+    expect(instantiatedNodes.find((node) => {
+      return node instanceof FieldValue && node.getName() === fieldValuePOJO2.name
+    })).not.toBe(undefined)
   })
 
   it('discards edges containing nodes that could not be instantiated', () => {
-      
+    const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+    const fieldValuePOJOInvalid: any = {
+      columnName: '+=Xh(TZCqK}e\@]O1s[@'
+    }
+
+    fieldValuePOJOPageCopy.edges.push({
+      node: fieldValuePOJOInvalid
+    })
+
+    const graphQLPage = new GraphQLPage(fieldValuePOJOPageCopy)
+
+    initializeNodes(FieldValue, graphQLPage)
+
+    const instantiatedNodes = graphQLPage.getNodeArray()
+
+    expect(instantiatedNodes.find((node) => {
+      return node instanceof FieldValue && node.getName() === fieldValuePOJO.name
+    })).not.toBe(undefined)
+
+    expect(instantiatedNodes.find((node) => {
+      return node instanceof FieldValue && node.getName() === fieldValuePOJOInvalid.name
+    })).toBe(undefined)
+
+    expect(instantiatedNodes.length).toBe(1)
   })
 })
