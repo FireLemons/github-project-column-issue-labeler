@@ -20,6 +20,18 @@ export class FieldValue {
   }
 }
 
+export class RecordWithID {
+  id: number | string
+
+  constructor(uid: number | string) {
+    this.id = uid
+  }
+
+  getId () {
+    return this.id
+  }
+}
+
 export class GraphQLPage<T> {
   page: {
     edges: {
@@ -43,6 +55,14 @@ export class GraphQLPage<T> {
   appendPage (page: GraphQLPage<T>) {
     this.page.edges.push(...page.getEdges())
     this.page.pageInfo = page.getPageInfo()
+  }
+
+  delete (index: number): T {
+    if ( 0 > index || index >= this.page.edges.length ) {
+      throw new RangeError('Param index out of range')
+    }
+
+    return this.page.edges.splice(index, 1)[0].node
   }
 
   getEdges () {
@@ -76,6 +96,40 @@ export class GraphQLPage<T> {
   }
 }
 
+export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>{
+  deletedNodeIds: Map<string | number, null>
+
+  constructor (pagePOJO: any) {
+    super(pagePOJO)
+
+    this.deletedNodeIds = new Map()
+  }
+
+  delete (index: number): T {
+    if ( 0 > index || index >= this.page.edges.length ) {
+      throw new RangeError('Param index out of range')
+    }
+
+    const deletedNode = this.page.edges.splice(index, 1)[0].node
+
+    this.deletedNodeIds.set(deletedNode.getId(), null)
+
+    return deletedNode
+  }
+
+  merge (page: GraphQLPageMergeable<T>) {
+    if (this.isEmpty()) {
+      return
+    }
+
+    const firstNode = this.page.edges[0].node
+
+    if (!(firstNode instanceof RecordWithID)) {
+      throw new ReferenceError('')
+    }
+  }
+}
+
 export class Issue {
   issue: {
     number: number
@@ -85,9 +139,9 @@ export class Issue {
 
   columnName?: string
 
-  columnNameSearchCursors: {
+  columnNameSearchIndicies: {
     lastUnsearchedProjectItemIndex: number
-    projectItemsWithUnsearchedFieldValues: ProjectItem[]
+    projectItemsWithUnsearchedFieldValues: Map<number, ProjectItem>
   }
 
   constructor (issuePOJO: any) {
@@ -113,25 +167,34 @@ export class Issue {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.columnNameSearchCursors = {
+    this.columnNameSearchIndicies = {
       lastUnsearchedProjectItemIndex: 0,
-      projectItemsWithUnsearchedFieldValues: []
+      projectItemsWithUnsearchedFieldValues: new Map()
     }
     this.issue = issueState
   }
 
   findColumnName () {
-    const projectItems = this.issue.projectItems.getNodeArray()
+    if (this.columnName) {
+      return this.columnName
+    }
 
-    for (let i = this.columnNameSearchCursors.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
+    const projectItems = this.issue.projectItems.getNodeArray().concat(Array.from(this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.values()))
+
+    for (let i = this.columnNameSearchIndicies.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
+      const projectItem = projectItems[i]
+
       try {
-        const columnName = projectItems[i].findColumnName()
+        const columnName = projectItem.findColumnName()
 
         if (columnName) {
           this.columnName = columnName
+          return
         }
       } catch (error) {
-        this.columnNameSearchCursors.projectItemsWithUnsearchedFieldValues
+        if (error instanceof ReferenceError) {
+          this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.set(projectItem.id, projectItem)
+        }
       }
     }
   }
@@ -167,11 +230,10 @@ export class Label {
   }
 }
 
-export class ProjectItem {
+export class ProjectItem extends RecordWithID{
   columnName?: string
-  databaseId: number
   fieldValues: GraphQLPage<FieldValue>
-  firstUnsearchedFieldValueIndex: number
+  declare id: number
   projectName: string
 
   constructor (projectItemPOJO: any) {
@@ -179,15 +241,14 @@ export class ProjectItem {
       throw new TypeError('Param projectItemPOJO does not match a project item object')
     }
 
+    super(projectItemPOJO.databaseId)
+
     try {
       this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues)
       initializeNodes(FieldValue, this.fieldValues)
     } catch (error) {
       throw new ReferenceError(`The field value page could not be initialized`)
     }
-
-    this.databaseId = projectItemPOJO.databaseId
-    this.firstUnsearchedFieldValueIndex = 0
     this.projectName = projectItemPOJO.project.title
   }
 
@@ -207,10 +268,6 @@ export class ProjectItem {
     }
 
     return null
-  }
-
-  getId () {
-    return this.databaseId
   }
 
   getProjectName () {

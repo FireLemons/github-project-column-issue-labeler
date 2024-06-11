@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, Issue, Label, ProjectItem, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, Issue, Label, ProjectItem, RecordWithID, initializeNodes } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -6,9 +6,6 @@ const fieldValuePOJO = {
 
 const fieldValuePOJOPage = {
   edges: [
-    {
-      node: {}
-    },
     {
       node: fieldValuePOJO
     }
@@ -155,6 +152,68 @@ describe('The GraphQLPage class', () => {
     })
   })
 
+  describe('appendPage()', () => {
+    it('appends the edges from the page passed as an argument to the page', () => {
+
+    })
+
+    it('updates the pageInfo for the page with the pageInfo from the passed page', () => {
+
+    })
+  })
+
+  describe('delete()', () => {
+    it('removes the edge at the index passed from the graphQL page', () => {
+      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+      const newFieldValueName = '7ZM@fyoDrP!i8-mf(M'
+
+      fieldValuePOJOPageCopy.edges.push({
+        node: {
+          name: newFieldValueName
+        }
+      })
+
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
+      initializeNodes(FieldValue, page)
+
+      page.delete(1)
+
+      const nodes = page.getNodeArray()
+
+      expect(nodes.find((fieldValue) => {
+        return fieldValue.name === fieldValuePOJO.name
+      })).not.toBe(undefined)
+
+      expect(nodes.find((fieldValue) => {
+        return fieldValue.name === newFieldValueName
+      })).toBe(undefined)
+
+      page.delete(0)
+
+      expect(page.isEmpty()).toBe(true)
+    })
+
+    it('returns the removed node', () => {
+      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
+      initializeNodes(FieldValue, page)
+
+      expect(page.delete(0).getName()).toBe(fieldValuePOJO.name)
+    })
+
+    it('throws an error when the index is out of bounds', () => {
+      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
+      initializeNodes(FieldValue, page)
+
+      expect(() => {
+        page.delete(1)
+      }).toThrow(RangeError)
+    })
+  })
+
   describe('getEdges()', () => {
     it('returns the edges of the graphQL page', () => {
       const page = new GraphQLPage(labelPOJOPage)
@@ -176,7 +235,6 @@ describe('The GraphQLPage class', () => {
       const page = new GraphQLPage(fieldValuePOJOPage)
 
       expect(page.getNodeArray()).toEqual([
-        {},
         fieldValuePOJO
       ])
     })
@@ -402,7 +460,7 @@ describe('The ProjectItem class', () => {
       const projectItemPOJOCopy = structuredClone(projectItemPOJO)
 
       projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false
-      projectItemPOJOCopy.fieldValues.edges.splice(1, 1)
+      projectItemPOJOCopy.fieldValues.edges.splice(0, 1)
 
       const projectItem = new ProjectItem(projectItemPOJOCopy)
 
@@ -412,7 +470,7 @@ describe('The ProjectItem class', () => {
     it('throws an error if the could name could not be found with incomplete pages', () => {
       const projectItemPOJOCopy = structuredClone(projectItemPOJO)
 
-      projectItemPOJOCopy.fieldValues.edges.splice(1, 1)
+      projectItemPOJOCopy.fieldValues.edges.splice(0, 1)
 
       const projectItem = new ProjectItem(projectItemPOJOCopy)
 
@@ -432,19 +490,26 @@ describe('The ProjectItem class', () => {
     })
   })
 
-  describe('getId()', () => {
-    it('returns the id of the project item', () => {
-      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
-
-      expect(projectItem.getId()).toBe(projectItemPOJO.databaseId)
-    })
-  })
-
   describe('getProjectName()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
       const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
 
       expect(projectItem.getProjectName()).toBe(projectItemPOJO.project.title)
+    })
+  })
+})
+
+describe('The RecordWithID class', () => {
+  describe('getId', () => {
+    it('returns the id of the record', () => {
+      const numericId = 40372098174
+      const stringId = '?1>Yd]i|IZfLJI?HGg'
+
+      const numericIdRecord = new RecordWithID(numericId)
+      const stringIdRecord = new RecordWithID(stringId)
+
+      expect(numericIdRecord.getId()).toBe(numericId)
+      expect(stringIdRecord.getId()).toBe(stringId)
     })
   })
 })

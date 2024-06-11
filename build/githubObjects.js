@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPage = exports.FieldValue = void 0;
+exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
 class FieldValue {
     name; // Column Name
@@ -38,6 +38,16 @@ class FieldValue {
     }
 }
 exports.FieldValue = FieldValue;
+class RecordWithID {
+    id;
+    constructor(uid) {
+        this.id = uid;
+    }
+    getId() {
+        return this.id;
+    }
+}
+exports.RecordWithID = RecordWithID;
 class GraphQLPage {
     page;
     constructor(pagePOJO) {
@@ -49,6 +59,12 @@ class GraphQLPage {
     appendPage(page) {
         this.page.edges.push(...page.getEdges());
         this.page.pageInfo = page.getPageInfo();
+    }
+    delete(index) {
+        if (0 > index || index >= this.page.edges.length) {
+            throw new RangeError('Param index out of range');
+        }
+        return this.page.edges.splice(index, 1)[0].node;
     }
     getEdges() {
         return this.page.edges;
@@ -75,10 +91,35 @@ class GraphQLPage {
     }
 }
 exports.GraphQLPage = GraphQLPage;
+class GraphQLPageMergeable extends GraphQLPage {
+    deletedNodeIds;
+    constructor(pagePOJO) {
+        super(pagePOJO);
+        this.deletedNodeIds = new Map();
+    }
+    delete(index) {
+        if (0 > index || index >= this.page.edges.length) {
+            throw new RangeError('Param index out of range');
+        }
+        const deletedNode = this.page.edges.splice(index, 1)[0].node;
+        this.deletedNodeIds.set(deletedNode.getId(), null);
+        return deletedNode;
+    }
+    merge(page) {
+        if (this.isEmpty()) {
+            return;
+        }
+        const firstNode = this.page.edges[0].node;
+        if (!(firstNode instanceof RecordWithID)) {
+            throw new ReferenceError('');
+        }
+    }
+}
+exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     issue;
     columnName;
-    columnNameSearchCursors;
+    columnNameSearchIndicies;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
@@ -100,23 +141,30 @@ class Issue {
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
-        this.columnNameSearchCursors = {
+        this.columnNameSearchIndicies = {
             lastUnsearchedProjectItemIndex: 0,
-            projectItemsWithUnsearchedFieldValues: []
+            projectItemsWithUnsearchedFieldValues: new Map()
         };
         this.issue = issueState;
     }
     findColumnName() {
-        const projectItems = this.issue.projectItems.getNodeArray();
-        for (let i = this.columnNameSearchCursors.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
+        if (this.columnName) {
+            return this.columnName;
+        }
+        const projectItems = this.issue.projectItems.getNodeArray().concat(Array.from(this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.values()));
+        for (let i = this.columnNameSearchIndicies.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
+            const projectItem = projectItems[i];
             try {
-                const columnName = projectItems[i].findColumnName();
+                const columnName = projectItem.findColumnName();
                 if (columnName) {
                     this.columnName = columnName;
+                    return;
                 }
             }
             catch (error) {
-                this.columnNameSearchCursors.projectItemsWithUnsearchedFieldValues;
+                if (error instanceof ReferenceError) {
+                    this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.set(projectItem.id, projectItem);
+                }
             }
         }
     }
@@ -146,16 +194,15 @@ class Label {
     }
 }
 exports.Label = Label;
-class ProjectItem {
+class ProjectItem extends RecordWithID {
     columnName;
-    databaseId;
     fieldValues;
-    firstUnsearchedFieldValueIndex;
     projectName;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
             throw new TypeError('Param projectItemPOJO does not match a project item object');
         }
+        super(projectItemPOJO.databaseId);
         try {
             this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
             initializeNodes(FieldValue, this.fieldValues);
@@ -163,8 +210,6 @@ class ProjectItem {
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);
         }
-        this.databaseId = projectItemPOJO.databaseId;
-        this.firstUnsearchedFieldValueIndex = 0;
         this.projectName = projectItemPOJO.project.title;
     }
     findColumnName() {
@@ -180,9 +225,6 @@ class ProjectItem {
             throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
         }
         return null;
-    }
-    getId() {
-        return this.databaseId;
     }
     getProjectName() {
         return this.projectName;
