@@ -153,12 +153,40 @@ describe('The GraphQLPage class', () => {
   })
 
   describe('appendPage()', () => {
-    it('appends the edges from the page passed as an argument to the page', () => {
+    let combinedPage: GraphQLPage<FieldValue>
+    const appendedPageFieldValueName = '~o9{5S/WT|<>FLuMS'
+    const appendedPageEndCursor = 'D=if(!.SUZ+H=h"+Ae'
 
+    beforeAll(() => {
+      combinedPage = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPage))
+      const appendedPageFieldValuePOJO = structuredClone(fieldValuePOJOPage)
+
+      appendedPageFieldValuePOJO.edges[0].node.name = appendedPageFieldValueName
+      appendedPageFieldValuePOJO.pageInfo = {
+        endCursor: appendedPageEndCursor,
+        hasNextPage: false
+      }
+
+      const appendedPage = new GraphQLPage<FieldValue>(appendedPageFieldValuePOJO)
+
+      combinedPage.appendPage(appendedPage)
+    })
+
+    it('appends the edges from the page passed as an argument to the page', () => {
+      expect(combinedPage.getEdges().find((edge) => {
+        return edge.node.name === fieldValuePOJO.name
+      })).not.toBe(undefined)
+
+      expect(combinedPage.getEdges().find((edge) => {
+        return edge.node.name === appendedPageFieldValueName
+      })).not.toBe(undefined)
     })
 
     it('updates the pageInfo for the page with the pageInfo from the passed page', () => {
+      const combinedPagePageInfo = combinedPage.getPageInfo()
 
+      expect(combinedPagePageInfo.endCursor).toBe(appendedPageEndCursor)
+      expect(combinedPagePageInfo.hasNextPage).toBe(false)
     })
   })
 
