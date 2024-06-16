@@ -50,11 +50,14 @@ class RecordWithID {
 exports.RecordWithID = RecordWithID;
 class GraphQLPage {
     page;
-    constructor(pagePOJO) {
+    constructor(pagePOJO, NodeClass) {
         if (!(isGraphQLPage(pagePOJO))) {
             throw new TypeError('Param pagePOJO does not match a graphQL page');
         }
         this.page = pagePOJO;
+        if (NodeClass) {
+            initializeNodes(NodeClass, this);
+        }
     }
     appendPage(page) {
         this.page.edges.push(...page.getEdges());
@@ -92,9 +95,15 @@ class GraphQLPage {
 }
 exports.GraphQLPage = GraphQLPage;
 class GraphQLPageMergeable extends GraphQLPage {
+    activeNodeFastAccessMap;
     deletedNodeIds;
-    constructor(pagePOJO) {
-        super(pagePOJO);
+    constructor(pagePOJO, NodeClass) {
+        super(pagePOJO, NodeClass);
+        this.activeNodeFastAccessMap = new Map();
+        for (let edge of this.page.edges) {
+            const { node } = edge;
+            this.activeNodeFastAccessMap.set(node.getId(), edge);
+        }
         this.deletedNodeIds = new Map();
     }
     delete(index) {
@@ -102,7 +111,9 @@ class GraphQLPageMergeable extends GraphQLPage {
             throw new RangeError('Param index out of range');
         }
         const deletedNode = this.page.edges.splice(index, 1)[0].node;
-        this.deletedNodeIds.set(deletedNode.getId(), null);
+        const deletedNodeId = deletedNode.getId();
+        this.activeNodeFastAccessMap.delete(deletedNodeId);
+        this.deletedNodeIds.set(deletedNodeId, null);
         return deletedNode;
     }
     merge(page) {
@@ -111,7 +122,7 @@ class GraphQLPageMergeable extends GraphQLPage {
         }
         const firstNode = this.page.edges[0].node;
         if (!(firstNode instanceof RecordWithID)) {
-            throw new ReferenceError('');
+            throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.');
         }
     }
 }
@@ -128,15 +139,13 @@ class Issue {
             number: issuePOJO.number
         };
         try {
-            issueState.labels = new GraphQLPage(issuePOJO.labels);
-            initializeNodes(Label, issueState.labels);
+            issueState.labels = new GraphQLPage(issuePOJO.labels, Label);
         }
         catch (error) {
             issuePOJO.labels = undefined;
         }
         try {
-            issueState.projectItems = new GraphQLPage(issuePOJO.projectItems);
-            initializeNodes(ProjectItem, issueState.projectItems);
+            issueState.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem);
         }
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
@@ -204,8 +213,7 @@ class ProjectItem extends RecordWithID {
         }
         super(projectItemPOJO.databaseId);
         try {
-            this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues);
-            initializeNodes(FieldValue, this.fieldValues);
+            this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue);
         }
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);

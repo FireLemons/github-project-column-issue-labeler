@@ -44,12 +44,16 @@ export class GraphQLPage<T> {
     }
   }
 
-  constructor (pagePOJO: any) {
+  constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
     if (!(isGraphQLPage(pagePOJO))) {
       throw new TypeError('Param pagePOJO does not match a graphQL page')
     }
 
     this.page = pagePOJO
+
+    if (NodeClass) {
+      initializeNodes(NodeClass, this)
+    }
   }
 
   appendPage (page: GraphQLPage<T>) {
@@ -96,11 +100,20 @@ export class GraphQLPage<T> {
   }
 }
 
-export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>{
+export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T> {
+  activeNodeFastAccessMap: Map<string | number, { node: T }>
   deletedNodeIds: Map<string | number, null>
 
-  constructor (pagePOJO: any) {
-    super(pagePOJO)
+  constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
+    super(pagePOJO, NodeClass)
+
+    this.activeNodeFastAccessMap = new Map()
+
+    for (let edge of this.page.edges) {
+      const { node } = edge
+
+      this.activeNodeFastAccessMap.set(node.getId(), edge)
+    }
 
     this.deletedNodeIds = new Map()
   }
@@ -111,8 +124,10 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
     }
 
     const deletedNode = this.page.edges.splice(index, 1)[0].node
+    const deletedNodeId = deletedNode.getId()
 
-    this.deletedNodeIds.set(deletedNode.getId(), null)
+    this.activeNodeFastAccessMap.delete(deletedNodeId)
+    this.deletedNodeIds.set(deletedNodeId, null)
 
     return deletedNode
   }
@@ -125,7 +140,7 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
     const firstNode = this.page.edges[0].node
 
     if (!(firstNode instanceof RecordWithID)) {
-      throw new ReferenceError('')
+      throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.')
     }
   }
 }
@@ -154,15 +169,13 @@ export class Issue {
     }
 
     try {
-      issueState.labels = new GraphQLPage(issuePOJO.labels)
-      initializeNodes(Label, issueState.labels)
+      issueState.labels = new GraphQLPage(issuePOJO.labels, Label)
     } catch (error) {
       issuePOJO.labels = undefined
     }
 
     try {
-      issueState.projectItems = new GraphQLPage(issuePOJO.projectItems)
-      initializeNodes(ProjectItem, issueState.projectItems)
+      issueState.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem)
     } catch (error) {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
@@ -244,8 +257,7 @@ export class ProjectItem extends RecordWithID{
     super(projectItemPOJO.databaseId)
 
     try {
-      this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues)
-      initializeNodes(FieldValue, this.fieldValues)
+      this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue)
     } catch (error) {
       throw new ReferenceError(`The field value page could not be initialized`)
     }
