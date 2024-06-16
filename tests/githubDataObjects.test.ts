@@ -1,10 +1,10 @@
-import { FieldValue, GraphQLPage, Issue, Label, ProjectItem, RecordWithID, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, initializeNodes } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
 }
 
-const fieldValuePOJOPage = {
+const fieldValuePagePOJO = {
   edges: [
     {
       node: fieldValuePOJO
@@ -20,7 +20,7 @@ const labelPOJO = {
   name: '5~hg?<[kjHwGhUII-p:'
 }
 
-const labelPOJOPage = {
+const labelPagePOJO = {
   edges: [
     {
       node: labelPOJO
@@ -34,13 +34,13 @@ const labelPOJOPage = {
 
 const projectItemPOJO = {
   databaseId: 65248239,
-  fieldValues: fieldValuePOJOPage,
+  fieldValues: fieldValuePagePOJO,
   project: {
     title: 'y%O/"!D%ZvpvkD$2cw_W'
   },
 }
 
-const projectItemPOJOPage = {
+const projectItemPagePOJO = {
   edges: [
     {
       node: projectItemPOJO
@@ -54,11 +54,11 @@ const projectItemPOJOPage = {
 
 const issuePOJO =  {
   number: 1009,
-  labels: labelPOJOPage,
-  projectItems: projectItemPOJOPage
+  labels: labelPagePOJO,
+  projectItems: projectItemPagePOJO
 }
 
-const issuePOJOPage = {
+const issuePagePOJO = {
   edges: [
     {
       node: issuePOJO
@@ -135,7 +135,7 @@ describe('The GraphQLPage class', () => {
     })
 
     test('it throws an error when passed an object not matching a graphQL page', () => {
-      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePOJOPage)
+      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePagePOJO)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
       expect(() => {
@@ -144,7 +144,7 @@ describe('The GraphQLPage class', () => {
     })
 
     test('does not throw an error when passed a page', () => {
-      const normalPage = structuredClone(projectItemPOJOPage)
+      const normalPage = structuredClone(projectItemPagePOJO)
 
       expect(() => {
         new GraphQLPage(normalPage)
@@ -158,8 +158,8 @@ describe('The GraphQLPage class', () => {
     const appendedPageEndCursor = 'D=if(!.SUZ+H=h"+Ae'
 
     beforeAll(() => {
-      combinedPage = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPage))
-      const appendedPageFieldValuePOJO = structuredClone(fieldValuePOJOPage)
+      combinedPage = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO))
+      const appendedPageFieldValuePOJO = structuredClone(fieldValuePagePOJO)
 
       appendedPageFieldValuePOJO.edges[0].node.name = appendedPageFieldValueName
       appendedPageFieldValuePOJO.pageInfo = {
@@ -192,17 +192,16 @@ describe('The GraphQLPage class', () => {
 
   describe('delete()', () => {
     it('removes the edge at the index passed from the graphQL page', () => {
-      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
       const newFieldValueName = '7ZM@fyoDrP!i8-mf(M'
 
-      fieldValuePOJOPageCopy.edges.push({
+      fieldValuePagePOJOCopy.edges.push({
         node: {
           name: newFieldValueName
         }
       })
 
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
-      initializeNodes(FieldValue, page)
+      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJOCopy, FieldValue)
 
       page.delete(1)
 
@@ -222,19 +221,17 @@ describe('The GraphQLPage class', () => {
     })
 
     it('returns the removed node', () => {
-      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
 
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
-      initializeNodes(FieldValue, page)
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJOCopy), FieldValue)
 
       expect(page.delete(0).getName()).toBe(fieldValuePOJO.name)
     })
 
     it('throws an error when the index is out of bounds', () => {
-      const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
 
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePOJOPageCopy))
-      initializeNodes(FieldValue, page)
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJOCopy), FieldValue)
 
       expect(() => {
         page.delete(1)
@@ -244,23 +241,23 @@ describe('The GraphQLPage class', () => {
 
   describe('getEdges()', () => {
     it('returns the edges of the graphQL page', () => {
-      const page = new GraphQLPage(labelPOJOPage)
+      const page = new GraphQLPage(labelPagePOJO)
 
-      expect(page.getEdges()).toBe(labelPOJOPage.edges)
+      expect(page.getEdges()).toBe(labelPagePOJO.edges)
     })
   })
 
   describe('getEndCursor()', () => {
     it('returns the end cursor of the graphQL page', () => {
-      const page = new GraphQLPage(labelPOJOPage)
+      const page = new GraphQLPage(labelPagePOJO)
 
-      expect(page.getEndCursor()).toBe(labelPOJOPage.pageInfo.endCursor)
+      expect(page.getEndCursor()).toBe(labelPagePOJO.pageInfo.endCursor)
     })
   })
 
   describe('getNodeArray()', () => {
     it('returns the nodes of the graphQL page as an array', () => {
-      const page = new GraphQLPage(fieldValuePOJOPage)
+      const page = new GraphQLPage(fieldValuePagePOJO)
 
       expect(page.getNodeArray()).toEqual([
         fieldValuePOJO
@@ -270,25 +267,25 @@ describe('The GraphQLPage class', () => {
 
   describe('getPageInfo()', () => {
     it('returns the page info of the graphQL page', () => {
-      const page = new GraphQLPage(labelPOJOPage)
+      const page = new GraphQLPage(labelPagePOJO)
 
-      expect(page.getPageInfo()).toBe(labelPOJOPage.pageInfo)
+      expect(page.getPageInfo()).toBe(labelPagePOJO.pageInfo)
     })
   })
 
   describe('isEmpty()', () => {
     it('returns true if the page does not have nodes', () => {
-      const labelPOJOPageCopy = structuredClone(labelPOJOPage)
+      const labelPagePOJOCopy = structuredClone(labelPagePOJO)
 
-      labelPOJOPageCopy.edges = []
+      labelPagePOJOCopy.edges = []
 
-      const labelPage = new GraphQLPage(labelPOJOPageCopy)
+      const labelPage = new GraphQLPage(labelPagePOJOCopy)
 
       expect(labelPage.isEmpty()).toBeTruthy()
     })
 
     it('returns false if the page has nodes', () => {
-      const labelPage = new GraphQLPage(labelPOJOPage)
+      const labelPage = new GraphQLPage(labelPagePOJO)
 
       expect(labelPage.isEmpty()).toBeFalsy()
     })
@@ -296,30 +293,92 @@ describe('The GraphQLPage class', () => {
 
   describe('isLastPage()', () => {
     it('returns true if the pageInfo indicates the page is the last page', () => {
-      const labelPOJOPageCopy = structuredClone(labelPOJOPage)
+      const labelPagePOJOCopy = structuredClone(labelPagePOJO)
 
-      labelPOJOPageCopy.pageInfo.hasNextPage = false
+      labelPagePOJOCopy.pageInfo.hasNextPage = false
 
-      const labelPage = new GraphQLPage(labelPOJOPageCopy)
+      const labelPage = new GraphQLPage(labelPagePOJOCopy)
 
       expect(labelPage.isLastPage()).toBeTruthy()
     })
 
     it('returns false if the pageInfo indicates the page is not the last page', () => {
-      const labelPage = new GraphQLPage(labelPOJOPage)
+      const labelPage = new GraphQLPage(labelPagePOJO)
 
       expect(labelPage.isLastPage()).toBeFalsy()
     })
   })
 })
 
+describe('The GraphQLPageMergeable class', () => {
+  describe('delete()', () => {
+    it('removes the edge at the index passed from the graphQL page', () => {
+      const projectItemPagePOJOCopy = structuredClone(projectItemPagePOJO)
+      const newProjectItemId = 38209138093218
+
+      projectItemPagePOJOCopy.edges.push({
+        node: {
+          databaseId: newProjectItemId,
+          fieldValues: structuredClone(fieldValuePagePOJO),
+          project: {
+            title: ''
+          }
+        }
+      })
+
+      const page = new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJOCopy, ProjectItem)
+
+      page.delete(1)
+
+      const nodes = page.getNodeArray()
+
+      expect(nodes.find((projectItem) => {
+        return projectItem.getId() === projectItemPOJO.databaseId
+      })).not.toBe(undefined)
+
+      expect(nodes.find((projectItem) => {
+        return projectItem.getId() === newProjectItemId
+      })).toBe(undefined)
+
+      page.delete(0)
+
+      expect(page.isEmpty()).toBe(true)
+    })
+
+    it('returns the removed node', () => {
+      const projectItemPagePOJOCopy = structuredClone(projectItemPagePOJO)
+
+      const page = new GraphQLPage<ProjectItem>(structuredClone(projectItemPagePOJOCopy), ProjectItem)
+
+      expect(page.delete(0).getId()).toBe(projectItemPOJO.databaseId)
+    })
+
+    it('stores the id of deleted nodes', () => {
+    })
+  })
+
+  describe('merge()', () => {
+    it('adds all the records from the page passed as an argument not found in the page to be merged into', () => {
+    })
+
+    it('does not re-add deleted nodes', () => {
+    })
+
+    it('overwrites records found in both pages using records from the page passed as an argument', () => {
+    })
+
+    it('overwrites the pageInfo of the page with the pageInfo of the passed page', () => {
+    })
+  })
+})
+
 describe('The Issue class', () => {
   beforeEach(() => { // The Issue constructor mutates the projectItemPOJO sub-object. This avoids the mutation persisting through to other tests
-    projectItemPOJOPage.edges[0].node = structuredClone(projectItemPOJO)
+    projectItemPagePOJO.edges[0].node = structuredClone(projectItemPOJO)
   })
 
   afterEach(() => {
-    projectItemPOJOPage.edges[0].node = projectItemPOJO
+    projectItemPagePOJO.edges[0].node = projectItemPOJO
   })
 
   describe('constructor', () => {
@@ -334,7 +393,7 @@ describe('The Issue class', () => {
         new Issue({
           number: 1,
           labels: 'wrong type for labels value',
-          projectItems: projectItemPOJOPage
+          projectItems: projectItemPagePOJO
         })
       }).toThrow(TypeError)
     })
@@ -343,7 +402,7 @@ describe('The Issue class', () => {
       expect(() => {
         new Issue({
           number: 1,
-          labels: labelPOJOPage,
+          labels: labelPagePOJO,
           projectItems: {
             pageInfo: null
           }
@@ -364,7 +423,7 @@ describe('The Issue class', () => {
           labels: {
             pageInfo: null
           },
-          projectItems: projectItemPOJOPage
+          projectItems: projectItemPagePOJO
         })
       }).not.toThrow()
     })
@@ -544,16 +603,16 @@ describe('The RecordWithID class', () => {
 
 describe('initializeNodes()', () => {
   it('converts all valid nodes to instances of the class parameter', () => {
-    const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
     const fieldValuePOJO2 = {
       name: '+=Xh(TZCqK}e\@]O1s[@'
     }
 
-    fieldValuePOJOPageCopy.edges.push({
+    fieldValuePagePOJOCopy.edges.push({
       node: fieldValuePOJO2
     })
 
-    const graphQLPage = new GraphQLPage(fieldValuePOJOPageCopy)
+    const graphQLPage = new GraphQLPage(fieldValuePagePOJOCopy)
 
     initializeNodes(FieldValue, graphQLPage)
 
@@ -569,18 +628,16 @@ describe('initializeNodes()', () => {
   })
 
   it('discards edges containing nodes that could not be instantiated', () => {
-    const fieldValuePOJOPageCopy = structuredClone(fieldValuePOJOPage)
+    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
     const fieldValuePOJOInvalid: any = {
       columnName: '+=Xh(TZCqK}e\@]O1s[@'
     }
 
-    fieldValuePOJOPageCopy.edges.push({
+    fieldValuePagePOJOCopy.edges.push({
       node: fieldValuePOJOInvalid
     })
 
-    const graphQLPage = new GraphQLPage(fieldValuePOJOPageCopy)
-
-    initializeNodes(FieldValue, graphQLPage)
+    const graphQLPage = new GraphQLPage(fieldValuePagePOJOCopy, FieldValue)
 
     const instantiatedNodes = graphQLPage.getNodeArray()
 
