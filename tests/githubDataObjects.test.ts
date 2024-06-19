@@ -221,17 +221,13 @@ describe('The GraphQLPage class', () => {
     })
 
     it('returns the removed node', () => {
-      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJOCopy), FieldValue)
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
 
       expect(page.delete(0).getName()).toBe(fieldValuePOJO.name)
     })
 
     it('throws an error when the index is out of bounds', () => {
-      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJOCopy), FieldValue)
+      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
 
       expect(() => {
         page.delete(1)
@@ -346,28 +342,129 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('returns the removed node', () => {
-      const projectItemPagePOJOCopy = structuredClone(projectItemPagePOJO)
-
-      const page = new GraphQLPage<ProjectItem>(structuredClone(projectItemPagePOJOCopy), ProjectItem)
+      const page = new GraphQLPageMergeable<ProjectItem>(structuredClone(projectItemPagePOJO), ProjectItem)
 
       expect(page.delete(0).getId()).toBe(projectItemPOJO.databaseId)
     })
 
     it('stores the id of deleted nodes', () => {
+      const page = new GraphQLPageMergeable<ProjectItem>(structuredClone(projectItemPagePOJO), ProjectItem)
+
+      expect(page.deletedNodeIds.has(projectItemPOJO.databaseId)).toBe(false)
+
+      page.delete(0)
+
+      expect(page.deletedNodeIds.has(projectItemPOJO.databaseId)).toBe(true)
     })
   })
 
   describe('merge()', () => {
+    const existingProjectItemUpdatedFieldValueName = '6lY,9xOuv5VX0AUoE)'
+
+    let existingProjectItemPOJO: typeof projectItemPOJO
+    let newProjectItemPOJO: typeof projectItemPOJO
+    let page: GraphQLPageMergeable<ProjectItem>
+    let pageToBeMerged: GraphQLPageMergeable<ProjectItem>
+
+    beforeEach(() => {
+      const deletedProjectItemPOJO = structuredClone(projectItemPOJO)
+
+      existingProjectItemPOJO = structuredClone(projectItemPOJO)
+
+      existingProjectItemPOJO.databaseId = 90285654630
+      existingProjectItemPOJO.fieldValues.edges = []
+      existingProjectItemPOJO.project.title = '#vuO;QJ@xywt@(Hy*#'
+
+      newProjectItemPOJO = structuredClone(projectItemPOJO)
+
+      newProjectItemPOJO.databaseId = 984379821739
+      existingProjectItemPOJO.project.title = 'T~{dZqN%M~i=0<KAwa'
+
+      const existingPagePOJO = {
+        edges: [
+          {
+            node: deletedProjectItemPOJO
+          },
+          {
+            node: existingProjectItemPOJO
+          }
+        ],
+        pageInfo: {
+          endCursor: 'AB',
+          hasNextPage: true
+        }
+      }
+
+      const newPagePojo = structuredClone(existingPagePOJO)
+
+      newPagePojo.edges[1].node.fieldValues.edges.push({
+        node: {
+          name: existingProjectItemUpdatedFieldValueName
+        }
+      })
+
+      newPagePojo.edges.push({
+        node: newProjectItemPOJO
+      })
+      newPagePojo.pageInfo.endCursor = 'XY'
+      newPagePojo.pageInfo.hasNextPage = false
+
+      page = new GraphQLPageMergeable<ProjectItem>(existingPagePOJO, ProjectItem)
+      page.delete(0)
+
+      pageToBeMerged = new GraphQLPageMergeable<ProjectItem>(newPagePojo, ProjectItem)
+    })
+
     it('adds all the records from the page passed as an argument not found in the page to be merged into', () => {
+      const newProjectItemId = newProjectItemPOJO.databaseId
+
+      expect(page.getNodeArray().find((projectItem) => {
+        return projectItem.getId() === newProjectItemId
+      })).toBe(undefined)
+
+      page.merge(pageToBeMerged)
+
+      expect(page.getNodeArray().find((projectItem) => {
+        return projectItem.getId() === newProjectItemId
+      })).not.toBe(undefined)
     })
 
     it('does not re-add deleted nodes', () => {
+      const deletedId = projectItemPOJO.databaseId
+
+      expect(page.deletedNodeIds.has(deletedId)).toBe(true)
+
+      page.merge(pageToBeMerged)
+
+      expect(page.getNodeArray().find((projectItem) => {
+        return projectItem.getId() === deletedId
+      })).toBe(undefined)
     })
 
     it('overwrites records found in both pages using records from the page passed as an argument', () => {
+      const existingProjectItemId = existingProjectItemPOJO.databaseId
+      const existingProjectItem = page.getNodeArray().find((projectItem) => {
+        return projectItem.id === existingProjectItemId
+      })
+
+      expect(existingProjectItem).not.toBe(undefined)
+      expect(existingProjectItem?.fieldValues.getNodeArray().length).toBe(0)
+
+      page.merge(pageToBeMerged)
+
+      expect(page.getNodeArray().find((projectItem) => {
+        return projectItem.getId() === existingProjectItemId && projectItem.fieldValues.getNodeArray().find((fieldValue) => {
+          return fieldValue.name === existingProjectItemUpdatedFieldValueName
+        })
+      })).not.toBe(undefined)
     })
 
     it('overwrites the pageInfo of the page with the pageInfo of the passed page', () => {
+      const oldPageInfo = page.getPageInfo()
+
+      page.merge(pageToBeMerged)
+
+      expect(page.getPageInfo()).not.toEqual(oldPageInfo)
     })
   })
 })
