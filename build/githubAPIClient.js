@@ -4,10 +4,8 @@ exports.GithubAPIClient = void 0;
 // Javascript destructuring assignment
 const octokit_1 = require("octokit");
 const MAX_PAGE_SIZE = 100;
-const ISSUE_PAGE_SIZE = MAX_PAGE_SIZE;
-const FIELD_VALUE_PAGE_SIZE = 1; //MAX_PAGE_SIZE
-const LABEL_PAGE_SIZE = 1; //20
-const PROJECT_ITEM_PAGE_SIZE = 1; //20
+const SMALL_PAGE_SIZE = 20;
+const MIN_PAGE_SIZE = 1; // For testing
 class GithubAPIClient {
     octokit;
     repoOwnerName;
@@ -16,6 +14,11 @@ class GithubAPIClient {
         this.octokit = new octokit_1.Octokit({ auth: githubAPIKey });
         this.repoName = repoName;
         this.repoOwnerName = repoOwnerName;
+    }
+    expandColumnNameSearchSpace(issueNumber) {
+        return this.octokit.graphql(`
+      
+    `);
     }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
@@ -91,10 +94,10 @@ class GithubAPIClient {
         }
       }`, {
             cursor: cursor,
-            pageSizeIssue: ISSUE_PAGE_SIZE,
-            pageSizeLabel: LABEL_PAGE_SIZE,
-            pageSizeProjectField: FIELD_VALUE_PAGE_SIZE,
-            pageSizeProjectItem: PROJECT_ITEM_PAGE_SIZE,
+            pageSizeIssue: MAX_PAGE_SIZE,
+            pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
+            pageSizeProjectField: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+            pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
             repoName: this.repoName,
             repoOwnerName: this.repoOwnerName
         });

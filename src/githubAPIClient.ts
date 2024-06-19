@@ -3,11 +3,8 @@ import { Issue, GraphQLPage } from './githubObjects'
 import { Octokit, App } from 'octokit'
 
 const MAX_PAGE_SIZE = 100
-
-const ISSUE_PAGE_SIZE = MAX_PAGE_SIZE
-const FIELD_VALUE_PAGE_SIZE = 1//MAX_PAGE_SIZE
-const LABEL_PAGE_SIZE = 1//20
-const PROJECT_ITEM_PAGE_SIZE = 1//20
+const SMALL_PAGE_SIZE = 20
+const MIN_PAGE_SIZE = 1 // For testing
 
 interface GitHubGraphQLError {
   type: string
@@ -39,6 +36,12 @@ export class GithubAPIClient {
     this.octokit = new Octokit({auth: githubAPIKey})
     this.repoName = repoName
     this.repoOwnerName = repoOwnerName
+  }
+
+  expandColumnNameSearchSpace (issueNumber: number): Promise<Issue> {
+    return this.octokit.graphql(`
+      
+    `)
   }
 
   fetchIssuePage (cursor?: string): Promise<IssuePageResponse> {
@@ -116,10 +119,10 @@ export class GithubAPIClient {
       }`,
       {
         cursor: cursor,
-        pageSizeIssue: ISSUE_PAGE_SIZE,
-        pageSizeLabel: LABEL_PAGE_SIZE,
-        pageSizeProjectField: FIELD_VALUE_PAGE_SIZE,
-        pageSizeProjectItem: PROJECT_ITEM_PAGE_SIZE,
+        pageSizeIssue: MAX_PAGE_SIZE,
+        pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
+        pageSizeProjectField: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+        pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
         repoName: this.repoName,
         repoOwnerName: this.repoOwnerName
       },
