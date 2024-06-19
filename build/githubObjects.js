@@ -117,13 +117,25 @@ class GraphQLPageMergeable extends GraphQLPage {
         return deletedNode;
     }
     merge(page) {
-        if (this.isEmpty()) {
-            return;
-        }
         const firstNode = this.page.edges[0].node;
         if (!(firstNode instanceof RecordWithID)) {
             throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.');
         }
+        for (let edge of page.getEdges()) {
+            const { node } = edge;
+            const nodeId = node.getId();
+            if (this.deletedNodeIds.has(nodeId)) {
+                continue;
+            }
+            if (this.activeNodeFastAccessMap.has(nodeId)) {
+                this.activeNodeFastAccessMap.get(nodeId).node = node;
+            }
+            else {
+                this.activeNodeFastAccessMap.set(nodeId, edge);
+                this.page.edges.push(edge);
+            }
+        }
+        this.page.pageInfo = page.getPageInfo();
     }
 }
 exports.GraphQLPageMergeable = GraphQLPageMergeable;
