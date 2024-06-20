@@ -17,8 +17,55 @@ class GithubAPIClient {
     }
     expandColumnNameSearchSpace(issueNumber) {
         return this.octokit.graphql(`
-      
-    `);
+      query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
+        repository (owner: $repoOwnerName, name: $repoName) {
+          issue (number: $issueNumber) {
+            number
+            projectItems (first: $pageSizeProjectItem) {
+              ...projectItemPage
+            }
+          }
+        }
+      }
+
+      fragment projectFieldPage on ProjectV2ItemFieldValueConnection {
+        edges {
+          node {
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+            }
+          }
+        },
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+
+      fragment projectItemPage on ProjectV2ItemConnection {
+        edges {
+          node {
+            databaseId
+            project {
+              title
+            }
+            fieldValues (first: $pageSizeFieldValue) {
+              ...projectFieldPage
+            }
+          }
+        },
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    `, {
+            "issueNumber": issueNumber,
+            "pageSizeFieldValue": MAX_PAGE_SIZE,
+            "pageSizeProjectItem": MAX_PAGE_SIZE,
+            "repoName": this.repoName,
+            "repoOwnerName": this.repoOwnerName
+        });
     }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
