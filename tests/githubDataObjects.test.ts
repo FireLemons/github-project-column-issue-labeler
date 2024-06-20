@@ -524,6 +524,15 @@ describe('The Issue class', () => {
         })
       }).not.toThrow()
     })
+
+    it('successfully constructs the Issue when passed an issue object without a label page', () => {
+      expect(() => {
+        new Issue({
+          number: 1,
+          projectItems: projectItemPagePOJO
+        })
+      }).not.toThrow()
+    })
   })
 
   describe('findColumnName()', () => {

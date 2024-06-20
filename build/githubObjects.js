@@ -305,7 +305,9 @@ function isIssue(object) {
     }
     try {
         TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number);
-        TypeChecker.validateObjectMember(object, 'labels', TypeChecker.Type.object);
+        if (object.labels) {
+            TypeChecker.validateObjectMember(object, 'labels', TypeChecker.Type.object);
+        }
         TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object);
     }
     catch (error) {
