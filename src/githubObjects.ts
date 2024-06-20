@@ -360,11 +360,6 @@ function isIssue (object: any): boolean {
 
   try {
     TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number)
-
-    if (object.labels) {
-      TypeChecker.validateObjectMember(object, 'labels', TypeChecker.Type.object)
-    }
-
     TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object)
   } catch (error) {
     return false
