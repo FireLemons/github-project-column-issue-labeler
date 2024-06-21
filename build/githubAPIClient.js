@@ -28,7 +28,7 @@ class GithubAPIClient {
         }
       }
 
-      fragment projectFieldPage on ProjectV2ItemFieldValueConnection {
+      fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
         edges {
           node {
             ... on ProjectV2ItemFieldSingleSelectValue {
@@ -50,7 +50,7 @@ class GithubAPIClient {
               title
             }
             fieldValues (first: $pageSizeFieldValue) {
-              ...projectFieldPage
+              ...fieldValuePage
             }
           }
         },
@@ -69,7 +69,7 @@ class GithubAPIClient {
     }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
-      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeProjectField: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
+      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
         repository (owner: $ownerName, name: $repoName) {
           issues (first: $pageSizeIssue, after: $cursor) {
             ...issuePage
@@ -107,7 +107,7 @@ class GithubAPIClient {
         }
       }
 
-      fragment projectFieldPage on ProjectV2ItemFieldValueConnection {
+      fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
         edges {
           node {
             ... on ProjectV2ItemFieldSingleSelectValue {
@@ -126,8 +126,8 @@ class GithubAPIClient {
           node {
             databaseId
 
-            fieldValues (first: $pageSizeProjectField) {
-              ...projectFieldPage
+            fieldValues (first: $pageSizeFieldValue) {
+              ...fieldValuePage
             }
 
             project {
@@ -143,7 +143,7 @@ class GithubAPIClient {
             cursor: cursor,
             pageSizeIssue: MAX_PAGE_SIZE,
             pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
-            pageSizeProjectField: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+            pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
             repoName: this.repoName,
             repoOwnerName: this.repoOwnerName
