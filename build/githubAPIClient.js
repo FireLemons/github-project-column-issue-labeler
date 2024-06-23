@@ -6,6 +6,60 @@ const octokit_1 = require("octokit");
 const MAX_PAGE_SIZE = 100;
 const SMALL_PAGE_SIZE = 20;
 const MIN_PAGE_SIZE = 1; // For testing
+const fragmentFieldValuePage = `
+fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
+  edges {
+    node {
+      ... on ProjectV2ItemFieldSingleSelectValue {
+        name
+      }
+    }
+  },
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+}`;
+const fragmentLabelPage = `
+fragment labelPage on LabelConnection {
+  edges{
+    node{
+      name
+    }
+  }
+  pageInfo{
+    hasNextPage
+    endCursor
+  }
+}`;
+const fragmentProjectItemPage = `
+fragment projectItemPage on ProjectV2ItemConnection {
+  edges {
+    node {
+      databaseId
+
+      fieldValues (first: $pageSizeFieldValue) {
+        ...fieldValuePage
+      }
+
+      project {
+        number
+        owner {
+          ... on Organization {
+            login
+          }
+          ... on User {
+            login
+          }
+        }
+      }
+    }
+  },
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+}`;
 class GithubAPIClient {
     octokit;
     repoOwnerName;
@@ -18,7 +72,7 @@ class GithubAPIClient {
     expandColumnNameSearchSpace(issueNumber) {
         return this.octokit.graphql(`
       query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
-        repository (owner: $repoOwnerName, name: $repoName) {
+        repository (name: $repoName, owner: $repoOwnerName) {
           issue (number: $issueNumber) {
             number
             projectItems (first: $pageSizeProjectItem) {
@@ -28,37 +82,8 @@ class GithubAPIClient {
         }
       }
 
-      fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
-        edges {
-          node {
-            ... on ProjectV2ItemFieldSingleSelectValue {
-              name
-            }
-          }
-        },
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-
-      fragment projectItemPage on ProjectV2ItemConnection {
-        edges {
-          node {
-            databaseId
-            project {
-              title
-            }
-            fieldValues (first: $pageSizeFieldValue) {
-              ...fieldValuePage
-            }
-          }
-        },
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
+      ${fragmentFieldValuePage}
+      ${fragmentProjectItemPage}
     `, {
             "issueNumber": issueNumber,
             "pageSizeFieldValue": MAX_PAGE_SIZE,
@@ -69,8 +94,8 @@ class GithubAPIClient {
     }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
-      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $ownerName: String!, $repoName: String!){
-        repository (owner: $ownerName, name: $repoName) {
+      query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoName: String!, $repoOwnerName: String!){
+        repository (name: $repoName, owner: $repoOwnerName) {
           issues (first: $pageSizeIssue, after: $cursor) {
             ...issuePage
           }
@@ -95,53 +120,11 @@ class GithubAPIClient {
         }
       }
 
-      fragment labelPage on LabelConnection {
-        edges {
-          node {
-            name
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-
-      fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
-        edges {
-          node {
-            ... on ProjectV2ItemFieldSingleSelectValue {
-              name
-            }
-          }
-        },
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-
-      fragment projectItemPage on ProjectV2ItemConnection {
-        edges {
-          node {
-            databaseId
-
-            fieldValues (first: $pageSizeFieldValue) {
-              ...fieldValuePage
-            }
-
-            project {
-              title
-            }
-          }
-        },
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }`, {
+      ${fragmentLabelPage}
+      ${fragmentFieldValuePage}
+      ${fragmentProjectItemPage}`, {
             cursor: cursor,
-            pageSizeIssue: MAX_PAGE_SIZE,
+            pageSizeIssue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
             pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
@@ -160,17 +143,7 @@ class GithubAPIClient {
       }
     }
     
-    fragment labelPage on LabelConnection {
-      edges{
-        node{
-          name
-        }
-      }
-      pageInfo{
-        hasNextPage
-        endCursor
-      }
-    }`, {
+    ${fragmentLabelPage}`, {
             "cursor": cursor,
             "issueNumber": issueNumber,
             "pageSize": MAX_PAGE_SIZE,
