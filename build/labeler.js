@@ -64,14 +64,14 @@ async function main() {
     }
     logger.info('Initialized github API accessors');
     try {
-        logger.info('Fetching issues with labels and associated column data...');
+        logger.info('Fetching issues with labels and column data...');
         githubGraphQLPageAssembler.fetchAllIssues()
             .then((response) => {
-            logger.info('Fetched issues with labels and associated column data', 2);
+            logger.info('Fetched issues with labels and column data', 2);
             logger.info(JSON.stringify(response, null, 2), 4);
         })
             .catch((error) => {
-            logger.error('Encountered errors after fetching issues with labels and associated column data', 2);
+            logger.error('Encountered errors after fetching issues with labels and column data', 2);
             if (error instanceof Error) {
                 logger.error(error.message, 4);
             }
@@ -82,7 +82,7 @@ async function main() {
     }
     catch (error) {
         if (error instanceof Error && error.message) {
-            logger.error('Failed to fetch issues with labels and associated column data', 2);
+            logger.error('Failed to fetch issues with labels and column data', 2);
             logger.error(error.message, 4);
             process.exitCode = 1;
         }
