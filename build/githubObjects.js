@@ -218,7 +218,7 @@ exports.Label = Label;
 class ProjectItem extends RecordWithID {
     columnName;
     fieldValues;
-    projectName;
+    projectHumanReadableUniqueIdentifiers;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
             throw new TypeError('Param projectItemPOJO does not match a project item object');
@@ -230,7 +230,10 @@ class ProjectItem extends RecordWithID {
         catch (error) {
             throw new ReferenceError(`The field value page could not be initialized`);
         }
-        this.projectName = projectItemPOJO.project.title;
+        this.projectHumanReadableUniqueIdentifiers = {
+            number: projectItemPOJO.project.number,
+            ownerLoginName: projectItemPOJO.project.owner.login
+        };
     }
     findColumnName() {
         if (this.columnName) {
@@ -246,8 +249,8 @@ class ProjectItem extends RecordWithID {
         }
         return null;
     }
-    getProjectName() {
-        return this.projectName;
+    getProjectHumanReadableUniqueIdentifiers() {
+        return this.projectHumanReadableUniqueIdentifiers;
     }
 }
 exports.ProjectItem = ProjectItem;

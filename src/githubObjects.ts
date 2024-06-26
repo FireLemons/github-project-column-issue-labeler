@@ -261,7 +261,10 @@ export class ProjectItem extends RecordWithID{
   columnName?: string
   fieldValues: GraphQLPage<FieldValue>
   declare id: number
-  projectName: string
+  projectHumanReadableUniqueIdentifiers: {
+    number: number
+    ownerLoginName: string
+  }
 
   constructor (projectItemPOJO: any) {
     if (!isProjectItem(projectItemPOJO)) {
@@ -275,7 +278,11 @@ export class ProjectItem extends RecordWithID{
     } catch (error) {
       throw new ReferenceError(`The field value page could not be initialized`)
     }
-    this.projectName = projectItemPOJO.project.title
+
+    this.projectHumanReadableUniqueIdentifiers = {
+      number: projectItemPOJO.project.number,
+      ownerLoginName: projectItemPOJO.project.owner.login
+    }
   }
 
   findColumnName () {
@@ -296,8 +303,8 @@ export class ProjectItem extends RecordWithID{
     return null
   }
 
-  getProjectName () {
-    return this.projectName
+  getProjectHumanReadableUniqueIdentifiers () {
+    return this.projectHumanReadableUniqueIdentifiers
   }
 }
 

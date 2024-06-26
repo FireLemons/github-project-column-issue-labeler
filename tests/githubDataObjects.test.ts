@@ -36,8 +36,11 @@ const projectItemPOJO = {
   databaseId: 65248239,
   fieldValues: fieldValuePagePOJO,
   project: {
-    title: 'y%O/"!D%ZvpvkD$2cw_W'
-  },
+    number: 1,
+    owner: {
+      login: "29;UhhP@%nooLB#ms"
+    }
+  }
 }
 
 const projectItemPagePOJO = {
@@ -317,7 +320,10 @@ describe('The GraphQLPageMergeable class', () => {
           databaseId: newProjectItemId,
           fieldValues: structuredClone(fieldValuePagePOJO),
           project: {
-            title: ''
+            number: 2,
+            owner: {
+              login: ''
+            }
           }
         }
       })
@@ -373,12 +379,12 @@ describe('The GraphQLPageMergeable class', () => {
 
       existingProjectItemPOJO.databaseId = 90285654630
       existingProjectItemPOJO.fieldValues.edges = []
-      existingProjectItemPOJO.project.title = '#vuO;QJ@xywt@(Hy*#'
+      existingProjectItemPOJO.project.owner.login = '#vuO;QJ@xywt@(Hy*#'
 
       newProjectItemPOJO = structuredClone(projectItemPOJO)
 
       newProjectItemPOJO.databaseId = 984379821739
-      existingProjectItemPOJO.project.title = 'T~{dZqN%M~i=0<KAwa'
+      existingProjectItemPOJO.project.owner.login = 'T~{dZqN%M~i=0<KAwa'
 
       const existingPagePOJO = {
         edges: [
@@ -537,15 +543,17 @@ describe('The Issue class', () => {
 
   describe('findColumnName()', () => {
     it('returns false if the column name could not be found with complete pages', () => {
-      
+      const issuePOJOCopy = structuredClone(issuePOJO)
+
+
     })
 
     it('throws an error if the could name could not be found with incomplete pages', () => {
-      
+      const issuePOJOCopy = structuredClone(issuePOJO)
     })
 
     it('returns true if the column name could be found', () => {
-      
+      const issuePOJOCopy = structuredClone(issuePOJO)
     })
   })
   
@@ -683,11 +691,14 @@ describe('The ProjectItem class', () => {
     })
   })
 
-  describe('getProjectName()', () => {
+  describe('getProjectHumanReadableUniqueIdentifiers()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
       const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
 
-      expect(projectItem.getProjectName()).toBe(projectItemPOJO.project.title)
+      expect(projectItem.getProjectHumanReadableUniqueIdentifiers()).toEqual({
+        number: projectItemPOJO.project.number,
+        ownerLoginName: projectItemPOJO.project.owner.login
+      })
     })
   })
 })
