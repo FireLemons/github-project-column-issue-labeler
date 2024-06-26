@@ -336,7 +336,9 @@ function isProjectItem(object) {
         TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object);
         TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object);
         const { project } = object;
-        TypeChecker.validateObjectMember(project, 'title', TypeChecker.Type.string);
+        TypeChecker.validateObjectMember(project, 'number', TypeChecker.Type.number);
+        TypeChecker.validateObjectMember(project, 'owner', TypeChecker.Type.object);
+        TypeChecker.validateObjectMember(project.owner, 'login', TypeChecker.Type.string);
     }
     catch (error) {
         return false;

@@ -401,7 +401,9 @@ function isProjectItem (object: any): boolean {
 
     const { project } = object
 
-    TypeChecker.validateObjectMember(project, 'title', TypeChecker.Type.string)
+    TypeChecker.validateObjectMember(project, 'number', TypeChecker.Type.number)
+    TypeChecker.validateObjectMember(project, 'owner', TypeChecker.Type.object)
+    TypeChecker.validateObjectMember(project.owner, 'login', TypeChecker.Type.string)
   } catch (error) {
     return false
   }

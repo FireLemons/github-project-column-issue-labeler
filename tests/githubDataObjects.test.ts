@@ -494,8 +494,8 @@ describe('The Issue class', () => {
     it('throws an error when passed an object not matching an issue', () => {
       expect(() => {
         new Issue({
-          number: 1,
-          labels: 'wrong type for labels value',
+          number: 'wrong type for number',
+          labels: [],
           projectItems: projectItemPagePOJO
         })
       }).toThrow(TypeError)
