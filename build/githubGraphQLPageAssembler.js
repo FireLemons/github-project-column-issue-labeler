@@ -30,7 +30,7 @@ class GithubGraphQLPageAssembler {
                 }
             }
             catch (error) {
-                if (issuePageResponse.repository) {
+                if (issuePageResponse?.repository) {
                     let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page';
                     logger.warn('Encountered errors while fetching ' + pageMessageIndex);
                 }
