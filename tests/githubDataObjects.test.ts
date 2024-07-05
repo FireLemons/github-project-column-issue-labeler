@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, IncompleteLocalRecordsError, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -475,6 +475,49 @@ describe('The GraphQLPageMergeable class', () => {
   })
 })
 
+describe('The IncompleteLocalRecordsError class', () => {
+  const parentId = projectItemPOJO.databaseId
+  let error: IncompleteLocalRecordsError
+  let page: GraphQLPage<FieldValue>
+
+  beforeEach(() => {
+    error = new IncompleteLocalRecordsError('Error message')
+    page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
+  })
+
+  it('extends RangeError', () => {
+    expect(new IncompleteLocalRecordsError('Error message') instanceof RangeError).toBe(true)
+  })
+
+  describe('addRemoteRecordQueryVariables()', () => {
+    it("adds a set of query parameters to a list in the error", () => {
+      error.addRemoteRecordQueryVariables({
+        parentId: parentId,
+        recordPage: page
+      })
+
+      error.addRemoteRecordQueryVariables({
+        recordPage: page
+      })
+
+      expect(error.remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
+        return queryParameters.parentId === parentId && queryParameters.recordPage === page
+      })).not.toBe(undefined)
+
+      expect(error.remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
+        return 'parentId' in queryParameters === false && queryParameters.recordPage === page
+      })).not.toBe(undefined)
+    })
+  })
+
+  describe('deleteRemoteRecordQueryVariables()', () => {
+
+  })
+
+  describe('getRemoteRecordQueryVariables()', () => {
+  })
+})
+
 describe('The Issue class', () => {
   beforeEach(() => { // The Issue constructor mutates the projectItemPOJO sub-object. This avoids the mutation persisting through to other tests
     projectItemPagePOJO.edges[0].node = structuredClone(projectItemPOJO)
@@ -691,11 +734,11 @@ describe('The ProjectItem class', () => {
     })
   })
 
-  describe('getProjectHumanReadableUniqueIdentifiers()', () => {
+  describe('getProjectHumanAccessibleUniqueIdentifiers()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
       const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
 
-      expect(projectItem.getProjectHumanReadableUniqueIdentifiers()).toEqual({
+      expect(projectItem.getProjectHumanAccessibleUniqueIdentifiers()).toEqual({
         number: projectItemPOJO.project.number,
         ownerLoginName: projectItemPOJO.project.owner.login
       })
