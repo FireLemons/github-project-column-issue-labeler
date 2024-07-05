@@ -4,6 +4,33 @@ interface Constructable<T> {
   new (...args: any[]): T;
 }
 
+export interface RemoteRecordPageQueryParameters {
+  parentId?: number | string
+  recordPage: GraphQLPage<FieldValue | Issue | Label | ProjectItem>
+}
+
+export class IncompleteLocalRecordsError extends RangeError {
+  remoteRecordQueryParameters: RemoteRecordPageQueryParameters[]
+
+  constructor (message: string) {
+    super(message)
+
+    this.remoteRecordQueryParameters = []
+  }
+
+  addRemoteRecordQueryVariables (queryParameters: RemoteRecordPageQueryParameters) {
+    this.remoteRecordQueryParameters.push(queryParameters)
+  }
+
+  deleteRemoteRecordQueryVariables (index: number) {
+    return this.remoteRecordQueryParameters.splice(index, 1)
+  }
+
+  getRemoteRecordQueryVariables () {
+    return this.remoteRecordQueryParameters
+  }
+}
+
 export class FieldValue {
   name: string // Column Name
 
@@ -168,11 +195,6 @@ export class Issue {
 
   columnName?: string
 
-  columnNameSearchIndicies: {
-    lastUnsearchedProjectItemIndex: number
-    projectItemsWithUnsearchedFieldValues: Map<number, ProjectItem>
-  }
-
   constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
       throw new TypeError('Param issuePOJO does not match a github issue object')
@@ -194,35 +216,62 @@ export class Issue {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.columnNameSearchIndicies = {
-      lastUnsearchedProjectItemIndex: 0,
-      projectItemsWithUnsearchedFieldValues: new Map()
-    }
     this.issue = issueState
   }
 
-  findColumnName () {
+  findColumnName (projectNumber: number, projectOwnerLogin: string) {
     if (this.columnName) {
       return this.columnName
     }
 
-    const projectItems = this.issue.projectItems.getNodeArray().concat(Array.from(this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.values()))
+    let isCompleteSearch = true
+    const projectEdges = this.issue.projectItems.getEdges()
 
-    for (let i = this.columnNameSearchIndicies.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
-      const projectItem = projectItems[i]
+    let i = projectEdges.length
+
+    while (i > 0) {
+      i--
+
+      const projectItem = projectEdges[i].node
+      const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
+
+      if (projectNumber && projectNumber === projectItemHumanAccessibleUniqueIdentifiers.number) {
+        this.issue.projectItems.delete(i)
+        continue
+      }
+
+      if (projectOwnerLogin && projectOwnerLogin === projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+        this.issue.projectItems.delete(i)
+        continue
+      }
 
       try {
-        const columnName = projectItem.findColumnName()
+        const columnNameSearchResult = projectItem.findColumnName()
 
-        if (columnName) {
-          this.columnName = columnName
-          return
+        if (columnNameSearchResult) {
+          this.columnName = columnNameSearchResult
+          return columnNameSearchResult
+        } else {
+          this.issue.projectItems.delete(i)
         }
       } catch (error) {
-        if (error instanceof ReferenceError) {
-          this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.set(projectItem.id, projectItem)
+        if (error instanceof ReferenceError && error.message === 'Failed to find column name when searching incomplete field value pages') {
+          isCompleteSearch = false
+        } else {
+          throw error
         }
       }
+    }
+
+    if (!(this.issue.projectItems.isLastPage())) {
+      isCompleteSearch = false
+    }
+
+    if (isCompleteSearch) {
+      return null
+    } else {
+      //Need more info about which type of record is incomplete
+      throw new ReferenceError('Failed to find column name when searching incomplete field value pages')
     }
   }
 
@@ -303,7 +352,7 @@ export class ProjectItem extends RecordWithID{
     return null
   }
 
-  getProjectHumanReadableUniqueIdentifiers () {
+  getProjectHumanAccessibleUniqueIdentifiers () {
     return this.projectHumanReadableUniqueIdentifiers
   }
 }

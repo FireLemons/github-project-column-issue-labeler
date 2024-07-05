@@ -23,8 +23,25 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = void 0;
+exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = exports.IncompleteLocalRecordsError = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
+class IncompleteLocalRecordsError extends RangeError {
+    remoteRecordQueryParameters;
+    constructor(message) {
+        super(message);
+        this.remoteRecordQueryParameters = [];
+    }
+    addRemoteRecordQueryVariables(queryParameters) {
+        this.remoteRecordQueryParameters.push(queryParameters);
+    }
+    deleteRemoteRecordQueryVariables(index) {
+        return this.remoteRecordQueryParameters.splice(index, 1);
+    }
+    getRemoteRecordQueryVariables() {
+        return this.remoteRecordQueryParameters;
+    }
+}
+exports.IncompleteLocalRecordsError = IncompleteLocalRecordsError;
 class FieldValue {
     name; // Column Name
     constructor(fieldValuePOJO) {
@@ -142,7 +159,6 @@ exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     issue;
     columnName;
-    columnNameSearchIndicies;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
@@ -162,31 +178,55 @@ class Issue {
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
-        this.columnNameSearchIndicies = {
-            lastUnsearchedProjectItemIndex: 0,
-            projectItemsWithUnsearchedFieldValues: new Map()
-        };
         this.issue = issueState;
     }
-    findColumnName() {
+    findColumnName(projectNumber, projectOwnerLogin) {
         if (this.columnName) {
             return this.columnName;
         }
-        const projectItems = this.issue.projectItems.getNodeArray().concat(Array.from(this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.values()));
-        for (let i = this.columnNameSearchIndicies.lastUnsearchedProjectItemIndex; i < projectItems.length; i++) {
-            const projectItem = projectItems[i];
+        let isCompleteSearch = true;
+        const projectEdges = this.issue.projectItems.getEdges();
+        let i = projectEdges.length;
+        while (i > 0) {
+            i--;
+            const projectItem = projectEdges[i].node;
+            const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
+            if (projectNumber && projectNumber === projectItemHumanAccessibleUniqueIdentifiers.number) {
+                this.issue.projectItems.delete(i);
+                continue;
+            }
+            if (projectOwnerLogin && projectOwnerLogin === projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+                this.issue.projectItems.delete(i);
+                continue;
+            }
             try {
-                const columnName = projectItem.findColumnName();
-                if (columnName) {
-                    this.columnName = columnName;
-                    return;
+                const columnNameSearchResult = projectItem.findColumnName();
+                if (columnNameSearchResult) {
+                    this.columnName = columnNameSearchResult;
+                    return columnNameSearchResult;
+                }
+                else {
+                    this.issue.projectItems.delete(i);
                 }
             }
             catch (error) {
-                if (error instanceof ReferenceError) {
-                    this.columnNameSearchIndicies.projectItemsWithUnsearchedFieldValues.set(projectItem.id, projectItem);
+                if (error instanceof ReferenceError && error.message === 'Failed to find column name when searching incomplete field value pages') {
+                    isCompleteSearch = false;
+                }
+                else {
+                    throw error;
                 }
             }
+        }
+        if (!(this.issue.projectItems.isLastPage())) {
+            isCompleteSearch = false;
+        }
+        if (isCompleteSearch) {
+            return null;
+        }
+        else {
+            //Need more info about which type of record is incomplete
+            throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
         }
     }
     getLabels() {
@@ -249,7 +289,7 @@ class ProjectItem extends RecordWithID {
         }
         return null;
     }
-    getProjectHumanReadableUniqueIdentifiers() {
+    getProjectHumanAccessibleUniqueIdentifiers() {
         return this.projectHumanReadableUniqueIdentifiers;
     }
 }
