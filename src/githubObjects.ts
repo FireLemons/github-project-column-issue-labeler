@@ -23,7 +23,13 @@ export class IncompleteLocalRecordsError extends RangeError {
   }
 
   deleteRemoteRecordQueryVariables (index: number) {
-    return this.remoteRecordQueryParameters.splice(index, 1)
+    if ( 0 > index || index >= this.remoteRecordQueryParameters.length ) {
+      throw new RangeError('Param index out of range')
+    }
+
+    const spliceResult = this.remoteRecordQueryParameters.splice(index, 1)
+
+    return spliceResult.length > 0 ? spliceResult[0] : null
   }
 
   getRemoteRecordQueryVariables () {

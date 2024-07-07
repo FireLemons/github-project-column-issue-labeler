@@ -511,7 +511,50 @@ describe('The IncompleteLocalRecordsError class', () => {
   })
 
   describe('deleteRemoteRecordQueryVariables()', () => {
+    it('removes the query variables at the specified index', () => {
+      expect(error.remoteRecordQueryParameters.length).toBe(0)
 
+      error.addRemoteRecordQueryVariables({
+        parentId: parentId,
+        recordPage: page
+      })
+
+      expect(error.remoteRecordQueryParameters.length).toBe(1)
+
+      error.deleteRemoteRecordQueryVariables(0)
+
+      expect(error.remoteRecordQueryParameters.length).toBe(0)
+    })
+
+    it('returns the deleted query variables', () => {
+      const queryVariables = {
+        parentId: parentId,
+        recordPage: page
+      }
+
+      error.addRemoteRecordQueryVariables(queryVariables)
+
+      const deleteReturnValue = error.deleteRemoteRecordQueryVariables(0)
+
+      expect(deleteReturnValue).toBe(queryVariables)
+    })
+
+    it('throws an error when the index is out of bounds', () => {
+      const queryVariables = {
+        parentId: parentId,
+        recordPage: page
+      }
+
+      error.addRemoteRecordQueryVariables(queryVariables)
+
+      expect(() => {
+        error.deleteRemoteRecordQueryVariables(-1)
+      }).toThrow(RangeError)
+
+      expect(() => {
+        error.deleteRemoteRecordQueryVariables(1)
+      }).toThrow(RangeError)
+    })
   })
 
   describe('getRemoteRecordQueryVariables()', () => {
