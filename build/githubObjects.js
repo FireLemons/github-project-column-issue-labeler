@@ -31,17 +31,17 @@ class IncompleteLocalRecordsError extends RangeError {
         super(message);
         this.remoteRecordQueryParameters = [];
     }
-    addRemoteRecordQueryVariables(queryParameters) {
+    addRemoteRecordQueryParameters(queryParameters) {
         this.remoteRecordQueryParameters.push(queryParameters);
     }
-    deleteRemoteRecordQueryVariables(index) {
+    deleteRemoteRecordQueryParameters(index) {
         if (0 > index || index >= this.remoteRecordQueryParameters.length) {
             throw new RangeError('Param index out of range');
         }
         const spliceResult = this.remoteRecordQueryParameters.splice(index, 1);
         return spliceResult.length > 0 ? spliceResult[0] : null;
     }
-    getRemoteRecordQueryVariables() {
+    getRemoteRecordQueryParameters() {
         return this.remoteRecordQueryParameters;
     }
 }

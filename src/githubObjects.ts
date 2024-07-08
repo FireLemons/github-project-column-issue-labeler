@@ -18,11 +18,11 @@ export class IncompleteLocalRecordsError extends RangeError {
     this.remoteRecordQueryParameters = []
   }
 
-  addRemoteRecordQueryVariables (queryParameters: RemoteRecordPageQueryParameters) {
+  addRemoteRecordQueryParameters (queryParameters: RemoteRecordPageQueryParameters) {
     this.remoteRecordQueryParameters.push(queryParameters)
   }
 
-  deleteRemoteRecordQueryVariables (index: number) {
+  deleteRemoteRecordQueryParameters (index: number) {
     if ( 0 > index || index >= this.remoteRecordQueryParameters.length ) {
       throw new RangeError('Param index out of range')
     }
@@ -32,7 +32,7 @@ export class IncompleteLocalRecordsError extends RangeError {
     return spliceResult.length > 0 ? spliceResult[0] : null
   }
 
-  getRemoteRecordQueryVariables () {
+  getRemoteRecordQueryParameters () {
     return this.remoteRecordQueryParameters
   }
 }

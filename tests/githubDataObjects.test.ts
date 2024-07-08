@@ -489,14 +489,14 @@ describe('The IncompleteLocalRecordsError class', () => {
     expect(new IncompleteLocalRecordsError('Error message') instanceof RangeError).toBe(true)
   })
 
-  describe('addRemoteRecordQueryVariables()', () => {
+  describe('addRemoteRecordQueryParameters()', () => {
     it("adds a set of query parameters to a list in the error", () => {
-      error.addRemoteRecordQueryVariables({
+      error.addRemoteRecordQueryParameters({
         parentId: parentId,
         recordPage: page
       })
 
-      error.addRemoteRecordQueryVariables({
+      error.addRemoteRecordQueryParameters({
         recordPage: page
       })
 
@@ -510,54 +510,74 @@ describe('The IncompleteLocalRecordsError class', () => {
     })
   })
 
-  describe('deleteRemoteRecordQueryVariables()', () => {
-    it('removes the query variables at the specified index', () => {
+  describe('deleteRemoteRecordQueryParameters()', () => {
+    it('removes the query parameters at the specified index', () => {
       expect(error.remoteRecordQueryParameters.length).toBe(0)
 
-      error.addRemoteRecordQueryVariables({
+      error.addRemoteRecordQueryParameters({
         parentId: parentId,
         recordPage: page
       })
 
       expect(error.remoteRecordQueryParameters.length).toBe(1)
 
-      error.deleteRemoteRecordQueryVariables(0)
+      error.deleteRemoteRecordQueryParameters(0)
 
       expect(error.remoteRecordQueryParameters.length).toBe(0)
     })
 
-    it('returns the deleted query variables', () => {
-      const queryVariables = {
+    it('returns the deleted query parameters', () => {
+      const queryParameters = {
         parentId: parentId,
         recordPage: page
       }
 
-      error.addRemoteRecordQueryVariables(queryVariables)
+      error.addRemoteRecordQueryParameters(queryParameters)
 
-      const deleteReturnValue = error.deleteRemoteRecordQueryVariables(0)
+      const deleteReturnValue = error.deleteRemoteRecordQueryParameters(0)
 
-      expect(deleteReturnValue).toBe(queryVariables)
+      expect(deleteReturnValue).toBe(queryParameters)
     })
 
     it('throws an error when the index is out of bounds', () => {
-      const queryVariables = {
+      const queryParameters = {
         parentId: parentId,
         recordPage: page
       }
 
-      error.addRemoteRecordQueryVariables(queryVariables)
+      error.addRemoteRecordQueryParameters(queryParameters)
 
       expect(() => {
-        error.deleteRemoteRecordQueryVariables(-1)
+        error.deleteRemoteRecordQueryParameters(-1)
       }).toThrow(RangeError)
 
       expect(() => {
-        error.deleteRemoteRecordQueryVariables(1)
+        error.deleteRemoteRecordQueryParameters(1)
       }).toThrow(RangeError)
     })
   })
 
-  describe('getRemoteRecordQueryVariables()', () => {
+  describe('getRemoteRecordQueryParameters()', () => {
+    it('returns the remote query parameters stored in the error', () => {
+      error.addRemoteRecordQueryParameters({
+        parentId: parentId,
+        recordPage: page
+      })
+
+      error.addRemoteRecordQueryParameters({
+        recordPage: page
+      })
+
+      const remoteRecordQueryParameters = error.getRemoteRecordQueryParameters()
+
+      expect(remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
+        return queryParameters.parentId === parentId && queryParameters.recordPage === page
+      })).not.toBe(undefined)
+
+      expect(remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
+        return 'parentId' in queryParameters === false && queryParameters.recordPage === page
+      })).not.toBe(undefined)
+    })
   })
 })
 
