@@ -197,7 +197,7 @@ export class Issue {
     this.issue = issueState
   }
 
-  findColumnName (projectNumber: number, projectOwnerLogin: string) {
+  findColumnName (projectNumber?: number, projectOwnerLogin?: string) {
     if (this.columnName) {
       return this.columnName
     }
