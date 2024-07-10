@@ -9,34 +9,6 @@ export interface RemoteRecordPageQueryParameters {
   recordPage: GraphQLPage<FieldValue | Issue | Label | ProjectItem>
 }
 
-export class IncompleteLocalRecordsError extends RangeError {
-  remoteRecordQueryParameters: RemoteRecordPageQueryParameters[]
-
-  constructor (message: string) {
-    super(message)
-
-    this.remoteRecordQueryParameters = []
-  }
-
-  addRemoteRecordQueryParameters (queryParameters: RemoteRecordPageQueryParameters) {
-    this.remoteRecordQueryParameters.push(queryParameters)
-  }
-
-  deleteRemoteRecordQueryParameters (index: number) {
-    if ( 0 > index || index >= this.remoteRecordQueryParameters.length ) {
-      throw new RangeError('Param index out of range')
-    }
-
-    const spliceResult = this.remoteRecordQueryParameters.splice(index, 1)
-
-    return spliceResult.length > 0 ? spliceResult[0] : null
-  }
-
-  getRemoteRecordQueryParameters () {
-    return this.remoteRecordQueryParameters
-  }
-}
-
 export class FieldValue {
   name: string // Column Name
 
@@ -230,7 +202,7 @@ export class Issue {
       return this.columnName
     }
 
-    let isCompleteSearch = true
+    let remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
     const projectEdges = this.issue.projectItems.getEdges()
 
     let i = projectEdges.length
@@ -251,33 +223,29 @@ export class Issue {
         continue
       }
 
-      try {
-        const columnNameSearchResult = projectItem.findColumnName()
+      const columnNameSearchResult = projectItem.findColumnName()
 
-        if (columnNameSearchResult) {
-          this.columnName = columnNameSearchResult
-          return columnNameSearchResult
-        } else {
-          this.issue.projectItems.delete(i)
-        }
-      } catch (error) {
-        if (error instanceof ReferenceError && error.message === 'Failed to find column name when searching incomplete field value pages') {
-          isCompleteSearch = false
-        } else {
-          throw error
-        }
+      if (columnNameSearchResult === null) {
+        this.issue.projectItems.delete(i)
+      } else if (TypeChecker.isString(columnNameSearchResult)) {
+        this.columnName = columnNameSearchResult
+        return columnNameSearchResult
+      } else {
+        remoteRecordQueryParams.push(columnNameSearchResult)
       }
     }
 
     if (!(this.issue.projectItems.isLastPage())) {
-      isCompleteSearch = false
+      remoteRecordQueryParams.push({
+        parentId: this.issue.number,
+        recordPage: this.issue.projectItems
+      })
     }
 
-    if (isCompleteSearch) {
+    if (remoteRecordQueryParams) {
       return null
     } else {
-      //Need more info about which type of record is incomplete
-      throw new ReferenceError('Failed to find column name when searching incomplete field value pages')
+      return remoteRecordQueryParams
     }
   }
 
@@ -352,7 +320,10 @@ export class ProjectItem extends RecordWithID{
 
       return this.columnName
     } else if (!(this.fieldValues.isLastPage())) {
-      throw new ReferenceError('Failed to find column name when searching incomplete field value pages')
+      return {
+        parentId: this.getId(),
+        recordPage: this.fieldValues
+      }
     }
 
     return null

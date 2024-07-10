@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, GraphQLPageMergeable, IncompleteLocalRecordsError, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -475,112 +475,6 @@ describe('The GraphQLPageMergeable class', () => {
   })
 })
 
-describe('The IncompleteLocalRecordsError class', () => {
-  const parentId = projectItemPOJO.databaseId
-  let error: IncompleteLocalRecordsError
-  let page: GraphQLPage<FieldValue>
-
-  beforeEach(() => {
-    error = new IncompleteLocalRecordsError('Error message')
-    page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
-  })
-
-  it('extends RangeError', () => {
-    expect(new IncompleteLocalRecordsError('Error message') instanceof RangeError).toBe(true)
-  })
-
-  describe('addRemoteRecordQueryParameters()', () => {
-    it("adds a set of query parameters to a list in the error", () => {
-      error.addRemoteRecordQueryParameters({
-        parentId: parentId,
-        recordPage: page
-      })
-
-      error.addRemoteRecordQueryParameters({
-        recordPage: page
-      })
-
-      expect(error.remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
-        return queryParameters.parentId === parentId && queryParameters.recordPage === page
-      })).not.toBe(undefined)
-
-      expect(error.remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
-        return 'parentId' in queryParameters === false && queryParameters.recordPage === page
-      })).not.toBe(undefined)
-    })
-  })
-
-  describe('deleteRemoteRecordQueryParameters()', () => {
-    it('removes the query parameters at the specified index', () => {
-      expect(error.remoteRecordQueryParameters.length).toBe(0)
-
-      error.addRemoteRecordQueryParameters({
-        parentId: parentId,
-        recordPage: page
-      })
-
-      expect(error.remoteRecordQueryParameters.length).toBe(1)
-
-      error.deleteRemoteRecordQueryParameters(0)
-
-      expect(error.remoteRecordQueryParameters.length).toBe(0)
-    })
-
-    it('returns the deleted query parameters', () => {
-      const queryParameters = {
-        parentId: parentId,
-        recordPage: page
-      }
-
-      error.addRemoteRecordQueryParameters(queryParameters)
-
-      const deleteReturnValue = error.deleteRemoteRecordQueryParameters(0)
-
-      expect(deleteReturnValue).toBe(queryParameters)
-    })
-
-    it('throws an error when the index is out of bounds', () => {
-      const queryParameters = {
-        parentId: parentId,
-        recordPage: page
-      }
-
-      error.addRemoteRecordQueryParameters(queryParameters)
-
-      expect(() => {
-        error.deleteRemoteRecordQueryParameters(-1)
-      }).toThrow(RangeError)
-
-      expect(() => {
-        error.deleteRemoteRecordQueryParameters(1)
-      }).toThrow(RangeError)
-    })
-  })
-
-  describe('getRemoteRecordQueryParameters()', () => {
-    it('returns the remote query parameters stored in the error', () => {
-      error.addRemoteRecordQueryParameters({
-        parentId: parentId,
-        recordPage: page
-      })
-
-      error.addRemoteRecordQueryParameters({
-        recordPage: page
-      })
-
-      const remoteRecordQueryParameters = error.getRemoteRecordQueryParameters()
-
-      expect(remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
-        return queryParameters.parentId === parentId && queryParameters.recordPage === page
-      })).not.toBe(undefined)
-
-      expect(remoteRecordQueryParameters.find((queryParameters: RemoteRecordPageQueryParameters) => {
-        return 'parentId' in queryParameters === false && queryParameters.recordPage === page
-      })).not.toBe(undefined)
-    })
-  })
-})
-
 describe('The Issue class', () => {
   beforeEach(() => { // The Issue constructor mutates the projectItemPOJO sub-object. This avoids the mutation persisting through to other tests
     projectItemPagePOJO.edges[0].node = structuredClone(projectItemPOJO)
@@ -774,19 +668,20 @@ describe('The ProjectItem class', () => {
       expect(projectItem.findColumnName()).toBe(null)
     })
 
-    it('throws an error if the could name could not be found with incomplete pages', () => {
+    it('returns an object containing parameters to fetch more data on a fail', () => {
       const projectItemPOJOCopy = structuredClone(projectItemPOJO)
 
       projectItemPOJOCopy.fieldValues.edges.splice(0, 1)
 
       const projectItem = new ProjectItem(projectItemPOJOCopy)
 
-      expect(() => {
-        projectItem.findColumnName()
-      }).toThrow(ReferenceError)
+      expect(projectItem.findColumnName()).toEqual({
+        parentId: projectItemPOJO.databaseId,
+        recordPage: projectItem.fieldValues
+      })
     })
 
-    it('returns true if the column name could be found', () => {
+    it('returns the column name on a successful search', () => {
       const projectItemPOJOCopy = structuredClone(projectItemPOJO)
 
       projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false

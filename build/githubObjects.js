@@ -23,29 +23,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = exports.IncompleteLocalRecordsError = void 0;
+exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
-class IncompleteLocalRecordsError extends RangeError {
-    remoteRecordQueryParameters;
-    constructor(message) {
-        super(message);
-        this.remoteRecordQueryParameters = [];
-    }
-    addRemoteRecordQueryParameters(queryParameters) {
-        this.remoteRecordQueryParameters.push(queryParameters);
-    }
-    deleteRemoteRecordQueryParameters(index) {
-        if (0 > index || index >= this.remoteRecordQueryParameters.length) {
-            throw new RangeError('Param index out of range');
-        }
-        const spliceResult = this.remoteRecordQueryParameters.splice(index, 1);
-        return spliceResult.length > 0 ? spliceResult[0] : null;
-    }
-    getRemoteRecordQueryParameters() {
-        return this.remoteRecordQueryParameters;
-    }
-}
-exports.IncompleteLocalRecordsError = IncompleteLocalRecordsError;
 class FieldValue {
     name; // Column Name
     constructor(fieldValuePOJO) {
@@ -188,7 +167,7 @@ class Issue {
         if (this.columnName) {
             return this.columnName;
         }
-        let isCompleteSearch = true;
+        let remoteRecordQueryParams = [];
         const projectEdges = this.issue.projectItems.getEdges();
         let i = projectEdges.length;
         while (i > 0) {
@@ -203,34 +182,29 @@ class Issue {
                 this.issue.projectItems.delete(i);
                 continue;
             }
-            try {
-                const columnNameSearchResult = projectItem.findColumnName();
-                if (columnNameSearchResult) {
-                    this.columnName = columnNameSearchResult;
-                    return columnNameSearchResult;
-                }
-                else {
-                    this.issue.projectItems.delete(i);
-                }
+            const columnNameSearchResult = projectItem.findColumnName();
+            if (columnNameSearchResult === null) {
+                this.issue.projectItems.delete(i);
             }
-            catch (error) {
-                if (error instanceof ReferenceError && error.message === 'Failed to find column name when searching incomplete field value pages') {
-                    isCompleteSearch = false;
-                }
-                else {
-                    throw error;
-                }
+            else if (TypeChecker.isString(columnNameSearchResult)) {
+                this.columnName = columnNameSearchResult;
+                return columnNameSearchResult;
+            }
+            else {
+                remoteRecordQueryParams.push(columnNameSearchResult);
             }
         }
         if (!(this.issue.projectItems.isLastPage())) {
-            isCompleteSearch = false;
+            remoteRecordQueryParams.push({
+                parentId: this.issue.number,
+                recordPage: this.issue.projectItems
+            });
         }
-        if (isCompleteSearch) {
+        if (remoteRecordQueryParams) {
             return null;
         }
         else {
-            //Need more info about which type of record is incomplete
-            throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
+            return remoteRecordQueryParams;
         }
     }
     getLabels() {
@@ -289,7 +263,10 @@ class ProjectItem extends RecordWithID {
             return this.columnName;
         }
         else if (!(this.fieldValues.isLastPage())) {
-            throw new ReferenceError('Failed to find column name when searching incomplete field value pages');
+            return {
+                parentId: this.getId(),
+                recordPage: this.fieldValues
+            };
         }
         return null;
     }
