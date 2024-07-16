@@ -242,10 +242,10 @@ export class Issue {
       })
     }
 
-    if (remoteRecordQueryParams) {
-      return null
-    } else {
+    if (remoteRecordQueryParams.length) {
       return remoteRecordQueryParams
+    } else {
+      return null
     }
   }
 

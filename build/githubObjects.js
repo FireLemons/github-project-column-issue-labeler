@@ -200,11 +200,11 @@ class Issue {
                 recordPage: this.issue.projectItems
             });
         }
-        if (remoteRecordQueryParams) {
-            return null;
+        if (remoteRecordQueryParams.length) {
+            return remoteRecordQueryParams;
         }
         else {
-            return remoteRecordQueryParams;
+            return null;
         }
     }
     getLabels() {
