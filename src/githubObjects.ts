@@ -38,6 +38,7 @@ export class RecordWithID {
 }
 
 export class GraphQLPage<T> {
+  nodeClass: Constructable<any> | undefined
   page: {
     edges: {
         node: T
@@ -55,6 +56,7 @@ export class GraphQLPage<T> {
     }
 
     this.page = pagePOJO
+    this.nodeClass = NodeClass
 
     if (NodeClass) {
       initializeNodes(NodeClass, this)
@@ -83,12 +85,6 @@ export class GraphQLPage<T> {
   }
 
   getNodeArray () {
-    return this.page.edges.map((edge) => {
-      return edge.node
-    })
-  }
-
-  getPageNodes (): T[] {
     return this.page.edges.map(edge => edge.node)
   }
 
@@ -102,6 +98,10 @@ export class GraphQLPage<T> {
 
   isLastPage () {
     return !(this.page.pageInfo.hasNextPage)
+  }
+
+  lookupNodeClass () {
+    return this.nodeClass
   }
 }
 

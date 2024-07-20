@@ -49,12 +49,14 @@ class RecordWithID {
 }
 exports.RecordWithID = RecordWithID;
 class GraphQLPage {
+    nodeClass;
     page;
     constructor(pagePOJO, NodeClass) {
         if (!(isGraphQLPage(pagePOJO))) {
             throw new TypeError('Param pagePOJO does not match a graphQL page');
         }
         this.page = pagePOJO;
+        this.nodeClass = NodeClass;
         if (NodeClass) {
             initializeNodes(NodeClass, this);
         }
@@ -76,11 +78,6 @@ class GraphQLPage {
         return this.page.pageInfo.endCursor;
     }
     getNodeArray() {
-        return this.page.edges.map((edge) => {
-            return edge.node;
-        });
-    }
-    getPageNodes() {
         return this.page.edges.map(edge => edge.node);
     }
     getPageInfo() {
@@ -91,6 +88,9 @@ class GraphQLPage {
     }
     isLastPage() {
         return !(this.page.pageInfo.hasNextPage);
+    }
+    lookupNodeClass() {
+        return this.nodeClass;
     }
 }
 exports.GraphQLPage = GraphQLPage;
