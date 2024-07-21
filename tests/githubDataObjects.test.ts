@@ -1,4 +1,5 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import * as TypeChecker from '../src/typeChecker'
 
 const fieldValuePOJO = {
   name: 'AnSVq5a_ibi2E*M<|/>'
@@ -542,18 +543,99 @@ describe('The Issue class', () => {
   })
 
   describe('findColumnName()', () => {
-    it('returns false if the column name could not be found with complete pages', () => {
+    it('returns null when the column name could not be found with a complete search space', () => {
       const issuePOJOCopy = structuredClone(issuePOJO)
 
+      issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+      issuePOJOCopy.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage = false
 
+      const issue = new Issue(issuePOJOCopy)
+
+      expect(issue.findColumnName()).toBe(null)
     })
 
-    it('throws an error if the could name could not be found with incomplete pages', () => {
+    it('returns remote query parameters when the column name could not be found', () => {
       const issuePOJOCopy = structuredClone(issuePOJO)
+
+      issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
+      issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+
+      const issue = new Issue(issuePOJOCopy)
+      const columnNameSearchResult = issue.findColumnName()
+
+      expect(Array.isArray(columnNameSearchResult)).toBe(true)
+
+      expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
+        return queryParameters.parentId === projectItemPOJO.databaseId && queryParameters.recordPage.lookupNodeClass() === FieldValue
+      })).not.toBe(undefined)
+
+      expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
+        return queryParameters.parentId === issue.getNumber() && queryParameters.recordPage.lookupNodeClass() === ProjectItem
+      })).not.toBe(undefined)
     })
 
-    it('returns true if the column name could be found', () => {
+    it('returns the column name on a successful search', () => {
       const issuePOJOCopy = structuredClone(issuePOJO)
+
+      const issue = new Issue(issuePOJOCopy)
+
+      expect(issue.findColumnName()).toBe(fieldValuePOJO.name)
+    })
+
+    describe('when passed parameters to filter by', () => {
+      const columnNameB = '$JF+dA=Rha{gj/5@B'
+      const columnNameC = 'tcmV=m0)<,u$B(Kim'
+      const loginB = 'FUv4k60t,[]Fz~l?8'
+      const loginC = 'gv2C.p|z[e/J4y&~<'
+      const projectNumberB = 2
+      const projectNumberC = 3
+
+      let issue
+
+      beforeAll(() => {
+        const issuePOJOCopy = structuredClone(issuePOJO)
+        const projectItemB = structuredClone(projectItemPOJO)
+        const projectItemC = structuredClone(projectItemPOJO)
+        
+        projectItemB.project.number = projectNumberB
+        projectItemC.project.number = projectNumberC
+  
+        projectItemB.project.owner.login = loginB
+        projectItemC.project.owner.login = loginC
+  
+        projectItemB.fieldValues.edges[0].node.name = columnNameB
+        projectItemC.fieldValues.edges[0].node.name = columnNameC
+
+        issuePOJOCopy.projectItems.edges.push({
+          node: projectItemB
+        })
+
+        issuePOJOCopy.projectItems.edges.push({
+          node: projectItemC
+        })
+
+        issue = new Issue(issuePOJOCopy)
+      })
+
+      it('returns the column name of the project item matching the passed project number', () => {
+        expect(issue!.findColumnName(projectItemPOJO.project.number)).toBe(fieldValuePOJO.name)
+        expect(issue!.findColumnName(projectNumberB)).toBe(columnNameB)
+        expect(issue!.findColumnName(projectNumberC)).toBe(columnNameC)
+      })
+
+      it('does not return a column name if no project item matches the passed project number', () => {
+        expect(TypeChecker.isString(issue!.findColumnName(-100))).not.toBe(true)
+      })
+
+      it('returns the column name of the project item matching the passed project owner name', () => {
+        expect(issue!.findColumnName(null, projectItemPOJO.project.owner.login)).toBe(fieldValuePOJO.name)
+        expect(issue!.findColumnName(null, loginB)).toBe(columnNameB)
+        expect(issue!.findColumnName(null, loginC)).toBe(columnNameC)
+      })
+
+      it('does not return a column name if no project item matches the passed project owner name', () => {
+        expect(TypeChecker.isString(issue!.findColumnName(null, 'nonexistant login'))).not.toBe(true)
+      })
     })
   })
   
