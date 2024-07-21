@@ -141,7 +141,6 @@ class GraphQLPageMergeable extends GraphQLPage {
 exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     issue;
-    columnName;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
@@ -164,9 +163,6 @@ class Issue {
         this.issue = issueState;
     }
     findColumnName(projectNumber, projectOwnerLogin) {
-        if (this.columnName) {
-            return this.columnName;
-        }
         let remoteRecordQueryParams = [];
         const projectEdges = this.issue.projectItems.getEdges();
         let i = projectEdges.length;
@@ -174,20 +170,17 @@ class Issue {
             i--;
             const projectItem = projectEdges[i].node;
             const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
-            if (projectNumber && projectNumber === projectItemHumanAccessibleUniqueIdentifiers.number) {
-                this.issue.projectItems.delete(i);
-                continue;
-            }
-            if (projectOwnerLogin && projectOwnerLogin === projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
-                this.issue.projectItems.delete(i);
-                continue;
-            }
             const columnNameSearchResult = projectItem.findColumnName();
             if (columnNameSearchResult === null) {
                 this.issue.projectItems.delete(i);
             }
             else if (TypeChecker.isString(columnNameSearchResult)) {
-                this.columnName = columnNameSearchResult;
+                if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+                    continue;
+                }
+                if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+                    continue;
+                }
                 return columnNameSearchResult;
             }
             else {

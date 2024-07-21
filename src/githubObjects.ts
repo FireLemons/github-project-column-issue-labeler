@@ -171,8 +171,6 @@ export class Issue {
     projectItems: GraphQLPage<ProjectItem>
   }
 
-  columnName?: string
-
   constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
       throw new TypeError('Param issuePOJO does not match a github issue object')
@@ -198,10 +196,6 @@ export class Issue {
   }
 
   findColumnName (projectNumber?: number, projectOwnerLogin?: string) {
-    if (this.columnName) {
-      return this.columnName
-    }
-
     let remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
     const projectEdges = this.issue.projectItems.getEdges()
 
@@ -212,23 +206,19 @@ export class Issue {
 
       const projectItem = projectEdges[i].node
       const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
-
-      if (projectNumber && projectNumber === projectItemHumanAccessibleUniqueIdentifiers.number) {
-        this.issue.projectItems.delete(i)
-        continue
-      }
-
-      if (projectOwnerLogin && projectOwnerLogin === projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
-        this.issue.projectItems.delete(i)
-        continue
-      }
-
       const columnNameSearchResult = projectItem.findColumnName()
 
       if (columnNameSearchResult === null) {
         this.issue.projectItems.delete(i)
       } else if (TypeChecker.isString(columnNameSearchResult)) {
-        this.columnName = columnNameSearchResult
+        if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+          continue
+        }
+
+        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+          continue
+        }
+
         return columnNameSearchResult
       } else {
         remoteRecordQueryParams.push(columnNameSearchResult)
