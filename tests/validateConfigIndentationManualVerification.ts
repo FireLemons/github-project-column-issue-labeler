@@ -67,8 +67,6 @@ async function main() {
         logger.error(error.stack ?? error.message, 2)
       }
     }
-
-    console.log('')
   }
 }
 

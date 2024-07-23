@@ -7,8 +7,10 @@ export interface ColumnConfiguration {
 
 export interface Config {
   accessToken: string
-  owner: string
-  repo: string
+  repo: {
+    name: string
+    ownerName: string
+  }
   columns: ColumnConfiguration []
 }
 

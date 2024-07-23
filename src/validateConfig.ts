@@ -167,9 +167,13 @@ export function validateConfig (config: string): Config {
   }
 
   typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string)
-  typeChecker.validateObjectMember(configAsObject, 'owner', typeChecker.Type.string)
-  typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.string)
   typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array)
+  typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object)
+
+  const configRepo = configAsObject['repo']
+
+  typeChecker.validateObjectMember(configRepo, 'name', typeChecker.Type.string)
+  typeChecker.validateObjectMember(configRepo, 'ownerName', typeChecker.Type.string)
 
   const trimmedGithubAccessToken = configAsObject.accessToken.trim()
 
@@ -179,8 +183,10 @@ export function validateConfig (config: string): Config {
 
   return {
     accessToken: trimmedGithubAccessToken,
-    owner: configAsObject['owner'].trim(),
-    repo: configAsObject['repo'].trim(),
+    repo: {
+      ownerName: configRepo.ownerName.trim(),
+      name: configRepo.name.trim()
+    },
     columns: validateColumnConfigurationsArray(configAsObject.columns)
   }
 }

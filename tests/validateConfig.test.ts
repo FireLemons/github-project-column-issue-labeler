@@ -1,4 +1,5 @@
 import fs from 'fs'
+import ConfigTestData from './configTestData'
 import { validateConfig } from '../src/validateConfig'
 import { ColumnConfiguration, Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/labelerConfig'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
@@ -28,10 +29,7 @@ function resetSpies () {
 describe('validateConfig()', () => {
   describe('when config contains invalid json', () => {
     it('throws an error with a message describing that the file did not contain parsable JSON', () => {
-      const configContents = `
-        {
-          keyWithoutQuotes: "value"
-        }`
+      const configContents = ConfigTestData.invalidJSON
 
       expect(() => {
         validateConfig(configContents.toString())
@@ -41,13 +39,7 @@ describe('validateConfig()', () => {
 
   describe('when config is missing a required key', () => {
     it('throws an error with a message describing that the file is missing a required key', () => {
-      const configContents = JSON.stringify({
-        "wrong-name-for-github-token": "token",
-        "owner": "repo owner",
-        "repo": "repo name",
-        "columns": [
-        ]
-      })
+      const configContents = ConfigTestData.configMissingKey
 
       expect(() => {
         validateConfig(configContents.toString())
@@ -58,13 +50,7 @@ describe('validateConfig()', () => {
   describe('when the config contains all required keys', () => {
     describe('when the github access token is not a string', () => {
       it('throws a TypeError specifying the correct type for the github access token', () => {
-        const configContents = JSON.stringify({
-          "accessToken": 3,
-          "owner": "repo owner",
-          "repo": "repo name",
-          "columns": [
-          ]
-        })
+        const configContents = ConfigTestData.configWrongTypeAccessToken
   
         expect(() => {
           validateConfig(configContents.toString())
@@ -74,13 +60,7 @@ describe('validateConfig()', () => {
 
     describe('when the github access token contains only whitespace', () => {
       it('throws a RangeError', () => {
-        const configContents = JSON.stringify({
-          "accessToken": " ",
-          "owner": "repo owner",
-          "repo": "repo name",
-          "columns": [
-          ]
-        })
+        const configContents = ConfigTestData.configWhiteSpaceOnlyAccessToken
   
         expect(() => {
           validateConfig(configContents.toString())
@@ -90,74 +70,28 @@ describe('validateConfig()', () => {
 
     describe('when the repo owner is not a string', () => {
       it('throws a TypeError specifying the correct type for the repo owner', () => {
-        const configContents = JSON.stringify({
-          "accessToken": "token",
-          "owner": [],
-          "repo": "repo name",
-          "columns": [
-          ]
-        })
+        const configContents = ConfigTestData.repoWrongTypeOwnerName
 
         expect(() => {
           validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "owner" was found not to be a string`))
+        }).toThrow(new TypeError(`Member "ownerName" was found not to be a string`))
       })
     })
 
     describe('when the repo name is not a string', () => {
       it('throws a TypeError specifying the correct type for repo name', () => {
-        const configContents = JSON.stringify({
-          "accessToken": "token",
-          "owner": "repo owner",
-          "repo": {},
-          "columns": [
-          ]
-        })
+        const configContents = ConfigTestData.repoWrongTypeName
 
         expect(() => {
           validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "repo" was found not to be a string`))
+        }).toThrow(new TypeError(`Member "name" was found not to be a string`))
       })
     })
 
     describe('columns', () => {
-      const configLabelDuplicationAndUnsortedAddRemove = JSON.stringify({
-        "accessToken": "token",
-        "owner": "repo owner",
-        "repo": "repo name",
-        "columns": [
-          {
-            "name": "column name",
-            "labelingRules": [
-              {
-                "action": "AdD",
-                "labels": ["Duplicate Label", "New", "Duplicate Label"]
-              },
-              {
-                "action": "ADD ",
-                "labels": ["DuplIcate LaBeL    ", "Help Wanted"]
-              },
-              {
-                "action": "ReMovE",
-                "labels": ["Duplicate emoji 🐌 ", "   Completed"]
-              },
-              {
-                "action": "ReMOVE",
-                "labels": ["DupliCAte Emoji 🐌", "Completed 1"]
-              }
-            ]
-          }
-        ]
-      })
-
       describe('when columns is not an array', () => {
         test('it throws a TypeError with a message describing the config key and correct type', () => {
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": "not supposed to be a string"
-          })
+          const configContents = ConfigTestData.configWrongTypeColumns
   
           expect(() => {
             validateConfig(configContents.toString())
@@ -172,16 +106,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              3,
-              [],
-              null
-            ]
-          })
+          const configContents = ConfigTestData.columnArrayValuesWrongType
 
           validateConfig(configContents.toString())
 
@@ -209,23 +134,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "a": 3,
-                "b": "b"
-              },
-              {
-                "name": "String"
-              },
-              {
-                "labelingRules": []
-              }
-            ]
-          })
+          const configContents = ConfigTestData.columnMissingRequiredKey
 
           validateConfig(configContents.toString())
 
@@ -269,29 +178,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": 3,
-                "labelingRules": []
-              },
-              {
-                "name": "Name",
-                "labelingRules": 3
-              },
-              {
-                "name": "                 ",
-                "labelingRules": []
-              },
-              {
-                "name": "",
-                "labelingRules": []
-              }
-            ]
-          })
+          const configContents = ConfigTestData.columnInvalidValues
 
           validateConfig(configContents.toString())
 
@@ -343,40 +230,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": "column name",
-                "labelingRules": [
-                  {
-                  },
-                  {
-                    "action": "ADD"
-                  },
-                  {
-                    "labels": ["a", "b", "c"]
-                  },
-                  {
-                    "action": 3,
-                    "labels": ["a", "b", "c"]
-                  },
-                  {
-                    "action": "ADD",
-                    "labels": {
-                      "a": "a"
-                    }
-                  },
-                  {
-                    "action": "Unsupported Action",
-                    "labels": ["a", "b", "c"]
-                  }
-                ]
-              }
-            ]
-          })
+          const configContents = ConfigTestData.columnAllInvalidLabelingRules
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -451,30 +305,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": "column name",
-                "labelingRules": [
-                  {
-                    "action": "Set",
-                    "labels": ["This should not appear"]
-                  },
-                  {
-                    "action": "Set",
-                    "labels": ["This should not appear"]
-                  },
-                  {
-                    "action": "Set",
-                    "labels": ["This should appear", "🛩", "alphabetically first"]
-                  }
-                ]
-              }
-            ]
-          })
+          const configContents = ConfigTestData.labelingRulesActionOrderPrecedence
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -509,30 +340,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": "column name",
-                "labelingRules": [
-                  {
-                    "action": "Remove",
-                    "labels": ["This should not appear"]
-                  },
-                  {
-                    "action": "Set",
-                    "labels": ["This should appear", "🛩", "alphabetically first"]
-                  },
-                  {
-                    "action": "Add",
-                    "labels": ["This should not appear"]
-                  }
-                ]
-              }
-            ]
-          })
+          const configContents = ConfigTestData.lableingRulesActionTypePrecedence
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -567,26 +375,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": "column name",
-                "labelingRules": [
-                  {
-                    "action": "ADD",
-                    "labels": ["", "    ", 3]
-                  },
-                  {
-                    "action": "REMOVE",
-                    "labels": ["normal rule"]
-                  }
-                ]
-              }
-            ]
-          })
+          const configContents = ConfigTestData.labelingRulesInvalidLabels
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -630,7 +419,7 @@ describe('validateConfig()', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configContents = configLabelDuplicationAndUnsortedAddRemove
+          const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
           validatedConfig = validateConfig(configContents.toString())
 
@@ -706,26 +495,7 @@ describe('validateConfig()', () => {
         describe('when an ADD and REMOVE rule contain the same label', () => {
           beforeAll(() => {
             resetSpies()
-            const configContents = JSON.stringify({
-              "accessToken": "token",
-              "owner": "repo owner",
-              "repo": "repo name",
-              "columns": [
-                {
-                  "name": "column name",
-                  "labelingRules": [
-                    {
-                      "action": "Remove",
-                      "labels": ["ambiguous label conflict", "Label 1"]
-                    },
-                    {
-                      "action": "Add",
-                      "labels": ["ambiguous label conflict", "Label 2"]
-                    }
-                  ]
-                }
-              ]
-            })
+            const configContents = ConfigTestData.labelingRulesConflict
   
             validatedConfig = validateConfig(configContents.toString())
 
@@ -757,33 +527,7 @@ describe('validateConfig()', () => {
         let validatedConfig: Config
 
         beforeAll(() => {
-          const configContents = JSON.stringify({
-            "accessToken": "token",
-            "owner": "repo owner",
-            "repo": "repo name",
-            "columns": [
-              {
-                "name": "valid column",
-                "labelingRules": [
-                  {
-                    "action": "Add",
-                    "labels": ["Help Wanted"]
-                  },
-                  {
-                    "action": "Remove",
-                    "labels": ["Done", "Completed", "", 4, "     "]
-                  },
-                  {
-                    "action": "invalid action",
-                    "labels": ["invalid label 1", "invalid label 2"]
-                  }
-                ]
-              },
-              {
-                "name": "invalid column"
-              }
-            ]
-          })
+          const configContents = ConfigTestData.configInvalidNonEssentialSections
 
           validatedConfig = validateConfig(configContents.toString())
         })
@@ -878,7 +622,7 @@ describe('validateConfig()', () => {
           let validatedConfig: Config
 
           beforeAll(() => {
-            const configContents = configLabelDuplicationAndUnsortedAddRemove
+            const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
             validatedConfig = validateConfig(configContents.toString())
           })
@@ -937,22 +681,7 @@ describe('validateConfig()', () => {
           let validatedConfig: Config
 
           beforeAll(() => {
-            const configContents = JSON.stringify({
-              "accessToken": "token",
-              "owner": "repo owner",
-              "repo": "repo name",
-              "columns": [
-                {
-                  "name": "column name",
-                  "labelingRules": [
-                    {
-                      "action": "SET ",
-                      "labels": ["DuplIcate LaBeL    ", "Help Wanted", "Duplicate Label", "New", "Duplicate Label"]
-                    }
-                  ]
-                }
-              ]
-            })
+            const configContents = ConfigTestData.labelingRulesSetActionAndDuplicateLabels
 
             validatedConfig = validateConfig(configContents.toString())
           })
@@ -994,30 +723,7 @@ describe('validateConfig()', () => {
       let validatedConfig: Config
 
       beforeAll(() => {
-        const configContents = JSON.stringify({
-          "accessToken": " access token ",
-          "owner": " repo owner ",
-          "repo": " repo name ",
-          "columns": [
-            {
-              "name": " column name ",
-              "labelingRules": [
-                {
-                  "action": " add ",
-                  "labels": ["label ", " label 2", " label 3 "]
-                },
-                {
-                  "action": "add",
-                  "labels": [" label ", "label 2 ", " label 3 "]
-                },
-                {
-                  "action": " remove ",
-                  "labels": [" 🐌 ", "   Completed"]
-                }
-              ]
-            }
-          ]
-        })
+        const configContents = ConfigTestData.configTrailingWhitespaceValues
 
         validatedConfig = validateConfig(configContents.toString())
       })
@@ -1030,13 +736,13 @@ describe('validateConfig()', () => {
 
       describe('the repo owner', () => {
         it('does not contain trailing whitespace', () => {
-          expect(hasTrailingWhitespace(validatedConfig.owner)).toBeFalsy()
+          expect(hasTrailingWhitespace(validatedConfig.repo.ownerName)).toBeFalsy()
         })
       })
 
       describe('the repo name', () => {
         it('does not contain trailing whitespace', () => {
-          expect(hasTrailingWhitespace(validatedConfig.repo)).toBeFalsy()
+          expect(hasTrailingWhitespace(validatedConfig.repo.name)).toBeFalsy()
         })
       })
 
@@ -1105,43 +811,7 @@ describe('validateConfig()', () => {
 
       beforeAll(() => {
         resetSpies()
-        const configContents = JSON.stringify({
-          "accessToken": "access token",
-          "owner": "repo owner",
-          "repo": "repo name",
-          "columns": [
-            {
-              "name": "to do",
-              "labelingRules": [
-                {
-                  "action": "add",
-                  "labels": ["hacktoberfest"]
-                },
-                {
-                  "action": "add",
-                  "labels": ["todo", "help wanted"]
-                },
-                {
-                  "action": "remove",
-                  "labels": ["🐌", "Completed"]
-                }
-              ]
-            },
-            {
-              "name": "completed",
-              "labelingRules": [
-                {
-                  "action": "remove",
-                  "labels": ["hacktoberfest"]
-                },
-                {
-                  "action": "remove",
-                  "labels": ["todo", "help wanted"]
-                }
-              ]
-            }
-          ]
-        })
+        const configContents = ConfigTestData.configNormal
 
         validatedConfig = validateConfig(configContents.toString())
 
@@ -1163,11 +833,11 @@ describe('validateConfig()', () => {
         })
 
         it('includes the repo owner', () => {
-          expect(validatedConfig.owner).toBe('repo owner')
+          expect(validatedConfig.repo.ownerName).toBe('repo owner')
         })
 
         it('includes the repo name', () => {
-          expect(validatedConfig.repo).toBe('repo name')
+          expect(validatedConfig.repo.name).toBe('repo name')
         })
 
         describe('columns', () => {

@@ -59,7 +59,7 @@ async function main() {
 
   try {
     logger.info('Initializing github API accessors')
-    githubAPIClient = new GithubAPIClient(config.accessToken, config.repo, config.owner)
+    githubAPIClient = new GithubAPIClient(config.accessToken, config.repo.name, config.repo.ownerName)
     githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
     if (error instanceof Error) {
