@@ -1,45 +1,20 @@
-import fs from 'fs'
 import { Config } from '../src/labelerConfig'
 import { Logger } from '../src/logger'
 import { validateConfig } from '../src/validateConfig'
 
-const fsPromises = fs.promises
+const ConfigTestData: { [key: string]: any } = require('./configTestData').default
 const logger = new Logger()
 const TEST_FOLDER_PATH = './tests/'
 
-async function listJSONFiles(directoryPath: string) {
-  const fileNames = await fsPromises.readdir(directoryPath)
-
-  return fileNames.filter((fileName) => {
-      return fileName.endsWith('.json')
-  })
-}
-
-async function loadConfig(path: string): Promise<string> {
-  const configContents = await fsPromises.readFile(path)
-
-  return "" + configContents
-}
-
-function randomizeOrder(arr: any[]) {
-  arr.sort(() => {
-    return Math.random() < 0.5 ? -1 : 1
-  })
-}
-
-async function main() {
-  const configs = await listJSONFiles(TEST_FOLDER_PATH)
-
-  randomizeOrder(configs)
-
+function main() {
   let configFileContents: string
 
-  for (const configFileName of configs) {
-    logger.info(`Config: ${configFileName}`)
+  for (const configDataDescription in ConfigTestData) {
+    logger.info(`Config: ${configDataDescription}`)
 
     try {
       logger.info('Loading Config')
-      configFileContents = await loadConfig(TEST_FOLDER_PATH + configFileName)
+      configFileContents = ConfigTestData[configDataDescription]
     } catch (error) {
       logger.error('Failed to load config', 2)
       if (error instanceof Error) {
@@ -67,6 +42,8 @@ async function main() {
         logger.error(error.stack ?? error.message, 2)
       }
     }
+
+    console.log('') // newline
   }
 }
 
