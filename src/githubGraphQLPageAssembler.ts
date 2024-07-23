@@ -1,5 +1,5 @@
 import { GithubAPIClient, IssuePageResponse } from './githubAPIClient'
-import { Issue, Label, GraphQLPage } from './githubObjects'
+import { Issue, GraphQLPage } from './githubObjects'
 import { Logger } from './logger'
 
 const logger = new Logger()
@@ -23,7 +23,7 @@ export class GithubGraphQLPageAssembler {
         issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor)
 
         if (issuePageResponse) {
-          const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues)
+          const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues, Issue)
           cursor = issuePage.getEndCursor()
 
           if (!issues) {

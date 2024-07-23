@@ -43,7 +43,7 @@ async function main() {
     } catch (error) {
       logger.error('Failed to load config', 2)
       if (error instanceof Error) {
-        logger.error(error.message, 4)
+        logger.error(error.stack ?? error.message, 4)
       }
 
       return
@@ -62,9 +62,9 @@ async function main() {
       logger.info('Validated Config:')
       logger.info(JSON.stringify(config, null, 2))
     } catch (error) {
-      if (error instanceof Error && error.message) {
+      if (error instanceof Error) {
         logger.error('Failed to validate config')
-        logger.error(error.message, 2)
+        logger.error(error.stack ?? error.message, 2)
       }
     }
 

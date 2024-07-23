@@ -19,7 +19,7 @@ class GithubGraphQLPageAssembler {
             try {
                 issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor);
                 if (issuePageResponse) {
-                    const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues);
+                    const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues, githubObjects_1.Issue);
                     cursor = issuePage.getEndCursor();
                     if (!issues) {
                         issues = issuePage;

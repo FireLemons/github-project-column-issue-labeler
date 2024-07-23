@@ -1,9 +1,8 @@
 import fs from 'fs'
+// Javascript destructuring assignment
 import { GithubAPIClient } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
 import { Logger } from './logger'
-// Javascript destructuring assignment
-import { Octokit, App } from 'octokit'
 import { validateConfig } from './validateConfig'
 
 const fsPromises = fs.promises
@@ -24,7 +23,7 @@ async function main() {
   } catch (error) {
     logger.error('Failed to load config', 2)
     if (error instanceof Error) {
-      logger.error(error.message, 4)
+      logger.error(error.stack ?? error.message, 4)
     }
 
     return
@@ -46,9 +45,9 @@ async function main() {
     logger.info('Validated Config:')
     logger.info(JSON.stringify(config, null, 2))
   } catch (error) {
-    if (error instanceof Error && error.message) {
+    if (error instanceof Error) {
       logger.error('Failed to validate config')
-      logger.error(error.message, 2)
+      logger.error(error.stack ?? error.message, 2)
       process.exitCode = 1
     }
 
@@ -63,45 +62,39 @@ async function main() {
     githubAPIClient = new GithubAPIClient(config.accessToken, config.repo, config.owner)
     githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
-    if (error instanceof Error && error.message) {
+    if (error instanceof Error) {
       logger.error('Failed to initialize github API accessors', 2)
-      logger.error(error.message, 4)
+      logger.error(error.stack ?? error.message, 4)
       process.exitCode = 1
     }
 
     return
   }
 
-  logger.info('Initialized github API accessors')
+  logger.info('Initialized github API client')
+  let issuePage
 
   try {
-      logger.info('Fetching issues with labels and column data...')
-      githubGraphQLPageAssembler.fetchAllIssues()
-      .then(
-        (response) => {
-          logger.info('Fetched issues with labels and column data', 2)
-          logger.info(JSON.stringify(response, null, 2), 4)
-        }
-      )
-      .catch(
-        (error) => {
-          logger.error('Encountered errors after fetching issues with labels and column data', 2)
-          if(error instanceof Error) {
-            logger.error(error.message, 4)
-          } else {
-            logger.error(error, 4)
-          }
-        }
-      )
-    } catch (error) {
-      if (error instanceof Error && error.message) {
-        logger.error('Failed to fetch issues with labels and column data', 2)
-        logger.error(error.message, 4)
-        process.exitCode = 1
-      }
+    logger.info('Fetching issues with labels and column data...')
+    issuePage = await githubGraphQLPageAssembler.fetchAllIssues()
 
-      return
+    logger.info('Fetched issues with labels and column data', 2)
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error('Failed to fetch issues with labels and column data', 2)
+      logger.error(error.stack ?? error.message, 4)
+      process.exitCode = 1
     }
+
+    return
   }
+
+  const issues = issuePage.getNodeArray()
+
+  for(let i = issues.length - 1; i >= 0; i--) {
+    const issue = issues[i]
+    const columnNameSearchResult = issue.findColumnName()
+  }
+}
 
 module.exports = main

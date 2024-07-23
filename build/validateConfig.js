@@ -121,8 +121,8 @@ function validateColumnConfigurationsArray(arr) {
         }
         catch (error) {
             logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`);
-            if (error instanceof Error && error.message) {
-                logger.error(error.message, 2);
+            if (error instanceof Error) {
+                logger.error(error.stack ?? error.message, 2);
             }
         }
         logger.addBaseIndentation(-2);
@@ -190,8 +190,8 @@ function validateLabelingRulesArray(arr) {
         }
         catch (error) {
             logger.warn(`Could not make valid labeling rule from value at index: ${index}. Skipping rule.`);
-            if (error instanceof Error && error.message) {
-                logger.error(error.message, 2);
+            if (error instanceof Error) {
+                logger.error(error.stack ?? error.message, 2);
             }
         }
         logger.addBaseIndentation(-2);
