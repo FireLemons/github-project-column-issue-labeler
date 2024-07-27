@@ -1,5 +1,5 @@
 import { Logger } from './logger'
-import { ColumnConfiguration, Config, LabelingAction, LabelingRule } from './labelerConfig'
+import { Column, Config, LabelingAction, LabelingRule, Project } from './configObjects'
 import * as typeChecker from './typeChecker'
 import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicatesFromSortedArray } from './util'
 
@@ -95,22 +95,22 @@ function isLabelingAction (str: string): str is LabelingAction {
   return Object.keys(LabelingAction).includes(str)
 }
 
-function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
-  const validatedColumnConfigurations: ColumnConfiguration[] = []
+function validateColumnsArray (arr: any[]): Column[] {
+  const validatedColumns: Column[] = []
 
   logger.addBaseIndentation(2)
 
-  arr.forEach((columnConfiguration: any, index: number) => {
+  arr.forEach((column: any, index: number) => {
     logger.info(`Checking column at index ${index}`)
-    let validatedColumnConfiguration
+    let validatedColumn
 
     logger.addBaseIndentation(2)
 
     try {
-      validatedColumnConfiguration = validateColumnConfiguration(columnConfiguration)
+      validatedColumn = validateColumn(column)
 
-      if (validatedColumnConfiguration.labelingRules.length) {
-        validatedColumnConfigurations.push(validatedColumnConfiguration)
+      if (validatedColumn.labelingRules.length) {
+        validatedColumns.push(validatedColumn)
       } else {
         logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
       }
@@ -127,10 +127,10 @@ function validateColumnConfigurationsArray (arr: any[]): ColumnConfiguration[] {
 
   logger.addBaseIndentation(-2)
 
-  return validatedColumnConfigurations
+  return validatedColumns
 }
 
-function validateColumnConfiguration (object: any): ColumnConfiguration {
+function validateColumn (object: any): Column {
   if (!typeChecker.isObject(object)) {
     throw new TypeError('Column configuration must be an object')
   }
@@ -167,7 +167,6 @@ export function validateConfig (config: string): Config {
   }
 
   typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string)
-  typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array)
   typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object)
 
   const configRepo = configAsObject['repo']
@@ -181,14 +180,27 @@ export function validateConfig (config: string): Config {
     throw new RangeError('The github access token cannot be empty or contain only whitespace')
   }
 
-  return {
+  const validatedConfig: Config = {
     accessToken: trimmedGithubAccessToken,
     repo: {
       ownerName: configRepo.ownerName.trim(),
       name: configRepo.name.trim()
-    },
-    columns: validateColumnConfigurationsArray(configAsObject.columns)
+    }
   }
+
+  if ('projects' in configAsObject) {
+    logger.info('Found projects in config')
+    typeChecker.validateObjectMember(configAsObject, 'projects', typeChecker.Type.array)
+    validatedConfig['projects'] = validateProjectsArray(configAsObject.projects)
+  } else if('columns' in configAsObject) {
+    logger.info('Found columns in config')
+    typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array)
+    validatedConfig['columns'] = validateColumnsArray(configAsObject.columns)
+  } else {
+    throw new ReferenceError('Missing keys "projects" and "columns". One is required')
+  }
+
+  return validatedConfig
 }
 
 function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
@@ -261,4 +273,71 @@ function validateLabelsArray (arr: any[]): string[] {
   })
   
   return validatedLabels
+}
+
+function validateProjectsArray (arr: any[]): Project[] {
+  const validatedProjects: Project[] = []
+
+  logger.addBaseIndentation(2)
+
+  arr.forEach((project: any, index: number) => {
+    logger.info(`Checking project at index ${index}`)
+    let validatedProject
+
+    logger.addBaseIndentation(2)
+
+    try {
+      validatedProject = validateProject(project)
+
+      if (validatedProject.columns.length) {
+        validatedProjects.push(validatedProject)
+      } else {
+        logger.warn(`Project at index: ${index} did not contain any valid columns. Skipping project.`)
+      }
+    } catch (error) {
+      logger.warn(`Could not make valid project from value at index: ${index}. Skipping project.`)
+
+      if (error instanceof Error) {
+        logger.error(error.stack ?? error.message, 2)
+      }
+    }
+
+    logger.addBaseIndentation(-2)
+  })
+
+  function validateProject (object: any): Project {
+    if (!typeChecker.isObject(object)) {
+      throw new TypeError('Project must be an object')
+    }
+
+    typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string)
+
+    if ('number' in object) {
+      typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number)
+    }
+
+    if (object['number'] < 1) {
+      throw new RangeError('number must be greater than 0')
+    }
+
+    const validatedOwnerLogin = object['ownerLogin'].trim()
+
+    if (!(validatedOwnerLogin.length)) {
+      throw new ReferenceError('ownerLogin must contain at least one non whitespace character')
+    }
+
+    typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array)
+
+    const validatedProjects = validateColumnsArray(object['columns'])
+
+    return {
+      columns: validatedProjects,
+      number: object['number'],
+      ownerLogin: validatedOwnerLogin
+    }
+  }
+
+  logger.addBaseIndentation(-2)
+
+  return validatedProjects
 }

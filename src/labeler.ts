@@ -35,11 +35,20 @@ async function main() {
     logger.info('Validating Config')
     config = validateConfig(configFileContents)
 
-    if (!(config.columns.length)) {
-      logger.error('Could not find any valid actions to perform from the configuration')
-      process.exitCode = 1
+    if ('projects' in config) {
+      if (!(config.projects!.length)) {
+        logger.error('Config does not contain any valid projects')
+        process.exitCode = 1
 
-      return
+        return
+      }
+    } else {
+      if (!(config.columns!.length)) {
+        logger.error('Config does not contain any valid columns')
+        process.exitCode = 1
+
+        return
+      }
     }
 
     logger.info('Validated Config:')

@@ -1,4 +1,4 @@
-import { Config } from '../src/labelerConfig'
+import { Config } from '../src/configObjects'
 import { Logger } from '../src/logger'
 import { validateConfig } from '../src/validateConfig'
 
@@ -30,8 +30,14 @@ function main() {
       logger.info('Validating Config')
       config = validateConfig(configFileContents)
 
-      if (!(config.columns.length)) {
-        logger.error('Could not find any valid actions to perform from the configuration')
+      if ('projects' in config) {
+        if (!(config.projects!.length)) {
+          logger.error('Config does not contain any valid projects')
+        }
+      } else {
+        if (!(config.columns!.length)) {
+          logger.error('Config does not contain any valid columns')
+        }
       }
 
       logger.info('Validated Config:')

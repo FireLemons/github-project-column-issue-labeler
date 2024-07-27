@@ -61,34 +61,40 @@ export default {
   configNormal: JSON.stringify({
     "accessToken": "access token",
     "repo": defaultRepoValue,
-    "columns": [
+    "projects": [
       {
-        "name": "to do",
-        "labelingRules": [
+        "ownerLogin": "githubOrganizationName",
+        "number": 2,
+        "columns": [
           {
-            "action": "add",
-            "labels": ["hacktoberfest"]
+            "name": "to do",
+            "labelingRules": [
+              {
+                "action": "add",
+                "labels": ["hacktoberfest"]
+              },
+              {
+                "action": "add",
+                "labels": ["todo", "help wanted"]
+              },
+              {
+                "action": "remove",
+                "labels": ["🐌", "Completed"]
+              }
+            ]
           },
           {
-            "action": "add",
-            "labels": ["todo", "help wanted"]
-          },
-          {
-            "action": "remove",
-            "labels": ["🐌", "Completed"]
-          }
-        ]
-      },
-      {
-        "name": "completed",
-        "labelingRules": [
-          {
-            "action": "remove",
-            "labels": ["hacktoberfest"]
-          },
-          {
-            "action": "remove",
-            "labels": ["todo", "help wanted"]
+            "name": "completed",
+            "labelingRules": [
+              {
+                "action": "remove",
+                "labels": ["hacktoberfest"]
+              },
+              {
+                "action": "remove",
+                "labels": ["todo", "help wanted"]
+              }
+            ]
           }
         ]
       }
