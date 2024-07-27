@@ -1,6 +1,6 @@
 import * as TypeChecker from './typeChecker'
 
-export interface ColumnConfiguration {
+export interface Column {
   name: string
   labelingRules: LabelingRule[]
 }
@@ -11,7 +11,8 @@ export interface Config {
     name: string
     ownerName: string
   }
-  columns: ColumnConfiguration []
+  columns?: Column[]
+  projects?: Project[]
 }
 
 export enum LabelingAction {
@@ -25,7 +26,13 @@ export interface LabelingRule {
   labels: string[]
 }
 
-export function isShallowColumn(value: any): value is ColumnConfiguration {
+export interface Project {
+  columns: Column[]
+  number?: number
+  ownerLogin?: string
+}
+
+export function isShallowColumn(value: any): value is Column {
   if (!(TypeChecker.isObject(value))) {
     return false
   }
