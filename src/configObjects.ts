@@ -29,7 +29,7 @@ export interface LabelingRule {
 export interface Project {
   columns: Column[]
   number?: number
-  ownerLogin?: string
+  ownerLogin: string
 }
 
 export function isShallowColumn(value: any): value is Column {
