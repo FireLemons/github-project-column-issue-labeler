@@ -1,7 +1,7 @@
 import fs from 'fs'
 import ConfigTestData from './configTestData'
 import { validateConfig } from '../src/validateConfig'
-import { ColumnConfiguration, Config, LabelingAction, LabelingRule, isShallowColumn, isShallowLabelingRule } from '../src/labelerConfig'
+import { Column, Config, LabelingAction, LabelingRule, Project, isShallowColumn, isShallowLabelingRule } from '../src/configObjects'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
 const fsPromises = fs.promises
@@ -51,7 +51,7 @@ describe('validateConfig()', () => {
     describe('when the github access token is not a string', () => {
       it('throws a TypeError specifying the correct type for the github access token', () => {
         const configContents = ConfigTestData.configWrongTypeAccessToken
-  
+
         expect(() => {
           validateConfig(configContents.toString())
         }).toThrow(new TypeError(`Member "accessToken" was found not to be a string`))
@@ -61,7 +61,7 @@ describe('validateConfig()', () => {
     describe('when the github access token contains only whitespace', () => {
       it('throws a RangeError', () => {
         const configContents = ConfigTestData.configWhiteSpaceOnlyAccessToken
-  
+
         expect(() => {
           validateConfig(configContents.toString())
         }).toThrow(new RangeError('The github access token cannot be empty or contain only whitespace'))
@@ -88,11 +88,140 @@ describe('validateConfig()', () => {
       })
     })
 
+    describe('projects', () => {
+      describe('when projects is not an array', () => {
+        test('it throws a TypeError with a message describing the config key and correct type', () => {
+          const configContents = ConfigTestData.configWrongTypeProjects
+
+          expect(() => {
+            validateConfig(configContents.toString())
+          }).toThrow(new TypeError(`Member "projects" was found not to be an array`))
+        })
+      })
+
+      describe('when a project is not an object', () => {
+        const PROJECTS_COUNT = 3
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.projectArrayValuesWrongType
+
+          validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        test('it prints errors with the index of the invalid element', () => {
+          for (let i = 0; i < PROJECTS_COUNT; i++) {
+            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid project from value at index: ${i}\\. Skipping project\\.`))
+            expect(consoleErrorCalls[i][0]).toMatch(/Project must be an object/)
+          }
+        })
+
+        test('it indents the error output more than the warning output', () => {
+          for (let i = 0; i < PROJECTS_COUNT; i++) {
+            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+          }
+        })
+      })
+
+      describe('when the project is missing a required key', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.projectMissingRequiredKey
+
+          validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        describe('when "columns" is missing', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid project from value at index: 0\. Skipping project\./)
+            expect(consoleErrorCalls[0][0]).toMatch(/key "columns" was not found in the object/)
+          })
+        })
+
+        describe('when "ownerLogin" is missing', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
+            expect(consoleErrorCalls[1][0]).toMatch(/key "ownerLogin" was not found in the object/)
+          })
+        })
+
+        test('it indents the error output more than the warning output', () => {
+          const PROJECT_COUNT = 2
+
+          for(let i = 0; i < PROJECT_COUNT; i++) {
+            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+          }
+        })
+      })
+
+      describe('when a project has invalid values', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.projectInvalidValues
+
+          validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        describe('when "ownerLogin" is of the wrong type', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid project from value at index: 0\. Skipping project\./)
+            expect(consoleErrorCalls[0][0]).toMatch(/Member "ownerLogin" was found not to be a string/)
+          })
+        })
+
+        describe('when "columns" is of the wrong type', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
+            expect(consoleErrorCalls[1][0]).toMatch(/Member "columns" was found not to be an array/)
+          })
+        })
+
+        describe('when "ownerLogin" contains only whitespace', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 2\. Skipping project\./)
+            expect(consoleErrorCalls[2][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+          })
+        })
+
+        describe('when "ownerLogin" is empty string', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid project from value at index: 3\. Skipping project\./)
+            expect(consoleErrorCalls[3][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+          })
+        })
+
+        test('it indents the error output more than the warning output', () => {
+          const PROJECT_COUNT = 4
+
+          for(let i = 0; i < PROJECT_COUNT; i++) {
+            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+          }
+        })
+      })
+    })
+
     describe('columns', () => {
       describe('when columns is not an array', () => {
         test('it throws a TypeError with a message describing the config key and correct type', () => {
           const configContents = ConfigTestData.configWrongTypeColumns
-  
+
           expect(() => {
             validateConfig(configContents.toString())
           }).toThrow(new TypeError(`Member "columns" was found not to be an array`))
@@ -142,29 +271,22 @@ describe('validateConfig()', () => {
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        describe('when both required keys are missing', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/key "[a-zA-Z]+" was not found in the object/)
-          })
-        })
-
         describe('when "labelingRules" is missing', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/key "labelingRules" was not found in the object/)
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
+            expect(consoleErrorCalls[0][0]).toMatch(/key "labelingRules" was not found in the object/)
           })
         })
 
         describe('when "name" is missing', () => {
           test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/key "name" was not found in the object/)
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
+            expect(consoleErrorCalls[1][0]).toMatch(/key "name" was not found in the object/)
           })
         })
 
         test('it indents the error output more than the warning output', () => {
-          const COLUMN_CONFIGURATION_COUNT = 3
+          const COLUMN_CONFIGURATION_COUNT = 2
 
           for(let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
@@ -293,7 +415,7 @@ describe('validateConfig()', () => {
         })
 
         test('the validated config will not include the column configuration', () => {
-          expect(validatedConfig.columns.find((columnConfig) => {
+          expect(validatedConfig.columns!.find((columnConfig) => {
             return columnConfig.name === 'Name'
           })).toBe(undefined)
         })
@@ -313,9 +435,9 @@ describe('validateConfig()', () => {
         })
 
         test('only the last labeling rule with a "SET" action appears in the validated config', () => {
-          expect(validatedConfig.columns.length).toBe(1)
-          expect(validatedConfig.columns[0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columns[0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns!.length).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules.length).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules[0].action).toBe(LabelingAction.SET)
         })
 
         test('a warning is printed stating that only the last "SET" rule will be used', () => {
@@ -348,9 +470,9 @@ describe('validateConfig()', () => {
         })
 
         test('only the labeling rule with a "SET" action appears in the validated config', () => {
-          expect(validatedConfig.columns.length).toBe(1)
-          expect(validatedConfig.columns[0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columns[0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns!.length).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules.length).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules[0].action).toBe(LabelingAction.SET)
         })
 
         test('a warning is printed stating that only SET rule will be used', () => {
@@ -401,7 +523,7 @@ describe('validateConfig()', () => {
         })
 
         test('the parent labeling rule of the invalid labels does not appear in the validated config', () => {
-          const { labelingRules } =  validatedConfig.columns[0]
+          const { labelingRules } = validatedConfig.columns![0]
 
           expect(labelingRules.findIndex((rule) => {
             return rule.action === LabelingAction.ADD
@@ -430,7 +552,7 @@ describe('validateConfig()', () => {
           let addRule: LabelingRule | undefined
 
           beforeAll(() => {
-            addRule = validatedConfig.columns[0].labelingRules.find((labelingRule) => {
+            addRule = validatedConfig.columns![0].labelingRules.find((labelingRule) => {
               return labelingRule.action === LabelingAction.ADD
             })
           })
@@ -461,7 +583,7 @@ describe('validateConfig()', () => {
           let removeRule: LabelingRule | undefined
 
           beforeAll(() => {
-            removeRule = validatedConfig.columns[0].labelingRules.find((labelingRule) => {
+            removeRule = validatedConfig.columns![0].labelingRules.find((labelingRule) => {
               return labelingRule.action === LabelingAction.REMOVE
             })
           })
@@ -496,14 +618,14 @@ describe('validateConfig()', () => {
           beforeAll(() => {
             resetSpies()
             const configContents = ConfigTestData.labelingRulesConflict
-  
+
             validatedConfig = validateConfig(configContents.toString())
 
             consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           })
 
           test('the label does not appear in the validated config', () => {
-            const columnConfiguration = validatedConfig.columns[0]
+            const columnConfiguration = validatedConfig.columns![0]
             const addRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
             const removeRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
 
@@ -532,20 +654,44 @@ describe('validateConfig()', () => {
           validatedConfig = validateConfig(configContents.toString())
         })
 
+        it('will not contain the invalid project', () => {
+          expect(validatedConfig.projects!.find((project) => {
+            return project.ownerLogin === 'invalid project'
+          })).toBe(undefined)
+        })
+
+        it('will contain the valid project', () => {
+          expect(validatedConfig.projects!.find((project) => {
+            return project.ownerLogin === 'valid project'
+          })).not.toBe(undefined)
+        })
+
         it('will not contain the invalid column', () => {
-          expect(validatedConfig.columns.find((column) => {
+          const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          expect(parentProject.columns.find((column) => {
             return column.name === 'invalid column'
           })).toBe(undefined)
         })
 
         it('will contain the valid column', () => {
-          expect(validatedConfig.columns.find((column) => {
+          const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          expect(parentProject.columns.find((column) => {
             return isShallowColumn(column) && column.name === 'valid column'
           })).not.toBe(undefined)
         })
 
         it('will not contain the invalid labeling rule', () => {
-          const parentColumn = validatedConfig.columns[0]
+          const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
 
@@ -557,7 +703,11 @@ describe('validateConfig()', () => {
         })
 
         it('will contain the valid labeling rules', () => {
-          const parentColumn = validatedConfig.columns[0]
+          const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
 
@@ -571,7 +721,11 @@ describe('validateConfig()', () => {
         })
 
         it('will not contain the invalid labels', () => {
-          const parentColumn = validatedConfig.columns[0]
+          const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
           expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
@@ -591,8 +745,11 @@ describe('validateConfig()', () => {
           })).toBe(undefined)
         })
 
-        it('will contain the valid labels', () => {
-          const parentColumn = validatedConfig.columns[0]
+        it('will contain the valid labels', () => {const parentProject = validatedConfig.projects![0]
+
+          expect(parentProject).toBeTruthy()
+
+          const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
           expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
@@ -628,7 +785,7 @@ describe('validateConfig()', () => {
           })
 
           it('removes the duplicates', () => {
-            const parentColumn = validatedConfig.columns[0]
+            const parentColumn = validatedConfig.columns![0]
             const labels = parentColumn.labelingRules[0].labels.concat(parentColumn.labelingRules[1].labels)
 
             expect(labels).not.toBeFalsy()
@@ -659,7 +816,7 @@ describe('validateConfig()', () => {
           })
 
           it('sorts the labels alphabetically', () => {
-            const parentColumn = validatedConfig.columns[0]
+            const parentColumn = validatedConfig.columns![0]
 
             expect(parentColumn.labelingRules.find((labelingRule) => {
               return labelingRule.labels.length > 1
@@ -687,7 +844,7 @@ describe('validateConfig()', () => {
           })
 
           it('removes the duplicates', () => {
-            const parentColumn = validatedConfig.columns[0]
+            const parentColumn = validatedConfig.columns![0]
             const labels = parentColumn.labelingRules[0].labels
 
             expect(labels).not.toBeFalsy()
@@ -706,7 +863,7 @@ describe('validateConfig()', () => {
           })
 
           it('sorts the labels alphabetically', () => {
-            const parentColumn = validatedConfig.columns[0]
+            const parentColumn = validatedConfig.columns![0]
             const { labels } = parentColumn.labelingRules[0]
 
             expect(labels.length).toBeGreaterThan(1)
@@ -746,58 +903,73 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('columns', () => {
-        describe('the column name', () => {
+      describe('projects', () => {
+        describe('the project owner login name', () => {
           it('does not contain trailing whitespace', () => {
-            const { columns } = validatedConfig
+            const { projects } = validatedConfig
 
-            expect(columns.length).toBeGreaterThan(0)
+            expect(projects!.length).toBeGreaterThan(0)
 
-            for(let column of columns) {
-              expect(hasTrailingWhitespace(column.name)).toBe(false)
+            for(let project of projects!) {
+              expect(hasTrailingWhitespace(project.ownerLogin)).toBe(false)
             }
           })
         })
 
-        describe('the labeling rules of a column', () => {
-          describe('the action of the labeling rule', () => {
+        describe('columns', () => {
+          let columns
+
+          beforeAll(() => {
+            columns = validatedConfig.projects![0].columns
+          })
+
+          describe('the column name', () => {
             it('does not contain trailing whitespace', () => {
-              const { columns } = validatedConfig
 
               expect(columns.length).toBeGreaterThan(0)
 
-              for(let column of columns) {
-                const { labelingRules } = column
-
-                expect(labelingRules.length).toBeGreaterThan(0)
-
-                for(let labelingRule of labelingRules) {
-                  expect(hasTrailingWhitespace(labelingRule.action)).toBe(false)
-                }
+              for(let column of columns!) {
+                expect(hasTrailingWhitespace(column.name)).toBe(false)
               }
             })
           })
 
-          describe('the labels of a labeling rule', () => {
-            test('the whitespace for each label is trimmed', () => {
-              const { columns } = validatedConfig
+          describe('the labeling rules of a column', () => {
+            describe('the action of the labeling rule', () => {
+              it('does not contain trailing whitespace', () => {
+                expect(columns.length).toBeGreaterThan(0)
 
-              expect(columns.length).toBeGreaterThan(0)
+                for(let column of columns!) {
+                  const { labelingRules } = column
 
-              for(let column of columns) {
-                const { labelingRules } = column
-                expect(labelingRules.length).toBeGreaterThan(0)
+                  expect(labelingRules.length).toBeGreaterThan(0)
 
-                for(let labelingRule of labelingRules) {
-                  const { labels } = labelingRule
-
-                  expect(labels.length).toBeGreaterThan(0)
-
-                  for(let label of labels) {
-                    expect(hasTrailingWhitespace(label)).toBe(false)
+                  for(let labelingRule of labelingRules) {
+                    expect(hasTrailingWhitespace(labelingRule.action)).toBe(false)
                   }
                 }
-              }
+              })
+            })
+
+            describe('the labels of a labeling rule', () => {
+              test('the whitespace for each label is trimmed', () => {
+                expect(columns.length).toBeGreaterThan(0)
+
+                for(let column of columns!) {
+                  const { labelingRules } = column
+                  expect(labelingRules.length).toBeGreaterThan(0)
+
+                  for(let labelingRule of labelingRules) {
+                    const { labels } = labelingRule
+
+                    expect(labels.length).toBeGreaterThan(0)
+
+                    for(let label of labels) {
+                      expect(hasTrailingWhitespace(label)).toBe(false)
+                    }
+                  }
+                }
+              })
             })
           })
         })
@@ -840,74 +1012,91 @@ describe('validateConfig()', () => {
           expect(validatedConfig.repo.name).toBe('repo name')
         })
 
-        describe('columns', () => {
-          let columns: ColumnConfiguration[]
-          let toDoColumn: ColumnConfiguration | undefined
-          let completedColumn: ColumnConfiguration | undefined
+        describe('projects', () => {
+          let projects: Project[]
 
           beforeAll(() => {
-            columns = validatedConfig.columns
+            projects = validatedConfig.projects!
           })
 
-          it('includes all columns', () => {
-            toDoColumn = columns.find((column) => {
-              return column.name === 'to do'
-            })
+          it ('includes the whole project', () => {
+            expect(projects.length).toBe(1)
 
-            completedColumn = columns.find((column) => {
-              return column.name === 'completed'
-            })
+            const project = projects[0]
 
-            expect(toDoColumn).not.toBe(undefined)
-            expect(completedColumn).not.toBe(undefined)
+            expect(project.number).toBe(2)
+            expect(project.ownerLogin).toBe('githubOrganizationName')
           })
 
-          describe('the labeling rules', () => {
-            let toDoAddLabelingRule: LabelingRule | undefined
-            let toDoRemoveLabelingRule: LabelingRule | undefined
-            let completedRemoveLabelingRule: LabelingRule | undefined
+          describe('columns', () => {
+            let columns: Column[]
+            let toDoColumn: Column | undefined
+            let completedColumn: Column | undefined
 
-            it('includes the correct labeling rule(s) for each column', () => {
-              if (toDoColumn) {
-                toDoAddLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
-                  return labelingRule.action === LabelingAction.ADD
-                })
-
-                toDoRemoveLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
-                  return labelingRule.action === LabelingAction.REMOVE
-                })
-
-                expect(toDoAddLabelingRule).not.toBe(undefined)
-                expect(toDoRemoveLabelingRule).not.toBe(undefined)
-              }
-
-              if (completedColumn) {
-                completedRemoveLabelingRule = completedColumn.labelingRules.find((labelingRule) => {
-                  return labelingRule.action === LabelingAction.REMOVE
-                })
-
-                expect(completedRemoveLabelingRule).not.toBe(undefined)
-              }
+            beforeAll(() => {
+              columns = projects[0].columns
             })
 
-            it('includes the correct labels for each labeling rule', () => {
-              if (toDoAddLabelingRule) {
-                expect(toDoAddLabelingRule.labels.includes('hacktoberfest')).toBe(true)
-                expect(toDoAddLabelingRule.labels.includes('todo')).toBe(true)
-                expect(toDoAddLabelingRule.labels.includes('help wanted')).toBe(true)
-              }
+            it('includes all columns', () => {
+              toDoColumn = columns.find((column) => {
+                return column.name === 'to do'
+              })
 
-              if (toDoRemoveLabelingRule) {
-                expect(toDoRemoveLabelingRule.labels.includes('Completed')).toBe(true)
-                expect(toDoRemoveLabelingRule.labels.includes('🐌')).toBe(true)
-              }
+              completedColumn = columns.find((column) => {
+                return column.name === 'completed'
+              })
 
-              if (completedRemoveLabelingRule) {
-                expect(completedRemoveLabelingRule.labels.includes('hacktoberfest')).toBe(true)
-                expect(completedRemoveLabelingRule.labels.includes('todo')).toBe(true)
-                expect(completedRemoveLabelingRule.labels.includes('help wanted')).toBe(true)
-              }
-            }) 
+              expect(toDoColumn).not.toBe(undefined)
+              expect(completedColumn).not.toBe(undefined)
+            })
+
+            describe('the labeling rules', () => {
+              let toDoAddLabelingRule: LabelingRule | undefined
+              let toDoRemoveLabelingRule: LabelingRule | undefined
+              let completedRemoveLabelingRule: LabelingRule | undefined
+
+              it('includes the correct labeling rule(s) for each column', () => {
+                if (toDoColumn) {
+                  toDoAddLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
+                    return labelingRule.action === LabelingAction.ADD
+                  })
+
+                  toDoRemoveLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
+                    return labelingRule.action === LabelingAction.REMOVE
+                  })
+
+                  expect(toDoAddLabelingRule).not.toBe(undefined)
+                  expect(toDoRemoveLabelingRule).not.toBe(undefined)
+                }
+
+                if (completedColumn) {
+                  completedRemoveLabelingRule = completedColumn.labelingRules.find((labelingRule) => {
+                    return labelingRule.action === LabelingAction.REMOVE
+                  })
+
+                  expect(completedRemoveLabelingRule).not.toBe(undefined)
+                }
+              })
+
+              it('includes the correct labels for each labeling rule', () => {
+                if (toDoAddLabelingRule) {
+                  expect(toDoAddLabelingRule.labels.includes('hacktoberfest')).toBe(true)
+                  expect(toDoAddLabelingRule.labels.includes('todo')).toBe(true)
+                  expect(toDoAddLabelingRule.labels.includes('help wanted')).toBe(true)
+                }
+
+                if (toDoRemoveLabelingRule) {
+                  expect(toDoRemoveLabelingRule.labels.includes('Completed')).toBe(true)
+                  expect(toDoRemoveLabelingRule.labels.includes('🐌')).toBe(true)
+                }
+
+                if (completedRemoveLabelingRule) {
+                  expect(completedRemoveLabelingRule.labels.includes('hacktoberfest')).toBe(true)
+                  expect(completedRemoveLabelingRule.labels.includes('todo')).toBe(true)
+                  expect(completedRemoveLabelingRule.labels.includes('help wanted')).toBe(true)
+                }
+              })
+            })
           })
         })
       })

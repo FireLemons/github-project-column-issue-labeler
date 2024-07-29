@@ -26,6 +26,11 @@ export default {
     "repo": defaultRepoValue,
     "columns": "not supposed to be a string"
   }),
+  configWrongTypeProjects: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": "not supposed to be a string"
+  }),
   configWhiteSpaceOnlyAccessToken: JSON.stringify({
     "accessToken": " ",
     "repo": defaultRepoValue,
@@ -35,26 +40,34 @@ export default {
   configInvalidNonEssentialSections: JSON.stringify({
     "accessToken": "token",
     "repo": defaultRepoValue,
-    "columns": [
+    "projects": [
       {
-        "name": "valid column",
-        "labelingRules": [
+        "ownerLogin": "valid project",
+        "columns": [
           {
-            "action": "Add",
-            "labels": ["Help Wanted"]
+            "name": "valid column",
+            "labelingRules": [
+              {
+                "action": "Add",
+                "labels": ["Help Wanted"]
+              },
+              {
+                "action": "Remove",
+                "labels": ["Done", "Completed", "", 4, "     "]
+              },
+              {
+                "action": "invalid action",
+                "labels": ["invalid label 1", "invalid label 2"]
+              }
+            ]
           },
           {
-            "action": "Remove",
-            "labels": ["Done", "Completed", "", 4, "     "]
-          },
-          {
-            "action": "invalid action",
-            "labels": ["invalid label 1", "invalid label 2"]
+            "name": "invalid column"
           }
         ]
       },
       {
-        "name": "invalid column"
+        "ownerLogin": "invalid project"
       }
     ]
   }),
@@ -106,21 +119,26 @@ export default {
       "ownerName": " repo owner ",
       "name": " repo name "
     },
-    "columns": [
+    "projects": [
       {
-        "name": " column name ",
-        "labelingRules": [
+        "ownerLogin": " owner name ",
+        "columns": [
           {
-            "action": " add ",
-            "labels": ["label ", " label 2", " label 3 "]
-          },
-          {
-            "action": "add",
-            "labels": [" label ", "label 2 ", " label 3 "]
-          },
-          {
-            "action": " remove ",
-            "labels": [" 🐌 ", "   Completed"]
+            "name": " column name ",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label ", " label 2", " label 3 "]
+              },
+              {
+                "action": "add",
+                "labels": [" label ", "label 2 ", " label 3 "]
+              },
+              {
+                "action": " remove ",
+                "labels": [" 🐌 ", "   Completed"]
+              }
+            ]
           }
         ]
       }
@@ -143,6 +161,50 @@ export default {
       "ownerName": "repo owner"
     },
     "columns": [
+    ]
+  }),
+
+  projectArrayValuesWrongType: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      3,
+      [],
+      null
+    ]
+  }),
+  projectInvalidValues: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": 3,
+        "columns": []
+      },
+      {
+        "ownerLogin": "Name",
+        "columns": 3
+      },
+      {
+        "ownerLogin": "                 ",
+        "columns": []
+      },
+      {
+        "ownerLogin": "",
+        "columns": []
+      }
+    ]
+  }),
+  projectMissingRequiredKey: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": "String"
+      },
+      {
+        "columns": []
+      }
     ]
   }),
 
@@ -241,10 +303,6 @@ export default {
     "accessToken": "token",
     "repo": defaultRepoValue,
     "columns": [
-      {
-        "a": 3,
-        "b": "b"
-      },
       {
         "name": "String"
       },
