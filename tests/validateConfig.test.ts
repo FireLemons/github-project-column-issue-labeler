@@ -345,6 +345,40 @@ describe('validateConfig()', () => {
         })
       })
 
+      describe('when there are duplicate column names', () => {
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.columnDuplicateNames
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+        })
+
+        test('labeling rules are combined between the duplicates', () => {
+          const column = validatedConfig.columns![0]
+
+          expect(column).toBeTruthy()
+
+          expect(column.labelingRules.find((labelingRule) => {
+            return labelingRule.action === LabelingAction.ADD && labelingRule.labels.includes('Label1')
+          })).not.toBe(undefined)
+
+          expect(column.labelingRules.find((labelingRule) => {
+            return labelingRule.action === LabelingAction.REMOVE && labelingRule.labels.includes('Label2')
+          })).not.toBe(undefined)
+        })
+
+        test('a message is printed about the labeling rule merge', () => {
+          expect(consoleWarnCalls.find((consoleArgs) => {
+            return /Found multiple columns with name:"duplicate name"\. Combining labeling rule lists\./.test(consoleArgs[0])
+          })).not.toBe(undefined)
+        })
+      })
+
       describe('when all of the labeling rules of a column configuration are invalid', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
@@ -411,7 +445,7 @@ describe('validateConfig()', () => {
         })
 
         it('prints a warning that the column configuration will not be used', () => {
-          expect(consoleWarnCalls[6][0]).toMatch(/Column configuration at index: 0 did not contain any valid labeling rules. Skipping column./)
+          expect(consoleWarnCalls[6][0]).toMatch(/Column with name:"column name" did not contain any valid labeling rules. Skipping column./)
         })
 
         test('the validated config will not include the column configuration', () => {

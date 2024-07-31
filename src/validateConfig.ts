@@ -39,7 +39,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
 
     determinedLabelingRules = [rules[lastSetRuleIndex]]
   } else {
-    logger.info('Labeling rules list only contains ADD or REMOVE rules')
+    logger.info('Labeling rules list only contains ADD or REMOVE rules. All rules will be used.')
 
     if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action) ) {
       logger.info('Filtering duplicate lables by action')
@@ -48,8 +48,6 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
       determinedLabelingRules = rules
     }
   }
-
-  logger.addBaseIndentation(2)
 
   for (const rule of determinedLabelingRules) {
     const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(rule.labels))
@@ -67,8 +65,6 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels)
   }
 
-  logger.addBaseIndentation(-2)
-
   return determinedLabelingRules
 }
 
@@ -84,7 +80,7 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string
     } else if (comparison > 0) {
       cursor2++
     } else {
-      logger.warn(`Found same label: "${sortedArray1[cursor1]}" in both ADD and REMOVE labeling rules. Removing label.`, 2)
+      logger.warn(`Found same label: "${sortedArray1[cursor1]}" in both ADD and REMOVE labeling rules. Removing label.`)
       sortedArray1.splice(cursor1, 1)
       sortedArray2.splice(cursor2, 1)
     }
@@ -96,23 +92,28 @@ function isLabelingAction (str: string): str is LabelingAction {
 }
 
 function validateColumnsArray (arr: any[]): Column[] {
-  const validatedColumns: Column[] = []
+  const columnMap: {
+    [key: string]: any[]
+  } = {}
 
   logger.addBaseIndentation(2)
+  logger.info(`Validating items in column array and handling possible duplicates`)
 
   arr.forEach((column: any, index: number) => {
-    logger.info(`Checking column at index ${index}`)
-    let validatedColumn
-
+    logger.addBaseIndentation(2)
+    logger.info(`Validating column at index ${index}`)
     logger.addBaseIndentation(2)
 
     try {
-      validatedColumn = validateColumn(column)
+      const validatedColumn = validateColumn(column)
 
-      if (validatedColumn.labelingRules.length) {
-        validatedColumns.push(validatedColumn)
+      const columnName = validatedColumn.name
+
+      if (columnName in columnMap) {
+        columnMap[validatedColumn.name].push(...validatedColumn.labelingRules)
+        logger.warn(`Found multiple columns with name:"${columnName}". Combining labeling rule lists.`)
       } else {
-        logger.warn(`Column configuration at index: ${index} did not contain any valid labeling rules. Skipping column.`)
+        columnMap[validatedColumn.name] = validatedColumn.labelingRules
       }
     } catch (error) {
       logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`)
@@ -122,8 +123,30 @@ function validateColumnsArray (arr: any[]): Column[] {
       }
     }
 
-    logger.addBaseIndentation(-2)
+    logger.addBaseIndentation(-4)
   })
+
+  logger.info(`Validating labeling rules for valid columns`)
+  const validatedColumns: Column[] = []
+
+  for (let columnName in columnMap) {
+    logger.addBaseIndentation(2)
+    logger.info(`Validating labeling rules of column with name:"${columnName}"`)
+
+    logger.addBaseIndentation(2)
+    const validatedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]))
+
+    if (!validatedLabelingRules.length) {
+      logger.warn(`Column with name:"${columnName}" did not contain any valid labeling rules. Skipping column.`, 2)
+    } else {
+      validatedColumns.push({
+        labelingRules: validatedLabelingRules,
+        name: columnName
+      })
+    }
+
+    logger.addBaseIndentation(-4)
+  }
 
   logger.addBaseIndentation(-2)
 
@@ -144,12 +167,10 @@ function validateColumn (object: any): Column {
   }
 
   typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array)
-  
-  const validatedLabelingRules = validateLabelingRulesArray(object['labelingRules'])
 
   return {
     name: validatedName,
-    labelingRules: determineLabelingRules(validatedLabelingRules)
+    labelingRules: object['labelingRules']
   }
 }
 
@@ -257,7 +278,7 @@ function validateLabelingRule (object: any): LabelingRule {
 
 function validateLabelsArray (arr: any[]): string[] {
   const validatedLabels: string[] = []
-  
+
   arr.forEach((label: any, index: number) => {
     if (!(typeChecker.isString(label))) {
       logger.warn(`Label at index: ${index} was found not to be a string. Removing value.`)
@@ -271,7 +292,7 @@ function validateLabelsArray (arr: any[]): string[] {
       }
     }
   })
-  
+
   return validatedLabels
 }
 

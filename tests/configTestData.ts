@@ -250,6 +250,30 @@ export default {
       null
     ]
   }),
+  columnDuplicateNames: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "columns": [
+      {
+        "name": "duplicate name",
+        "labelingRules": [
+          {
+            "action": "ADD",
+            "labels": ["Label1"]
+          }
+        ]
+      },
+      {
+        "name": "duplicate name",
+        "labelingRules": [
+          {
+            "action": "REMOVE",
+            "labels": ["Label2"]
+          }
+        ]
+      }
+    ]
+  }),
   columnInvalidValues: JSON.stringify({
     "accessToken": "token",
     "repo": defaultRepoValue,
