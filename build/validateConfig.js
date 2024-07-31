@@ -296,9 +296,12 @@ function validateProjectsArray(arr) {
         typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
         if ('number' in object) {
             typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
-        }
-        if (object['number'] < 1) {
-            throw new RangeError('number must be greater than 0');
+            if (!(Number.isInteger(object['number']))) {
+                throw new TypeError('Number must be an integer');
+            }
+            if (object['number'] < 1) {
+                throw new RangeError('Number must be greater than 0');
+            }
         }
         const validatedOwnerLogin = object['ownerLogin'].trim();
         if (!(validatedOwnerLogin.length)) {

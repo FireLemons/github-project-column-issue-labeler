@@ -178,20 +178,35 @@ export default {
     "repo": defaultRepoValue,
     "projects": [
       {
-        "ownerLogin": 3,
-        "columns": []
+        "columns": 3,
+        "ownerLogin": "Name"
       },
       {
-        "ownerLogin": "Name",
-        "columns": 3
+        "columns": [],
+        "number": "not a number",
+        "ownerLogin": "owner name"
       },
       {
-        "ownerLogin": "                 ",
-        "columns": []
+        "columns": [],
+        "number": -1,
+        "ownerLogin": "owner name"
       },
       {
-        "ownerLogin": "",
-        "columns": []
+        "columns": [],
+        "number": 1.01,
+        "ownerLogin": "owner name"
+      },
+      {
+        "columns": [],
+        "ownerLogin": 3
+      },
+      {
+        "columns": [],
+        "ownerLogin": "                 "
+      },
+      {
+        "columns": [],
+        "ownerLogin": ""
       }
     ]
   }),

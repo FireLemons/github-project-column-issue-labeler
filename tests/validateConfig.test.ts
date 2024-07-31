@@ -179,36 +179,57 @@ describe('validateConfig()', () => {
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        describe('when "ownerLogin" is of the wrong type', () => {
+        describe('when "columns" is of the wrong type', () => {
           test('errors are printed with the index of the invalid project', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid project from value at index: 0\. Skipping project\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/Member "ownerLogin" was found not to be a string/)
+            expect(consoleErrorCalls[0][0]).toMatch(/Member "columns" was found not to be an array/)
           })
         })
 
-        describe('when "columns" is of the wrong type', () => {
+        describe('when "number" is of the wrong type', () => {
           test('errors are printed with the index of the invalid project', () => {
             expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/Member "columns" was found not to be an array/)
+            expect(consoleErrorCalls[1][0]).toMatch(/Member "number" was found not to be a number/)
+          })
+        })
+
+        describe('when "number" is less than 1', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 2\. Skipping project\./)
+            expect(consoleErrorCalls[2][0]).toMatch(/Number must be greater than 0/)
+          })
+        })
+
+        describe('when "number" is not an integer', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid project from value at index: 3\. Skipping project\./)
+            expect(consoleErrorCalls[3][0]).toMatch(/Number must be an integer/)
+          })
+        })
+
+        describe('when "ownerLogin" is of the wrong type', () => {
+          test('errors are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid project from value at index: 4\. Skipping project\./)
+            expect(consoleErrorCalls[4][0]).toMatch(/Member "ownerLogin" was found not to be a string/)
           })
         })
 
         describe('when "ownerLogin" contains only whitespace', () => {
           test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 2\. Skipping project\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+            expect(consoleWarnCalls[5][0]).toMatch(/Could not make valid project from value at index: 5\. Skipping project\./)
+            expect(consoleErrorCalls[5][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
           })
         })
 
         describe('when "ownerLogin" is empty string', () => {
           test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid project from value at index: 3\. Skipping project\./)
-            expect(consoleErrorCalls[3][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+            expect(consoleWarnCalls[6][0]).toMatch(/Could not make valid project from value at index: 6\. Skipping project\./)
+            expect(consoleErrorCalls[6][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
           })
         })
 
         test('it indents the error output more than the warning output', () => {
-          const PROJECT_COUNT = 4
+          const PROJECT_COUNT = 7
 
           for(let i = 0; i < PROJECT_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
