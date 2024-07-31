@@ -121,7 +121,7 @@ function validateColumnsArray(arr) {
             }
         }
         catch (error) {
-            logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`);
+            logger.warn(`Could not make valid column from value at index: ${index}. Skipping column.`);
             if (error instanceof Error) {
                 logger.error(error.stack ?? error.message, 2);
             }
@@ -151,7 +151,7 @@ function validateColumnsArray(arr) {
 }
 function validateColumn(object) {
     if (!typeChecker.isObject(object)) {
-        throw new TypeError('Column configuration must be an object');
+        throw new TypeError('Column must be an object');
     }
     typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string);
     const validatedName = object['name'].trim();

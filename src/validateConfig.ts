@@ -116,7 +116,7 @@ function validateColumnsArray (arr: any[]): Column[] {
         columnMap[validatedColumn.name] = validatedColumn.labelingRules
       }
     } catch (error) {
-      logger.warn(`Could not make valid column configuration from value at index: ${index}. Skipping column.`)
+      logger.warn(`Could not make valid column from value at index: ${index}. Skipping column.`)
 
       if (error instanceof Error) {
         logger.error(error.stack ?? error.message, 2)
@@ -155,7 +155,7 @@ function validateColumnsArray (arr: any[]): Column[] {
 
 function validateColumn (object: any): Column {
   if (!typeChecker.isObject(object)) {
-    throw new TypeError('Column configuration must be an object')
+    throw new TypeError('Column must be an object')
   }
 
   typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string)

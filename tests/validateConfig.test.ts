@@ -228,8 +228,8 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('when a column configuration is not an object', () => {
-        const COLUMN_CONFIGURATION_COUNT = 3
+      describe('when a column is not an object', () => {
+        const COLUMN_COUNT = 3
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
@@ -244,20 +244,20 @@ describe('validateConfig()', () => {
         })
 
         test('it prints errors with the index of the invalid element', () => {
-          for (let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
-            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column configuration from value at index: ${i}\\. Skipping column\\.`))
-            expect(consoleErrorCalls[i][0]).toMatch(/Column configuration must be an object/)
+          for (let i = 0; i < COLUMN_COUNT; i++) {
+            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column from value at index: ${i}\\. Skipping column\\.`))
+            expect(consoleErrorCalls[i][0]).toMatch(/Column must be an object/)
           }
         })
 
         test('it indents the error output more than the warning output', () => {
-          for (let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
+          for (let i = 0; i < COLUMN_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
           }
         })
       })
 
-      describe('when the column configuration is missing a required key', () => {
+      describe('when the column is missing a required key', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
@@ -272,29 +272,29 @@ describe('validateConfig()', () => {
         })
 
         describe('when "labelingRules" is missing', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column from value at index: 0\. Skipping column\./)
             expect(consoleErrorCalls[0][0]).toMatch(/key "labelingRules" was not found in the object/)
           })
         })
 
         describe('when "name" is missing', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
             expect(consoleErrorCalls[1][0]).toMatch(/key "name" was not found in the object/)
           })
         })
 
         test('it indents the error output more than the warning output', () => {
-          const COLUMN_CONFIGURATION_COUNT = 2
+          const COLUMN_COUNT = 2
 
-          for(let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
+          for(let i = 0; i < COLUMN_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
           }
         })
       })
 
-      describe('when a column configuration has invalid values', () => {
+      describe('when a column has invalid values', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
@@ -309,37 +309,37 @@ describe('validateConfig()', () => {
         })
 
         describe('when "name" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column configuration from value at index: 0\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column from value at index: 0\. Skipping column\./)
             expect(consoleErrorCalls[0][0]).toMatch(/Member "name" was found not to be a string/)
           })
         })
 
         describe('when "labelingRules" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column configuration from value at index: 1\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
             expect(consoleErrorCalls[1][0]).toMatch(/Member "labelingRules" was found not to be an array/)
           })
         })
 
         describe('when "name" contains only whitespace', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column configuration from value at index: 2\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column from value at index: 2\. Skipping column\./)
             expect(consoleErrorCalls[2][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
         describe('when "name" is empty string', () => {
-          test('errors are printed with the index of the invalid column configuration', () => {
-            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column configuration from value at index: 3\. Skipping column\./)
+          test('errors are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column from value at index: 3\. Skipping column\./)
             expect(consoleErrorCalls[3][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
         test('it indents the error output more than the warning output', () => {
-          const COLUMN_CONFIGURATION_COUNT = 4
+          const COLUMN_COUNT = 4
 
-          for(let i = 0; i < COLUMN_CONFIGURATION_COUNT; i++) {
+          for(let i = 0; i < COLUMN_COUNT; i++) {
             expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
           }
         })
@@ -379,7 +379,7 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('when all of the labeling rules of a column configuration are invalid', () => {
+      describe('when all of the labeling rules of a column are invalid', () => {
         let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
@@ -448,7 +448,7 @@ describe('validateConfig()', () => {
           expect(consoleWarnCalls[6][0]).toMatch(/Column with name:"column name" did not contain any valid labeling rules. Skipping column./)
         })
 
-        test('the validated config will not include the column configuration', () => {
+        test('the validated config will not include the column', () => {
           expect(validatedConfig.columns!.find((columnConfig) => {
             return columnConfig.name === 'Name'
           })).toBe(undefined)
@@ -569,7 +569,7 @@ describe('validateConfig()', () => {
         })
       })
 
-      describe('when a column configuration does not contain SET labeling rules', () => {
+      describe('when a column does not contain SET labeling rules', () => {
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
@@ -659,9 +659,9 @@ describe('validateConfig()', () => {
           })
 
           test('the label does not appear in the validated config', () => {
-            const columnConfiguration = validatedConfig.columns![0]
-            const addRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
-            const removeRule = columnConfiguration.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
+            const column = validatedConfig.columns![0]
+            const addRule = column.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
+            const removeRule = column.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
 
             expect(addRule?.labels.length).toBe(1)
             expect(removeRule?.labels.length).toBe(1)
