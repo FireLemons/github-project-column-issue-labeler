@@ -103,7 +103,6 @@ function isLabelingAction(str) {
 }
 function validateColumnsArray(arr) {
     const columnMap = {};
-    logger.addBaseIndentation(2);
     logger.info(`Validating items in column array and handling possible duplicates`);
     arr.forEach((column, index) => {
         logger.addBaseIndentation(2);
@@ -146,7 +145,6 @@ function validateColumnsArray(arr) {
         }
         logger.addBaseIndentation(-4);
     }
-    logger.addBaseIndentation(-2);
     return validatedColumns;
 }
 function validateColumn(object) {
@@ -165,46 +163,72 @@ function validateColumn(object) {
     };
 }
 function validateConfig(config) {
+    logger.info('Validating Config');
     let configAsObject;
     try {
-        configAsObject = JSON.parse(config);
+        try {
+            configAsObject = JSON.parse(config);
+        }
+        catch (error) {
+            throw new SyntaxError('Could not parse config as JSON');
+        }
+        if (!(typeChecker.isObject(configAsObject))) {
+            throw new TypeError('The config must be an object');
+        }
+        typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string);
+        typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object);
+        const configRepo = configAsObject['repo'];
+        typeChecker.validateObjectMember(configRepo, 'name', typeChecker.Type.string);
+        typeChecker.validateObjectMember(configRepo, 'ownerName', typeChecker.Type.string);
+        const trimmedGithubAccessToken = configAsObject.accessToken.trim();
+        if (!(trimmedGithubAccessToken.length)) {
+            throw new RangeError('The github access token cannot be empty or contain only whitespace');
+        }
+        const validatedConfig = {
+            accessToken: trimmedGithubAccessToken,
+            repo: {
+                ownerName: configRepo.ownerName.trim(),
+                name: configRepo.name.trim()
+            }
+        };
+        logger.addBaseIndentation(2);
+        if ('projects' in configAsObject) {
+            logger.info('Found projects in config');
+            logger.addBaseIndentation(2);
+            typeChecker.validateObjectMember(configAsObject, 'projects', typeChecker.Type.array);
+            const validatedProjects = validateProjectsArray(configAsObject.projects);
+            if (!(validatedProjects.length)) {
+                throw new ReferenceError('Config does not contain any valid projects');
+            }
+            validatedConfig['projects'] = validatedProjects;
+        }
+        else if ('columns' in configAsObject) {
+            logger.info('Found columns in config');
+            logger.addBaseIndentation(2);
+            typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array);
+            const validatedColumns = validateColumnsArray(configAsObject.columns);
+            if (!(validatedColumns.length)) {
+                throw new ReferenceError('Config does not contain any valid columns');
+            }
+            validatedConfig['columns'] = validatedColumns;
+        }
+        else {
+            logger.addBaseIndentation(-4);
+            throw new ReferenceError('Missing keys "projects" and "columns". One is required');
+        }
+        logger.addBaseIndentation(-4);
+        logger.info('Validated Config:');
+        logger.info(JSON.stringify(validatedConfig, null, 2));
+        return validatedConfig;
     }
     catch (error) {
-        throw new SyntaxError('Could not parse config as JSON');
-    }
-    if (!(typeChecker.isObject(configAsObject))) {
-        throw new TypeError('The config must be an object');
-    }
-    typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string);
-    typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object);
-    const configRepo = configAsObject['repo'];
-    typeChecker.validateObjectMember(configRepo, 'name', typeChecker.Type.string);
-    typeChecker.validateObjectMember(configRepo, 'ownerName', typeChecker.Type.string);
-    const trimmedGithubAccessToken = configAsObject.accessToken.trim();
-    if (!(trimmedGithubAccessToken.length)) {
-        throw new RangeError('The github access token cannot be empty or contain only whitespace');
-    }
-    const validatedConfig = {
-        accessToken: trimmedGithubAccessToken,
-        repo: {
-            ownerName: configRepo.ownerName.trim(),
-            name: configRepo.name.trim()
+        logger.addBaseIndentation(-4);
+        if (error instanceof Error) {
+            logger.error('Failed to validate config');
+            logger.error(error.stack ?? error.message, 2);
         }
-    };
-    if ('projects' in configAsObject) {
-        logger.info('Found projects in config');
-        typeChecker.validateObjectMember(configAsObject, 'projects', typeChecker.Type.array);
-        validatedConfig['projects'] = validateProjectsArray(configAsObject.projects);
+        return null;
     }
-    else if ('columns' in configAsObject) {
-        logger.info('Found columns in config');
-        typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array);
-        validatedConfig['columns'] = validateColumnsArray(configAsObject.columns);
-    }
-    else {
-        throw new ReferenceError('Missing keys "projects" and "columns". One is required');
-    }
-    return validatedConfig;
 }
 exports.validateConfig = validateConfig;
 function validateLabelingRulesArray(arr) {
@@ -266,19 +290,33 @@ function validateLabelsArray(arr) {
     return validatedLabels;
 }
 function validateProjectsArray(arr) {
-    const validatedProjects = [];
+    const projectMap = new Map();
+    logger.info(`Validating items in project array and handling possible duplicates`);
     logger.addBaseIndentation(2);
     arr.forEach((project, index) => {
-        logger.info(`Checking project at index ${index}`);
-        let validatedProject;
+        logger.info(`Validating project at index ${index}`);
         logger.addBaseIndentation(2);
+        let validatedProject;
         try {
             validatedProject = validateProject(project);
-            if (validatedProject.columns.length) {
-                validatedProjects.push(validatedProject);
+            const projectOwnerName = validatedProject.ownerLogin;
+            const projectNumber = validatedProject.number ?? 0;
+            let projectNumberMap;
+            if (projectMap.has(projectOwnerName)) {
+                projectNumberMap = projectMap.get(projectOwnerName);
             }
             else {
-                logger.warn(`Project at index: ${index} did not contain any valid columns. Skipping project.`);
+                projectNumberMap = new Map();
+                projectNumberMap.set(projectNumber, validatedProject.columns);
+                projectMap.set(projectOwnerName, projectNumberMap);
+                logger.addBaseIndentation(-2);
+                return; // continue
+            }
+            if (projectNumber in projectNumberMap) {
+                projectNumberMap.get(projectNumber).push(...validatedProject.columns);
+            }
+            else {
+                projectNumberMap.set(projectNumber, validatedProject.columns);
             }
         }
         catch (error) {
@@ -289,32 +327,70 @@ function validateProjectsArray(arr) {
         }
         logger.addBaseIndentation(-2);
     });
-    function validateProject(object) {
-        if (!typeChecker.isObject(object)) {
-            throw new TypeError('Project must be an object');
-        }
-        typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
-        if ('number' in object) {
-            typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
-            if (!(Number.isInteger(object['number']))) {
-                throw new TypeError('Number must be an integer');
-            }
-            if (object['number'] < 1) {
-                throw new RangeError('Number must be greater than 0');
-            }
-        }
-        const validatedOwnerLogin = object['ownerLogin'].trim();
-        if (!(validatedOwnerLogin.length)) {
-            throw new ReferenceError('ownerLogin must contain at least one non whitespace character');
-        }
-        typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array);
-        const validatedProjects = validateColumnsArray(object['columns']);
-        return {
-            columns: validatedProjects,
-            number: object['number'],
-            ownerLogin: validatedOwnerLogin
-        };
-    }
     logger.addBaseIndentation(-2);
+    logger.info(`Validating columns for valid projects`);
+    logger.addBaseIndentation(2);
+    const validatedProjects = [];
+    for (const [projectOwnerName, projectNumberMap] of projectMap) {
+        let numberLessColumns = projectNumberMap.get(0);
+        projectNumberMap.delete(0);
+        if (numberLessColumns) {
+            logger.info(`Validating labeling rules of project with with owner name:"${projectOwnerName}"`);
+            logger.addBaseIndentation(2);
+            numberLessColumns = validateColumnsArray(numberLessColumns);
+            if (numberLessColumns.length) {
+                validatedProjects.push({
+                    columns: numberLessColumns,
+                    ownerLogin: projectOwnerName
+                });
+            }
+            else {
+                logger.warn(`Project with owner name:"${projectOwnerName}" and no number did not contain any valid columns. Skipping project.`);
+            }
+        }
+        for (const [projectNumber, unvalidatedColumns] of projectNumberMap) {
+            logger.info(`Validating labeling rules of project with with owner name:"${projectOwnerName}" and number: ${projectNumber}`);
+            logger.addBaseIndentation(2);
+            const validatedColumns = validateColumnsArray(unvalidatedColumns);
+            if (validatedColumns.length) {
+                validatedProjects.push({
+                    columns: validatedColumns,
+                    number: projectNumber,
+                    ownerLogin: projectOwnerName
+                });
+            }
+            else {
+                logger.warn(`Project with owner name:"${projectOwnerName}" and number:"${projectNumber}" did not contain any valid columns. Skipping project.`);
+            }
+        }
+        logger.addBaseIndentation(-2);
+    }
+    logger.addBaseIndentation(-4);
     return validatedProjects;
+}
+function validateProject(object) {
+    if (!typeChecker.isObject(object)) {
+        throw new TypeError('Project must be an object');
+    }
+    typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array);
+    typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
+    const validatedOwnerLogin = object['ownerLogin'].trim();
+    const validatedProject = {
+        columns: object['columns'],
+        ownerLogin: validatedOwnerLogin
+    };
+    if ('number' in object) {
+        typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
+        if (!(Number.isInteger(object['number']))) {
+            throw new TypeError('Number must be an integer');
+        }
+        if (object['number'] < 1) {
+            throw new RangeError('Number must be greater than 0');
+        }
+        validatedProject.number = object['number'];
+    }
+    if (!(validatedOwnerLogin.length)) {
+        throw new ReferenceError('ownerLogin must contain at least one non whitespace character');
+    }
+    return validatedProject;
 }

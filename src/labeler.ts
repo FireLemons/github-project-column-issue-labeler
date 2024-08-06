@@ -29,37 +29,9 @@ async function main() {
     return
   }
 
-  let config
+  const config = validateConfig(configFileContents)
 
-  try {
-    logger.info('Validating Config')
-    config = validateConfig(configFileContents)
-
-    if ('projects' in config) {
-      if (!(config.projects!.length)) {
-        logger.error('Config does not contain any valid projects')
-        process.exitCode = 1
-
-        return
-      }
-    } else {
-      if (!(config.columns!.length)) {
-        logger.error('Config does not contain any valid columns')
-        process.exitCode = 1
-
-        return
-      }
-    }
-
-    logger.info('Validated Config:')
-    logger.info(JSON.stringify(config, null, 2))
-  } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to validate config')
-      logger.error(error.stack ?? error.message, 2)
-      process.exitCode = 1
-    }
-
+  if (!config) {
     return
   }
 

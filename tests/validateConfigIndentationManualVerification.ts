@@ -23,31 +23,8 @@ function main() {
 
       return
     }
-
-    let config: Config
-
-    try {
-      logger.info('Validating Config')
-      config = validateConfig(configFileContents)
-
-      if ('projects' in config) {
-        if (!(config.projects!.length)) {
-          logger.error('Config does not contain any valid projects')
-        }
-      } else {
-        if (!(config.columns!.length)) {
-          logger.error('Config does not contain any valid columns')
-        }
-      }
-
-      logger.info('Validated Config:')
-      logger.info(JSON.stringify(config, null, 2))
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error('Failed to validate config')
-        logger.error(error.stack ?? error.message, 2)
-      }
-    }
+ 
+    validateConfig(configFileContents)
 
     console.log('') // newline
   }

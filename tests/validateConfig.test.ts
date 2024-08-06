@@ -374,7 +374,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnDuplicateNames
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -409,7 +409,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnAllInvalidLabelingRules
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
@@ -484,7 +484,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.labelingRulesActionOrderPrecedence
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
         })
@@ -519,7 +519,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.lableingRulesActionTypePrecedence
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
         })
@@ -554,7 +554,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.labelingRulesInvalidLabels
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -598,7 +598,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -674,7 +674,7 @@ describe('validateConfig()', () => {
             resetSpies()
             const configContents = ConfigTestData.labelingRulesConflict
 
-            validatedConfig = validateConfig(configContents.toString())
+            validatedConfig = validateConfig(configContents.toString())!
 
             consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           })
@@ -706,7 +706,7 @@ describe('validateConfig()', () => {
         beforeAll(() => {
           const configContents = ConfigTestData.configInvalidNonEssentialSections
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())!
         })
 
         it('will not contain the invalid project', () => {
@@ -836,7 +836,7 @@ describe('validateConfig()', () => {
           beforeAll(() => {
             const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
-            validatedConfig = validateConfig(configContents.toString())
+            validatedConfig = validateConfig(configContents.toString())!
           })
 
           it('removes the duplicates', () => {
@@ -895,7 +895,7 @@ describe('validateConfig()', () => {
           beforeAll(() => {
             const configContents = ConfigTestData.labelingRulesSetActionAndDuplicateLabels
 
-            validatedConfig = validateConfig(configContents.toString())
+            validatedConfig = validateConfig(configContents.toString())!
           })
 
           it('removes the duplicates', () => {
@@ -937,7 +937,7 @@ describe('validateConfig()', () => {
       beforeAll(() => {
         const configContents = ConfigTestData.configTrailingWhitespaceValues
 
-        validatedConfig = validateConfig(configContents.toString())
+        validatedConfig = validateConfig(configContents.toString())!
       })
 
       describe('the github access token', () => {
@@ -1040,7 +1040,7 @@ describe('validateConfig()', () => {
         resetSpies()
         const configContents = ConfigTestData.configNormal
 
-        validatedConfig = validateConfig(configContents.toString())
+        validatedConfig = validateConfig(configContents.toString())!
 
         consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls

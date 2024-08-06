@@ -16,6 +16,7 @@ export class Logger {
 
   addBaseIndentation (amount: number) {
     this.baseIndentation = Math.max(0, this.baseIndentation + amount)
+    // console.log(`Indentation: ${this.baseIndentation}`)
   }
 
   info (message: string, indentationCount: number = 0) {

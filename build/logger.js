@@ -19,6 +19,7 @@ class Logger {
     }
     addBaseIndentation(amount) {
         this.baseIndentation = Math.max(0, this.baseIndentation + amount);
+        // console.log(`Indentation: ${this.baseIndentation}`)
     }
     info(message, indentationCount = 0) {
         console.info(this.#makePrettyString(message, 'INFO', this.baseIndentation + indentationCount, cli_color_1.default.cyan));
