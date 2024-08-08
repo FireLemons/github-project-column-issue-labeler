@@ -13,7 +13,7 @@ const fsPromises = fs_1.default.promises;
 const logger = new logger_1.Logger();
 async function loadConfig() {
     const configContents = await fsPromises.readFile('./config.json');
-    return "" + configContents;
+    return '' + configContents;
 }
 async function main() {
     let configFileContents;
@@ -29,7 +29,7 @@ async function main() {
         return;
     }
     const config = (0, validateConfig_1.validateConfig)(configFileContents);
-    if (!config) {
+    if (config === null) {
         return;
     }
     let githubAPIClient;

@@ -16,9 +16,9 @@ export interface Config {
 }
 
 export enum LabelingAction {
-  ADD = "ADD",
-  REMOVE = "REMOVE",
-  SET = "SET"
+  ADD = 'ADD',
+  REMOVE = 'REMOVE',
+  SET = 'SET'
 }
 
 export interface LabelingRule {
@@ -32,7 +32,7 @@ export interface Project {
   ownerLogin: string
 }
 
-export function isShallowColumn(value: any): value is Column {
+export function isShallowColumn (value: any): value is Column {
   if (!(TypeChecker.isObject(value))) {
     return false
   }
@@ -47,7 +47,7 @@ export function isShallowColumn(value: any): value is Column {
   return true
 }
 
-export function isShallowLabelingRule(value: any): value is LabelingRule {
+export function isShallowLabelingRule (value: any): value is LabelingRule {
   if (!(TypeChecker.isObject(value))) {
     return false
   }

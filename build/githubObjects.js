@@ -57,7 +57,7 @@ class GraphQLPage {
         }
         this.page = pagePOJO;
         this.nodeClass = NodeClass;
-        if (NodeClass) {
+        if (NodeClass !== undefined) {
             initializeNodes(NodeClass, this);
         }
     }
@@ -100,7 +100,7 @@ class GraphQLPageMergeable extends GraphQLPage {
     constructor(pagePOJO, NodeClass) {
         super(pagePOJO, NodeClass);
         this.activeNodeFastAccessMap = new Map();
-        for (let edge of this.page.edges) {
+        for (const edge of this.page.edges) {
             const { node } = edge;
             this.activeNodeFastAccessMap.set(node.getId(), edge);
         }
@@ -121,7 +121,7 @@ class GraphQLPageMergeable extends GraphQLPage {
         if (!(firstNode instanceof RecordWithID)) {
             throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.');
         }
-        for (let edge of page.getEdges()) {
+        for (const edge of page.getEdges()) {
             const { node } = edge;
             const nodeId = node.getId();
             if (this.deletedNodeIds.has(nodeId)) {
@@ -163,7 +163,7 @@ class Issue {
         this.issue = issueState;
     }
     findColumnName(projectNumber, projectOwnerLogin) {
-        let remoteRecordQueryParams = [];
+        const remoteRecordQueryParams = [];
         const projectEdges = this.issue.projectItems.getEdges();
         let i = projectEdges.length;
         while (i > 0) {
@@ -175,10 +175,10 @@ class Issue {
                 this.issue.projectItems.delete(i);
             }
             else if (TypeChecker.isString(columnNameSearchResult)) {
-                if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+                if (projectOwnerLogin !== undefined && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
                     continue;
                 }
-                if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+                if (projectNumber !== undefined && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
                     continue;
                 }
                 return columnNameSearchResult;
@@ -193,7 +193,7 @@ class Issue {
                 recordPage: this.issue.projectItems
             });
         }
-        if (remoteRecordQueryParams.length) {
+        if (remoteRecordQueryParams.length !== 0) {
             return remoteRecordQueryParams;
         }
         else {
@@ -201,7 +201,7 @@ class Issue {
         }
     }
     getLabels() {
-        if (this.issue.labels) {
+        if (this.issue.labels !== undefined) {
             return this.issue.labels.getNodeArray().map((label) => {
                 return label.getName();
             });
@@ -239,7 +239,7 @@ class ProjectItem extends RecordWithID {
             this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue);
         }
         catch (error) {
-            throw new ReferenceError(`The field value page could not be initialized`);
+            throw new ReferenceError('The field value page could not be initialized');
         }
         this.projectHumanReadableUniqueIdentifiers = {
             number: projectItemPOJO.project.number,
@@ -247,11 +247,11 @@ class ProjectItem extends RecordWithID {
         };
     }
     findColumnName() {
-        if (this.columnName) {
+        if (this.columnName !== undefined) {
             return this.columnName;
         }
         const columnNameList = this.fieldValues.getNodeArray();
-        if (columnNameList.length) {
+        if (columnNameList.length !== 0) {
             this.columnName = columnNameList[0].getName();
             return this.columnName;
         }
@@ -300,13 +300,13 @@ function isGraphQLPage(object) {
     try {
         TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array);
         TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object);
-        TypeChecker.validateObjectMember(object['pageInfo'], 'endCursor', TypeChecker.Type.string);
-        TypeChecker.validateObjectMember(object['pageInfo'], 'hasNextPage', TypeChecker.Type.boolean);
+        TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.string);
+        TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean);
     }
     catch (error) {
         return false;
     }
-    for (const edge of object['edges']) {
+    for (const edge of object.edges) {
         try {
             TypeChecker.validateObjectMember(edge, 'node', TypeChecker.Type.object);
         }

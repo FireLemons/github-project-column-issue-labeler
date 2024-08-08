@@ -8,8 +8,8 @@ const logger = new Logger()
 function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
   const consolidatedLabels: Map<LabelingAction, string[]> = new Map()
 
-  for(const rule of rules) {
-    const {action} = rule
+  for (const rule of rules) {
+    const { action } = rule
     if (consolidatedLabels.has(action)) {
       consolidatedLabels.get(action)!.push(...rule.labels)
     } else {
@@ -21,8 +21,8 @@ function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
 
   for (const [action, labels] of consolidatedLabels) {
     consolidatedLabelingRules.push({
-      action: action,
-      labels: labels
+      action,
+      labels
     })
   }
 
@@ -41,7 +41,7 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
   } else {
     logger.info('Labeling rules list only contains ADD or REMOVE rules. All rules will be used.')
 
-    if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action) ) {
+    if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action)) {
       logger.info('Filtering duplicate lables by action')
       determinedLabelingRules = getUniqueLabelsByAction(rules)
     } else {
@@ -58,10 +58,10 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
     }
   }
 
-  const addRule = determinedLabelingRules.find((labelingRule) => {return labelingRule.action === LabelingAction.ADD})
-  const removeRule = determinedLabelingRules.find((labelingRule) => {return labelingRule.action === LabelingAction.REMOVE})
+  const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
+  const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
 
-  if (addRule && removeRule) {
+  if (addRule !== undefined && removeRule !== undefined) {
     removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels)
   }
 
@@ -69,8 +69,8 @@ function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
 }
 
 function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string[], sortedArray2: string[]) {
-  let cursor1 = 0,
-  cursor2 = 0
+  let cursor1 = 0
+  let cursor2 = 0
 
   while (cursor1 < sortedArray1.length && cursor2 < sortedArray2.length) {
     const comparison = caseInsensitiveCompare(sortedArray1[cursor1], sortedArray2[cursor2])
@@ -96,7 +96,7 @@ function validateColumnsArray (arr: any[]): Column[] {
     [key: string]: any[]
   } = {}
 
-  logger.info(`Validating items in column array and handling possible duplicates`)
+  logger.info('Validating items in column array and handling possible duplicates')
 
   arr.forEach((column: any, index: number) => {
     logger.addBaseIndentation(2)
@@ -125,23 +125,23 @@ function validateColumnsArray (arr: any[]): Column[] {
     logger.addBaseIndentation(-4)
   })
 
-  logger.info(`Validating labeling rules for valid columns`)
+  logger.info('Validating labeling rules for valid columns')
   const validatedColumns: Column[] = []
 
-  for (let columnName in columnMap) {
+  for (const columnName in columnMap) {
     logger.addBaseIndentation(2)
     logger.info(`Validating labeling rules of column with name:"${columnName}"`)
 
     logger.addBaseIndentation(2)
     const validatedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]))
 
-    if (!validatedLabelingRules.length) {
-      logger.warn(`Column with name:"${columnName}" did not contain any valid labeling rules. Skipping column.`, 2)
-    } else {
+    if (validatedLabelingRules.length !== 0) {
       validatedColumns.push({
         labelingRules: validatedLabelingRules,
         name: columnName
       })
+    } else {
+      logger.warn(`Column with name:"${columnName}" did not contain any valid labeling rules. Skipping column.`, 2)
     }
 
     logger.addBaseIndentation(-4)
@@ -157,7 +157,7 @@ function validateColumn (object: any): Column {
 
   typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string)
 
-  const validatedName = object['name'].trim()
+  const validatedName = object.name.trim()
 
   if (!(validatedName.length)) {
     throw new ReferenceError('name must contain at least one non whitespace character')
@@ -167,7 +167,7 @@ function validateColumn (object: any): Column {
 
   return {
     name: validatedName,
-    labelingRules: object['labelingRules']
+    labelingRules: object.labelingRules
   }
 }
 
@@ -189,7 +189,7 @@ export function validateConfig (config: string): Config | null {
     typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string)
     typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object)
 
-    const configRepo = configAsObject['repo']
+    const configRepo = configAsObject.repo
 
     typeChecker.validateObjectMember(configRepo, 'name', typeChecker.Type.string)
     typeChecker.validateObjectMember(configRepo, 'ownerName', typeChecker.Type.string)
@@ -217,22 +217,22 @@ export function validateConfig (config: string): Config | null {
 
       const validatedProjects = validateProjectsArray(configAsObject.projects)
 
-      if (!(validatedProjects.length)) {
+      if (validatedProjects.length === 0) {
         throw new ReferenceError('Config does not contain any valid projects')
       }
 
-      validatedConfig['projects'] = validatedProjects
-    } else if('columns' in configAsObject) {
+      validatedConfig.projects = validatedProjects
+    } else if ('columns' in configAsObject) {
       logger.info('Found columns in config')
       logger.addBaseIndentation(2)
       typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array)
       const validatedColumns = validateColumnsArray(configAsObject.columns)
 
-      if (!(validatedColumns.length)) {
+      if (validatedColumns.length === 0) {
         throw new ReferenceError('Config does not contain any valid columns')
       }
 
-      validatedConfig['columns'] = validatedColumns
+      validatedConfig.columns = validatedColumns
     } else {
       logger.addBaseIndentation(-4)
       throw new ReferenceError('Missing keys "projects" and "columns". One is required')
@@ -267,7 +267,7 @@ function validateLabelingRulesArray (arr: any[]): LabelingRule[] {
     try {
       validatedLabelingRule = validateLabelingRule(labelingRule)
 
-      if (validatedLabelingRule.labels.length) {
+      if (validatedLabelingRule.labels.length !== 0) {
         validatedLabelingRules.push(validatedLabelingRule)
       } else {
         logger.warn(`Labeling rule at index: ${index} did not contain any valid labels. Skipping rule.`)
@@ -293,7 +293,7 @@ function validateLabelingRule (object: any): LabelingRule {
 
   typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string)
 
-  const formattedAction = object['action'].toUpperCase().trim()
+  const formattedAction = object.action.toUpperCase().trim()
 
   if (!isLabelingAction(formattedAction)) {
     throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(LabelingAction))}`)
@@ -303,7 +303,7 @@ function validateLabelingRule (object: any): LabelingRule {
 
   return {
     action: formattedAction,
-    labels: validateLabelsArray(object['labels'])
+    labels: validateLabelsArray(object.labels)
   }
 }
 
@@ -316,10 +316,10 @@ function validateLabelsArray (arr: any[]): string[] {
     } else {
       const labelWithoutSurroundingWhitespace = label.trim()
 
-      if (!(labelWithoutSurroundingWhitespace.length)) {
-        logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`)
-      } else {
+      if (labelWithoutSurroundingWhitespace.length !== 0) {
         validatedLabels.push(labelWithoutSurroundingWhitespace)
+      } else {
+        logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`)
       }
     }
   })
@@ -330,7 +330,7 @@ function validateLabelsArray (arr: any[]): string[] {
 function validateProjectsArray (arr: any[]): Project[] {
   const projectMap: Map<string, Map<number, any[]>> = new Map()
 
-  logger.info(`Validating items in project array and handling possible duplicates`)
+  logger.info('Validating items in project array and handling possible duplicates')
   logger.addBaseIndentation(2)
 
   arr.forEach((project: any, index: number) => {
@@ -372,7 +372,7 @@ function validateProjectsArray (arr: any[]): Project[] {
   })
 
   logger.addBaseIndentation(-2)
-  logger.info(`Validating columns for valid projects`)
+  logger.info('Validating columns for valid projects')
   logger.addBaseIndentation(2)
 
   const validatedProjects: Project[] = []
@@ -382,13 +382,13 @@ function validateProjectsArray (arr: any[]): Project[] {
 
     projectNumberMap.delete(0)
 
-    if (numberLessColumns) {
+    if (numberLessColumns !== undefined) {
       logger.info(`Validating labeling rules of project with with owner name:"${projectOwnerName}"`)
 
       logger.addBaseIndentation(2)
       numberLessColumns = validateColumnsArray(numberLessColumns)
 
-      if (numberLessColumns.length) {
+      if (numberLessColumns.length !== 0) {
         validatedProjects.push({
           columns: numberLessColumns,
           ownerLogin: projectOwnerName
@@ -404,7 +404,7 @@ function validateProjectsArray (arr: any[]): Project[] {
       logger.addBaseIndentation(2)
       const validatedColumns = validateColumnsArray(unvalidatedColumns)
 
-      if (validatedColumns.length) {
+      if (validatedColumns.length !== 0) {
         validatedProjects.push({
           columns: validatedColumns,
           number: projectNumber,
@@ -431,25 +431,25 @@ function validateProject (object: any): Project {
   typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array)
   typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string)
 
-  const validatedOwnerLogin = object['ownerLogin'].trim()
+  const validatedOwnerLogin = object.ownerLogin.trim()
 
   const validatedProject: Project = {
-    columns: object['columns'],
+    columns: object.columns,
     ownerLogin: validatedOwnerLogin
   }
 
   if ('number' in object) {
     typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number)
 
-    if (!(Number.isInteger(object['number']))) {
+    if (!(Number.isInteger(object.number))) {
       throw new TypeError('Number must be an integer')
     }
 
-    if (object['number'] < 1) {
+    if (object.number < 1) {
       throw new RangeError('Number must be greater than 0')
     }
 
-    validatedProject.number = object['number']
+    validatedProject.number = object.number
   }
 
   if (!(validatedOwnerLogin.length)) {

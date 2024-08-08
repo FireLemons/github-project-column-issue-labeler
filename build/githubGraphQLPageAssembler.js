@@ -18,27 +18,25 @@ class GithubGraphQLPageAssembler {
         do {
             try {
                 issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor);
-                if (issuePageResponse) {
-                    const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues, githubObjects_1.Issue);
-                    cursor = issuePage.getEndCursor();
-                    if (!issues) {
-                        issues = issuePage;
-                    }
-                    else {
-                        issues.appendPage(issuePage);
-                    }
+                const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues, githubObjects_1.Issue);
+                cursor = issuePage.getEndCursor();
+                if (issues === undefined) {
+                    issues = issuePage;
+                }
+                else {
+                    issues.appendPage(issuePage);
                 }
             }
             catch (error) {
-                if (issuePageResponse?.repository) {
-                    let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page';
+                if (issuePageResponse?.repository !== undefined) {
+                    const pageMessageIndex = cursor !== undefined ? `page with cursor ${cursor}` : 'first page';
                     logger.warn('Encountered errors while fetching ' + pageMessageIndex);
                 }
                 else {
                     throw error;
                 }
             }
-        } while (!(issues.isLastPage()));
+        } while (!(issues?.isLastPage()));
         logger.addBaseIndentation(-2);
         return issues;
     }

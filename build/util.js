@@ -20,7 +20,7 @@ exports.isCaseInsensitiveEqual = isCaseInsensitiveEqual;
 function removeCaseInsensitiveDuplicatesFromSortedArray(sortedArray) {
     let i = 0;
     while (i < sortedArray.length - 1) {
-        if (!caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1])) {
+        if (caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1]) === 0) {
             sortedArray.splice(i + 1, 1);
         }
         else {

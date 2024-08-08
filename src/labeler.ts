@@ -8,13 +8,13 @@ import { validateConfig } from './validateConfig'
 const fsPromises = fs.promises
 const logger = new Logger()
 
-async function loadConfig(): Promise<string> {
+async function loadConfig (): Promise<string> {
   const configContents = await fsPromises.readFile('./config.json')
 
-  return "" + configContents
+  return '' + configContents
 }
 
-async function main() {
+async function main () {
   let configFileContents
 
   try {
@@ -31,7 +31,7 @@ async function main() {
 
   const config = validateConfig(configFileContents)
 
-  if (!config) {
+  if (config === null) {
     return
   }
 
@@ -72,7 +72,7 @@ async function main() {
 
   const issues = issuePage.getNodeArray()
 
-  for(let i = issues.length - 1; i >= 0; i--) {
+  for (let i = issues.length - 1; i >= 0; i--) {
     const issue = issues[i]
     const columnNameSearchResult = issue.findColumnName()
   }

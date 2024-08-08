@@ -43,8 +43,8 @@ function getUniqueLabelsByAction(rules) {
     const consolidatedLabelingRules = [];
     for (const [action, labels] of consolidatedLabels) {
         consolidatedLabelingRules.push({
-            action: action,
-            labels: labels
+            action,
+            labels
         });
     }
     return consolidatedLabelingRules;
@@ -76,13 +76,14 @@ function determineLabelingRules(rules) {
     }
     const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === configObjects_1.LabelingAction.ADD; });
     const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === configObjects_1.LabelingAction.REMOVE; });
-    if (addRule && removeRule) {
+    if (addRule !== undefined && removeRule !== undefined) {
         removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels);
     }
     return determinedLabelingRules;
 }
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
-    let cursor1 = 0, cursor2 = 0;
+    let cursor1 = 0;
+    let cursor2 = 0;
     while (cursor1 < sortedArray1.length && cursor2 < sortedArray2.length) {
         const comparison = (0, util_1.caseInsensitiveCompare)(sortedArray1[cursor1], sortedArray2[cursor2]);
         if (comparison < 0) {
@@ -103,7 +104,7 @@ function isLabelingAction(str) {
 }
 function validateColumnsArray(arr) {
     const columnMap = {};
-    logger.info(`Validating items in column array and handling possible duplicates`);
+    logger.info('Validating items in column array and handling possible duplicates');
     arr.forEach((column, index) => {
         logger.addBaseIndentation(2);
         logger.info(`Validating column at index ${index}`);
@@ -127,21 +128,21 @@ function validateColumnsArray(arr) {
         }
         logger.addBaseIndentation(-4);
     });
-    logger.info(`Validating labeling rules for valid columns`);
+    logger.info('Validating labeling rules for valid columns');
     const validatedColumns = [];
-    for (let columnName in columnMap) {
+    for (const columnName in columnMap) {
         logger.addBaseIndentation(2);
         logger.info(`Validating labeling rules of column with name:"${columnName}"`);
         logger.addBaseIndentation(2);
         const validatedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]));
-        if (!validatedLabelingRules.length) {
-            logger.warn(`Column with name:"${columnName}" did not contain any valid labeling rules. Skipping column.`, 2);
-        }
-        else {
+        if (validatedLabelingRules.length !== 0) {
             validatedColumns.push({
                 labelingRules: validatedLabelingRules,
                 name: columnName
             });
+        }
+        else {
+            logger.warn(`Column with name:"${columnName}" did not contain any valid labeling rules. Skipping column.`, 2);
         }
         logger.addBaseIndentation(-4);
     }
@@ -152,14 +153,14 @@ function validateColumn(object) {
         throw new TypeError('Column must be an object');
     }
     typeChecker.validateObjectMember(object, 'name', typeChecker.Type.string);
-    const validatedName = object['name'].trim();
+    const validatedName = object.name.trim();
     if (!(validatedName.length)) {
         throw new ReferenceError('name must contain at least one non whitespace character');
     }
     typeChecker.validateObjectMember(object, 'labelingRules', typeChecker.Type.array);
     return {
         name: validatedName,
-        labelingRules: object['labelingRules']
+        labelingRules: object.labelingRules
     };
 }
 function validateConfig(config) {
@@ -177,7 +178,7 @@ function validateConfig(config) {
         }
         typeChecker.validateObjectMember(configAsObject, 'accessToken', typeChecker.Type.string);
         typeChecker.validateObjectMember(configAsObject, 'repo', typeChecker.Type.object);
-        const configRepo = configAsObject['repo'];
+        const configRepo = configAsObject.repo;
         typeChecker.validateObjectMember(configRepo, 'name', typeChecker.Type.string);
         typeChecker.validateObjectMember(configRepo, 'ownerName', typeChecker.Type.string);
         const trimmedGithubAccessToken = configAsObject.accessToken.trim();
@@ -197,20 +198,20 @@ function validateConfig(config) {
             logger.addBaseIndentation(2);
             typeChecker.validateObjectMember(configAsObject, 'projects', typeChecker.Type.array);
             const validatedProjects = validateProjectsArray(configAsObject.projects);
-            if (!(validatedProjects.length)) {
+            if (validatedProjects.length === 0) {
                 throw new ReferenceError('Config does not contain any valid projects');
             }
-            validatedConfig['projects'] = validatedProjects;
+            validatedConfig.projects = validatedProjects;
         }
         else if ('columns' in configAsObject) {
             logger.info('Found columns in config');
             logger.addBaseIndentation(2);
             typeChecker.validateObjectMember(configAsObject, 'columns', typeChecker.Type.array);
             const validatedColumns = validateColumnsArray(configAsObject.columns);
-            if (!(validatedColumns.length)) {
+            if (validatedColumns.length === 0) {
                 throw new ReferenceError('Config does not contain any valid columns');
             }
-            validatedConfig['columns'] = validatedColumns;
+            validatedConfig.columns = validatedColumns;
         }
         else {
             logger.addBaseIndentation(-4);
@@ -239,7 +240,7 @@ function validateLabelingRulesArray(arr) {
         logger.addBaseIndentation(2);
         try {
             validatedLabelingRule = validateLabelingRule(labelingRule);
-            if (validatedLabelingRule.labels.length) {
+            if (validatedLabelingRule.labels.length !== 0) {
                 validatedLabelingRules.push(validatedLabelingRule);
             }
             else {
@@ -261,14 +262,14 @@ function validateLabelingRule(object) {
         throw new TypeError('Labeling rule must be an object');
     }
     typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
-    const formattedAction = object['action'].toUpperCase().trim();
+    const formattedAction = object.action.toUpperCase().trim();
     if (!isLabelingAction(formattedAction)) {
         throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(configObjects_1.LabelingAction))}`);
     }
     typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
     return {
         action: formattedAction,
-        labels: validateLabelsArray(object['labels'])
+        labels: validateLabelsArray(object.labels)
     };
 }
 function validateLabelsArray(arr) {
@@ -279,11 +280,11 @@ function validateLabelsArray(arr) {
         }
         else {
             const labelWithoutSurroundingWhitespace = label.trim();
-            if (!(labelWithoutSurroundingWhitespace.length)) {
-                logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`);
+            if (labelWithoutSurroundingWhitespace.length !== 0) {
+                validatedLabels.push(labelWithoutSurroundingWhitespace);
             }
             else {
-                validatedLabels.push(labelWithoutSurroundingWhitespace);
+                logger.warn(`Label at index: ${index} must contain at least one non whitespace character. Removing value.`);
             }
         }
     });
@@ -291,7 +292,7 @@ function validateLabelsArray(arr) {
 }
 function validateProjectsArray(arr) {
     const projectMap = new Map();
-    logger.info(`Validating items in project array and handling possible duplicates`);
+    logger.info('Validating items in project array and handling possible duplicates');
     logger.addBaseIndentation(2);
     arr.forEach((project, index) => {
         logger.info(`Validating project at index ${index}`);
@@ -328,17 +329,17 @@ function validateProjectsArray(arr) {
         logger.addBaseIndentation(-2);
     });
     logger.addBaseIndentation(-2);
-    logger.info(`Validating columns for valid projects`);
+    logger.info('Validating columns for valid projects');
     logger.addBaseIndentation(2);
     const validatedProjects = [];
     for (const [projectOwnerName, projectNumberMap] of projectMap) {
         let numberLessColumns = projectNumberMap.get(0);
         projectNumberMap.delete(0);
-        if (numberLessColumns) {
+        if (numberLessColumns !== undefined) {
             logger.info(`Validating labeling rules of project with with owner name:"${projectOwnerName}"`);
             logger.addBaseIndentation(2);
             numberLessColumns = validateColumnsArray(numberLessColumns);
-            if (numberLessColumns.length) {
+            if (numberLessColumns.length !== 0) {
                 validatedProjects.push({
                     columns: numberLessColumns,
                     ownerLogin: projectOwnerName
@@ -352,7 +353,7 @@ function validateProjectsArray(arr) {
             logger.info(`Validating labeling rules of project with with owner name:"${projectOwnerName}" and number: ${projectNumber}`);
             logger.addBaseIndentation(2);
             const validatedColumns = validateColumnsArray(unvalidatedColumns);
-            if (validatedColumns.length) {
+            if (validatedColumns.length !== 0) {
                 validatedProjects.push({
                     columns: validatedColumns,
                     number: projectNumber,
@@ -374,20 +375,20 @@ function validateProject(object) {
     }
     typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array);
     typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
-    const validatedOwnerLogin = object['ownerLogin'].trim();
+    const validatedOwnerLogin = object.ownerLogin.trim();
     const validatedProject = {
-        columns: object['columns'],
+        columns: object.columns,
         ownerLogin: validatedOwnerLogin
     };
     if ('number' in object) {
         typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
-        if (!(Number.isInteger(object['number']))) {
+        if (!(Number.isInteger(object.number))) {
             throw new TypeError('Number must be an integer');
         }
-        if (object['number'] < 1) {
+        if (object.number < 1) {
             throw new RangeError('Number must be greater than 0');
         }
-        validatedProject.number = object['number'];
+        validatedProject.number = object.number;
     }
     if (!(validatedOwnerLogin.length)) {
         throw new ReferenceError('ownerLogin must contain at least one non whitespace character');

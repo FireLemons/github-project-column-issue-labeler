@@ -1,4 +1,3 @@
-import { Config } from '../src/configObjects'
 import { Logger } from '../src/logger'
 import { validateConfig } from '../src/validateConfig'
 
@@ -23,7 +22,7 @@ function main() {
 
       return
     }
- 
+
     validateConfig(configFileContents)
 
     console.log('') // newline

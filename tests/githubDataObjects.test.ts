@@ -56,7 +56,7 @@ const projectItemPagePOJO = {
   }
 }
 
-const issuePOJO =  {
+const issuePOJO = {
   number: 1009,
   labels: labelPagePOJO,
   projectItems: projectItemPagePOJO
@@ -599,10 +599,10 @@ describe('The Issue class', () => {
         
         projectItemB.project.number = projectNumberB
         projectItemC.project.number = projectNumberC
-  
+
         projectItemB.project.owner.login = loginB
         projectItemC.project.owner.login = loginC
-  
+
         projectItemB.fieldValues.edges[0].node.name = columnNameB
         projectItemC.fieldValues.edges[0].node.name = columnNameC
 
@@ -638,7 +638,7 @@ describe('The Issue class', () => {
       })
     })
   })
-  
+
   describe('getLabels()', () => {
     it('returns the labels of the Issue instance as an array', () => {
       const issuePOJOCopy = structuredClone(issuePOJO)

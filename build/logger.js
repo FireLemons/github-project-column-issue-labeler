@@ -34,7 +34,7 @@ class Logger {
         return this.indentationCharacter.repeat(indentationAmount);
     }
     #formatSubequentLines(lines, spaceIndentationCount, applyColor) {
-        if (!(lines.length)) {
+        if (lines.length === 0) {
             return '';
         }
         const formattedLines = lines.map((line) => {

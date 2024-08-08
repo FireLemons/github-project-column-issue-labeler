@@ -73,7 +73,7 @@ interface GitHubGraphQLError {
       line: number
       column: number
     }
-  ],
+  ]
   message: string
 }
 
@@ -90,7 +90,7 @@ export class GithubAPIClient {
   repoName: string
 
   constructor (githubAPIKey: string, repoName: string, repoOwnerName: string) {
-    this.octokit = new Octokit({auth: githubAPIKey})
+    this.octokit = new Octokit({ auth: githubAPIKey })
     this.repoName = repoName
     this.repoOwnerName = repoOwnerName
   }
@@ -111,11 +111,11 @@ export class GithubAPIClient {
       ${fragmentFieldValuePage}
       ${fragmentProjectItemPage}
     `, {
-      "issueNumber": issueNumber,
-      "pageSizeFieldValue": MAX_PAGE_SIZE,
-      "pageSizeProjectItem": MAX_PAGE_SIZE,
-      "repoName": this.repoName,
-      "repoOwnerName": this.repoOwnerName
+      issueNumber,
+      pageSizeFieldValue: MAX_PAGE_SIZE,
+      pageSizeProjectItem: MAX_PAGE_SIZE,
+      repoName: this.repoName,
+      repoOwnerName: this.repoOwnerName
     })
   }
 
@@ -149,16 +149,16 @@ export class GithubAPIClient {
 
       ${fragmentLabelPage}
       ${fragmentFieldValuePage}
-      ${fragmentProjectItemPage}`,
-      {
-        cursor: cursor,
+      ${fragmentProjectItemPage}
+      `, {
+        cursor,
         pageSizeIssue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
         pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
         pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
         pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
         repoName: this.repoName,
         repoOwnerName: this.repoOwnerName
-      },
+      }
     )
   }
 
@@ -172,14 +172,14 @@ export class GithubAPIClient {
         }
       }
     }
-    
-    ${fragmentLabelPage}`,
-    {
-      "cursor": cursor,
-      "issueNumber": issueNumber,
-      "pageSize": MAX_PAGE_SIZE,
-      "repoName": this.repoName,
-      "repoOwnerName": this.repoOwnerName
+
+    ${fragmentLabelPage}
+    `, {
+      cursor,
+      issueNumber,
+      pageSize: MAX_PAGE_SIZE,
+      repoName: this.repoName,
+      repoOwnerName: this.repoOwnerName
     })
   }
 }

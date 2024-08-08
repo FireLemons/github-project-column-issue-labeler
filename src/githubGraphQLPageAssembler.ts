@@ -15,32 +15,30 @@ export class GithubGraphQLPageAssembler {
     logger.addBaseIndentation(2)
     logger.info('Fetching Issues')
     let cursor
-    let issues!: GraphQLPage<Issue>
+    let issues: GraphQLPage<Issue> | undefined
     let issuePageResponse!: IssuePageResponse
 
     do {
       try {
         issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor)
 
-        if (issuePageResponse) {
-          const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues, Issue)
-          cursor = issuePage.getEndCursor()
+        const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues, Issue)
+        cursor = issuePage.getEndCursor()
 
-          if (!issues) {
-            issues = issuePage
-          } else {
-            issues.appendPage(issuePage)
-          }
+        if (issues === undefined) {
+          issues = issuePage
+        } else {
+          issues.appendPage(issuePage)
         }
       } catch (error) {
-        if (issuePageResponse?.repository) {
-          let pageMessageIndex = cursor ? `page with cursor ${cursor}` : 'first page'
+        if (issuePageResponse?.repository !== undefined) {
+          const pageMessageIndex = cursor !== undefined ? `page with cursor ${cursor}` : 'first page'
           logger.warn('Encountered errors while fetching ' + pageMessageIndex)
         } else {
           throw error
         }
       }
-    } while (!(issues.isLastPage()))
+    } while (!(issues?.isLastPage()))
 
     logger.addBaseIndentation(-2)
     return issues

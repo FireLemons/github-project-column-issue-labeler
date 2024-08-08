@@ -1,7 +1,7 @@
 import * as TypeChecker from './typeChecker'
 
 interface Constructable<T> {
-  new (...args: any[]): T;
+  new (...args: any[]): T
 }
 
 export interface RemoteRecordPageQueryParameters {
@@ -28,7 +28,7 @@ export class FieldValue {
 export class RecordWithID {
   id: number | string
 
-  constructor(uid: number | string) {
+  constructor (uid: number | string) {
     this.id = uid
   }
 
@@ -40,9 +40,9 @@ export class RecordWithID {
 export class GraphQLPage<T> {
   nodeClass: Constructable<any> | undefined
   page: {
-    edges: {
+    edges: Array<{
         node: T
-    }[]
+    }>
 
     pageInfo: {
       endCursor: string
@@ -58,7 +58,7 @@ export class GraphQLPage<T> {
     this.page = pagePOJO
     this.nodeClass = NodeClass
 
-    if (NodeClass) {
+    if (NodeClass !== undefined) {
       initializeNodes(NodeClass, this)
     }
   }
@@ -69,7 +69,7 @@ export class GraphQLPage<T> {
   }
 
   delete (index: number): T {
-    if ( 0 > index || index >= this.page.edges.length ) {
+    if (0 > index || index >= this.page.edges.length) {
       throw new RangeError('Param index out of range')
     }
 
@@ -114,7 +114,7 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
 
     this.activeNodeFastAccessMap = new Map()
 
-    for (let edge of this.page.edges) {
+    for (const edge of this.page.edges) {
       const { node } = edge
 
       this.activeNodeFastAccessMap.set(node.getId(), edge)
@@ -124,7 +124,7 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
   }
 
   delete (index: number): T {
-    if ( 0 > index || index >= this.page.edges.length ) {
+    if (0 > index || index >= this.page.edges.length) {
       throw new RangeError('Param index out of range')
     }
 
@@ -144,7 +144,7 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
       throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.')
     }
 
-    for (let edge of page.getEdges()) {
+    for (const edge of page.getEdges()) {
       const { node } = edge
       const nodeId = node.getId()
 
@@ -196,7 +196,7 @@ export class Issue {
   }
 
   findColumnName (projectNumber?: number, projectOwnerLogin?: string) {
-    let remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
+    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
     const projectEdges = this.issue.projectItems.getEdges()
 
     let i = projectEdges.length
@@ -211,11 +211,11 @@ export class Issue {
       if (columnNameSearchResult === null) {
         this.issue.projectItems.delete(i)
       } else if (TypeChecker.isString(columnNameSearchResult)) {
-        if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+        if (projectOwnerLogin !== undefined && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
           continue
         }
 
-        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+        if (projectNumber !== undefined && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
           continue
         }
 
@@ -232,7 +232,7 @@ export class Issue {
       })
     }
 
-    if (remoteRecordQueryParams.length) {
+    if (remoteRecordQueryParams.length !== 0) {
       return remoteRecordQueryParams
     } else {
       return null
@@ -240,7 +240,7 @@ export class Issue {
   }
 
   getLabels () {
-    if (this.issue.labels) {
+    if (this.issue.labels !== undefined) {
       return this.issue.labels.getNodeArray().map((label: Label) => {
         return label.getName()
       })
@@ -270,7 +270,7 @@ export class Label {
   }
 }
 
-export class ProjectItem extends RecordWithID{
+export class ProjectItem extends RecordWithID {
   columnName?: string
   fieldValues: GraphQLPage<FieldValue>
   declare id: number
@@ -289,7 +289,7 @@ export class ProjectItem extends RecordWithID{
     try {
       this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue)
     } catch (error) {
-      throw new ReferenceError(`The field value page could not be initialized`)
+      throw new ReferenceError('The field value page could not be initialized')
     }
 
     this.projectHumanReadableUniqueIdentifiers = {
@@ -299,13 +299,13 @@ export class ProjectItem extends RecordWithID{
   }
 
   findColumnName () {
-    if (this.columnName) {
+    if (this.columnName !== undefined) {
       return this.columnName
     }
 
     const columnNameList = this.fieldValues.getNodeArray()
 
-    if (columnNameList.length) {
+    if (columnNameList.length !== 0) {
       this.columnName = columnNameList[0].getName()
 
       return this.columnName
@@ -359,13 +359,13 @@ function isGraphQLPage (object: any): boolean {
   try {
     TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array)
     TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object)
-    TypeChecker.validateObjectMember(object['pageInfo'], 'endCursor', TypeChecker.Type.string)
-    TypeChecker.validateObjectMember(object['pageInfo'], 'hasNextPage', TypeChecker.Type.boolean)
+    TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.string)
+    TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean)
   } catch (error) {
     return false
   }
 
-  for (const edge of object['edges']) {
+  for (const edge of object.edges) {
     try {
       TypeChecker.validateObjectMember(edge, 'node', TypeChecker.Type.object)
     } catch (error) {

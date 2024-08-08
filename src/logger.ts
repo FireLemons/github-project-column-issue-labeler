@@ -36,7 +36,7 @@ export class Logger {
   }
 
   #formatSubequentLines (lines: string[], spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {
-    if (!(lines.length)) {
+    if (lines.length === 0) {
       return ''
     }
 

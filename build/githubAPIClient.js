@@ -85,11 +85,11 @@ class GithubAPIClient {
       ${fragmentFieldValuePage}
       ${fragmentProjectItemPage}
     `, {
-            "issueNumber": issueNumber,
-            "pageSizeFieldValue": MAX_PAGE_SIZE,
-            "pageSizeProjectItem": MAX_PAGE_SIZE,
-            "repoName": this.repoName,
-            "repoOwnerName": this.repoOwnerName
+            issueNumber,
+            pageSizeFieldValue: MAX_PAGE_SIZE,
+            pageSizeProjectItem: MAX_PAGE_SIZE,
+            repoName: this.repoName,
+            repoOwnerName: this.repoOwnerName
         });
     }
     fetchIssuePage(cursor) {
@@ -122,8 +122,9 @@ class GithubAPIClient {
 
       ${fragmentLabelPage}
       ${fragmentFieldValuePage}
-      ${fragmentProjectItemPage}`, {
-            cursor: cursor,
+      ${fragmentProjectItemPage}
+      `, {
+            cursor,
             pageSizeIssue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
             pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
@@ -142,13 +143,14 @@ class GithubAPIClient {
         }
       }
     }
-    
-    ${fragmentLabelPage}`, {
-            "cursor": cursor,
-            "issueNumber": issueNumber,
-            "pageSize": MAX_PAGE_SIZE,
-            "repoName": this.repoName,
-            "repoOwnerName": this.repoOwnerName
+
+    ${fragmentLabelPage}
+    `, {
+            cursor,
+            issueNumber,
+            pageSize: MAX_PAGE_SIZE,
+            repoName: this.repoName,
+            repoOwnerName: this.repoOwnerName
         });
     }
 }
