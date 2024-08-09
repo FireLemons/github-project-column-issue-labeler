@@ -28,74 +28,172 @@ function resetSpies () {
 
 describe('validateConfig()', () => {
   describe('when config contains invalid json', () => {
-    it('throws an error with a message describing that the file did not contain parsable JSON', () => {
+    let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+    let validatedConfig: Config | null
+
+    beforeAll(() => {
+      resetSpies()
       const configContents = ConfigTestData.invalidJSON
 
-      expect(() => {
-        validateConfig(configContents.toString())
-      }).toThrow(new SyntaxError('Could not parse config as JSON'))
+      validatedConfig = validateConfig(configContents.toString())
+
+      consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+    })
+
+    it('returns null', () => {
+      expect(validatedConfig).toBe(null)
+    })
+
+    it('prints an error describing why the config is invalid', () => {
+      expect(consoleErrorCalls.find((consoleErrorCall) => {
+        return /Could not parse config as JSON/.test(consoleErrorCall[0])
+      })).not.toBe(undefined)
     })
   })
 
   describe('when config is missing a required key', () => {
-    it('throws an error with a message describing that the file is missing a required key', () => {
+    let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+    let validatedConfig: Config | null
+
+    beforeAll(() => {
+      resetSpies()
       const configContents = ConfigTestData.configMissingKey
 
-      expect(() => {
-        validateConfig(configContents.toString())
-      }).toThrow(new ReferenceError(`key "accessToken" was not found in the object`))
+      validatedConfig = validateConfig(configContents.toString())
+
+      consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+    })
+
+    it('returns null', () => {
+      expect(validatedConfig).toBe(null)
+    })
+
+    it('prints an error describing why the config is invalid', () => {
+      expect(consoleErrorCalls.find((consoleErrorCall) => {
+        return /key "accessToken" was not found in the object/.test(consoleErrorCall[0])
+      })).not.toBe(undefined)
     })
   })
 
   describe('when the config contains all required keys', () => {
     describe('when the github access token is not a string', () => {
-      it('throws a TypeError specifying the correct type for the github access token', () => {
+      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+      let validatedConfig: Config | null
+
+      beforeAll(() => {
+        resetSpies()
         const configContents = ConfigTestData.configWrongTypeAccessToken
 
-        expect(() => {
-          validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "accessToken" was found not to be a string`))
+        validatedConfig = validateConfig(configContents.toString())
+
+        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+      })
+
+      it('returns null', () => {
+        expect(validatedConfig).toBe(null)
+      })
+
+      it('prints an error describing why the config is invalid', () => {
+        expect(consoleErrorCalls.find((consoleErrorCall) => {
+          return /Member "accessToken" was found not to be a string/.test(consoleErrorCall[0])
+        })).not.toBe(undefined)
       })
     })
 
     describe('when the github access token contains only whitespace', () => {
-      it('throws a RangeError', () => {
+      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+      let validatedConfig: Config | null
+
+      beforeAll(() => {
+        resetSpies()
         const configContents = ConfigTestData.configWhiteSpaceOnlyAccessToken
 
-        expect(() => {
-          validateConfig(configContents.toString())
-        }).toThrow(new RangeError('The github access token cannot be empty or contain only whitespace'))
+        validatedConfig = validateConfig(configContents.toString())
+
+        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+      })
+
+      it('returns null', () => {
+        expect(validatedConfig).toBe(null)
+      })
+
+      it('prints an error describing why the config is invalid', () => {
+        expect(consoleErrorCalls.find((consoleErrorCall) => {
+          return /The github access token cannot be empty or contain only whitespace/.test(consoleErrorCall[0])
+        })).not.toBe(undefined)
       })
     })
 
     describe('when the repo owner is not a string', () => {
-      it('throws a TypeError specifying the correct type for the repo owner', () => {
+      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+      let validatedConfig: Config | null
+
+      beforeAll(() => {
+        resetSpies()
         const configContents = ConfigTestData.repoWrongTypeOwnerName
 
-        expect(() => {
-          validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "ownerName" was found not to be a string`))
+        validatedConfig = validateConfig(configContents.toString())
+
+        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+      })
+
+      it('returns null', () => {
+        expect(validatedConfig).toBe(null)
+      })
+
+      it('prints an error describing why the config is invalid', () => {
+        expect(consoleErrorCalls.find((consoleErrorCall) => {
+          return /Member "ownerName" was found not to be a string/.test(consoleErrorCall[0])
+        })).not.toBe(undefined)
       })
     })
 
     describe('when the repo name is not a string', () => {
-      it('throws a TypeError specifying the correct type for repo name', () => {
+      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+      let validatedConfig: Config | null
+
+      beforeAll(() => {
+        resetSpies()
         const configContents = ConfigTestData.repoWrongTypeName
 
-        expect(() => {
-          validateConfig(configContents.toString())
-        }).toThrow(new TypeError(`Member "name" was found not to be a string`))
+        validatedConfig = validateConfig(configContents.toString())
+
+        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+      })
+
+      it('returns null', () => {
+        expect(validatedConfig).toBe(null)
+      })
+
+      it('prints an error describing why the config is invalid', () => {
+        expect(consoleErrorCalls.find((consoleErrorCall) => {
+          return /Member "name" was found not to be a string/.test(consoleErrorCall[0])
+        })).not.toBe(undefined)
       })
     })
 
     describe('projects', () => {
       describe('when projects is not an array', () => {
-        test('it throws a TypeError with a message describing the config key and correct type', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
+
+        beforeAll(() => {
+          resetSpies()
           const configContents = ConfigTestData.configWrongTypeProjects
 
-          expect(() => {
-            validateConfig(configContents.toString())
-          }).toThrow(new TypeError(`Member "projects" was found not to be an array`))
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /Member "projects" was found not to be an array/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
         })
       })
 
@@ -240,12 +338,26 @@ describe('validateConfig()', () => {
 
     describe('columns', () => {
       describe('when columns is not an array', () => {
-        test('it throws a TypeError with a message describing the config key and correct type', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
+
+        beforeAll(() => {
+          resetSpies()
           const configContents = ConfigTestData.configWrongTypeColumns
 
-          expect(() => {
-            validateConfig(configContents.toString())
-          }).toThrow(new TypeError(`Member "columns" was found not to be an array`))
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /Member "columns" was found not to be an array/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
         })
       })
 
@@ -469,10 +581,8 @@ describe('validateConfig()', () => {
           expect(consoleWarnCalls[6][0]).toMatch(/Column with name:"column name" did not contain any valid labeling rules. Skipping column./)
         })
 
-        test('the validated config will not include the column', () => {
-          expect(validatedConfig.columns!.find((columnConfig) => {
-            return columnConfig.name === 'Name'
-          })).toBe(undefined)
+        it('will cause the validated config to be null because all columns are invalid', () => {
+          expect(validatedConfig).toBe(null)
         })
       })
 
