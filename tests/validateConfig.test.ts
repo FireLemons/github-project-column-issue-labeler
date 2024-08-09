@@ -334,6 +334,68 @@ describe('validateConfig()', () => {
           }
         })
       })
+
+      describe('when there are duplicate projects without numbers sharing names', () => {
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.projectDuplicatesNameOnly
+
+          validatedConfig = validateConfig(configContents.toString())!
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+        })
+
+        test('columns are combined between the duplicates', () => {
+        })
+
+        test('labling actions are combined between the duplicate columns', () => {
+        })
+
+        test('a message is printed about the column merge', () => {
+          expect(consoleWarnCalls.find((consoleArgs) => {
+            return /regex/.test(consoleArgs[0])
+          })).not.toBe(undefined)
+        })
+      })
+
+      describe('when there are duplicate projects sharing names and numbers', () => {
+        let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.projectDuplicatesNameAndNumber
+
+          validatedConfig = validateConfig(configContents.toString())!
+
+          consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
+        })
+
+        test('columns are combined between the duplicates', () => {
+        })
+
+        test('a message is printed about the column merge', () => {
+          expect(consoleWarnCalls.find((consoleArgs) => {
+            return /regex/.test(consoleArgs[0])
+          })).not.toBe(undefined)
+        })
+      })
+
+      describe('when there are duplicate projects sharing names but not numbers', () => {
+        let validatedConfig: Config
+
+        beforeAll(() => {
+          const configContents = ConfigTestData.projectDuplicatesNameButNotNumber
+
+          validatedConfig = validateConfig(configContents.toString())!
+        })
+
+        test('the projects are not considered duplicates', () => {
+        })
+      })
     })
 
     describe('columns', () => {

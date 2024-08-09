@@ -173,6 +173,112 @@ export default {
       null
     ]
   }),
+  projectDuplicatesNameOnly: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": "duplicate project name 1",
+        "columns": [
+          {
+            "name": "duplicate name",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "ownerLogin": "duplicate project name 1",
+        "columns": [
+          {
+            "name": "duplicate name",
+            "labelingRules": [
+              {
+                "action": "add",
+                "labels": ["label 2", "label 3"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectDuplicatesNameAndNumber: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": "duplicate project name 2",
+        "number": 1,
+        "columns": [
+          {
+            "name": "column 1",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "ownerLogin": "duplicate project name 2",
+        "number": 1,
+        "columns": [
+          {
+            "name": "column 2",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectDuplicatesNameButNotNumber: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": "duplicate project name 3",
+        "number": 1,
+        "columns": [
+          {
+            "name": "column 2",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "ownerLogin": "duplicate project name 3",
+        "number": 2,
+        "columns": [
+          {
+            "name": "column 2",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
   projectInvalidValues: JSON.stringify({
     "accessToken": "token",
     "repo": defaultRepoValue,
