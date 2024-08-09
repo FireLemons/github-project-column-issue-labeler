@@ -211,11 +211,11 @@ export class Issue {
       if (columnNameSearchResult === null) {
         this.issue.projectItems.delete(i)
       } else if (TypeChecker.isString(columnNameSearchResult)) {
-        if (projectOwnerLogin !== undefined && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+        if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
           continue
         }
 
-        if (projectNumber !== undefined && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
           continue
         }
 
