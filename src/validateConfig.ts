@@ -355,7 +355,7 @@ function validateProjectsArray (arr: any[]): Project[] {
         return // continue
       }
 
-      if (projectNumber in projectNumberMap) {
+      if (projectNumberMap.has(projectNumber)) {
         projectNumberMap.get(projectNumber)!.push(...validatedProject.columns)
       } else {
         projectNumberMap.set(projectNumber, validatedProject.columns)

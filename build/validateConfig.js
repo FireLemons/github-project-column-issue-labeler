@@ -313,7 +313,7 @@ function validateProjectsArray(arr) {
                 logger.addBaseIndentation(-2);
                 return; // continue
             }
-            if (projectNumber in projectNumberMap) {
+            if (projectNumberMap.has(projectNumber)) {
                 projectNumberMap.get(projectNumber).push(...validatedProject.columns);
             }
             else {
