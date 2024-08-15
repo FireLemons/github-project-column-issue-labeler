@@ -348,15 +348,50 @@ describe('validateConfig()', () => {
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
 
-        test('columns are combined between the duplicates', () => {
+        test('only one project with the name remains in the validated config', () => {
+          expect(validatedConfig.projects!.filter((project) => {
+            return project.ownerLogin === 'duplicate project name'
+          }).length).toBe(1)
         })
 
-        test('labling actions are combined between the duplicate columns', () => {
+        test('duplicate children of the projects are merged', () => {
+          const duplicateProject = validatedConfig.projects![0]
+          const duplicateColumnsSearchOfDuplicateProject = duplicateProject.columns.filter((column) => {
+            return column.name === 'duplicate column name'
+          })
+
+          expect(duplicateColumnsSearchOfDuplicateProject.length).toBe(1)
+          expect(duplicateProject.columns.find((column) => {
+            return column.name === 'non duplicate column name'
+          })).not.toBe(undefined)
+
+          const duplicateColumn = duplicateColumnsSearchOfDuplicateProject[0]
+          const duplicateLabelingRuleSearchOfDuplicateColumn = duplicateColumn.labelingRules.filter((labelingRule) => {
+            return labelingRule.action === LabelingAction.ADD
+          })
+
+          expect(duplicateLabelingRuleSearchOfDuplicateColumn.length).toBe(1)
+
+          const duplicateLabelingRule = duplicateLabelingRuleSearchOfDuplicateColumn[0]
+
+          expect(duplicateLabelingRule.labels.find((label) => {
+            return label === 'label 1'
+          })).not.toBe(undefined)
+          expect(duplicateLabelingRule.labels.find((label) => {
+            return label === 'label 2'
+          })).not.toBe(undefined)
+          expect(duplicateLabelingRule.labels.find((label) => {
+            return label === 'label 3'
+          })).not.toBe(undefined)
         })
 
-        test('a message is printed about the column merge', () => {
+        test('messages are printed out about the duplicate merging', () => {
           expect(consoleWarnCalls.find((consoleArgs) => {
-            return /regex/.test(consoleArgs[0])
+            return /Found multiple columns with name:"duplicate column name"\. Combining labeling rules\./.test(consoleArgs[0])
+          })).not.toBe(undefined)
+
+          expect(consoleWarnCalls.find((consoleArgs) => {
+            return /Found multiple projects with owner:"duplicate project name" and number:null\. Combining columns\./.test(consoleArgs[0])
           })).not.toBe(undefined)
         })
       })
@@ -374,17 +409,32 @@ describe('validateConfig()', () => {
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
 
-        test('columns are combined between the duplicates', () => {
+        test('only one project with the name remains in the validated config', () => {
+          expect(validatedConfig.projects!.filter((project) => {
+            return project.ownerLogin === 'duplicate project name' && project.number === 1
+          }).length).toBe(1)
         })
 
-        test('a message is printed about the column merge', () => {
+        test('columns are combined between the duplicate projects', () => {
+          const duplicateProject = validatedConfig.projects![0]
+
+          expect(duplicateProject.columns.filter((column) => {
+            return column.name === 'column 1'
+          }).length).toBe(1)
+
+          expect(duplicateProject.columns.filter((column) => {
+            return column.name === 'column 2'
+          }).length).toBe(1)
+        })
+
+        test('messages are printed out about the duplicate merging', () => {
           expect(consoleWarnCalls.find((consoleArgs) => {
-            return /regex/.test(consoleArgs[0])
+            return /Found multiple projects with owner:"duplicate project name" and number:1\. Combining columns\./.test(consoleArgs[0])
           })).not.toBe(undefined)
         })
       })
 
-      describe('when there are duplicate projects sharing names but not numbers', () => {
+      describe('when there are projects sharing names but not numbers', () => {
         let validatedConfig: Config
 
         beforeAll(() => {
@@ -394,6 +444,37 @@ describe('validateConfig()', () => {
         })
 
         test('the projects are not considered duplicates', () => {
+          const projects = validatedConfig.projects!
+
+          expect(projects.filter((project) => {
+            return project.ownerLogin === 'duplicate project name' && project.number === 1
+          }).length).toBe(1)
+
+          expect(projects.filter((project) => {
+            return project.ownerLogin === 'duplicate project name' && project.number === 2
+          }).length).toBe(1)
+        })
+      })
+
+      describe('when there are projects sharing numbers but not names', () => {
+        let validatedConfig: Config
+
+        beforeAll(() => {
+          const configContents = ConfigTestData.projectDuplicatesNumberButNotName
+
+          validatedConfig = validateConfig(configContents.toString())!
+        })
+
+        test('the projects are not considered duplicates', () => {
+          const projects = validatedConfig.projects!
+
+          expect(projects.filter((project) => {
+            return project.ownerLogin === 'project name' && project.number === 1
+          }).length).toBe(1)
+
+          expect(projects.filter((project) => {
+            return project.ownerLogin === 'different project name' && project.number === 1
+          }).length).toBe(1)
         })
       })
     })
@@ -569,7 +650,7 @@ describe('validateConfig()', () => {
 
         test('a message is printed about the labeling rule merge', () => {
           expect(consoleWarnCalls.find((consoleArgs) => {
-            return /Found multiple columns with name:"duplicate name"\. Combining labeling rule lists\./.test(consoleArgs[0])
+            return /Found multiple columns with name:"duplicate name"\. Combining labeling rules\./.test(consoleArgs[0])
           })).not.toBe(undefined)
         })
       })

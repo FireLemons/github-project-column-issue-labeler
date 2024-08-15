@@ -114,7 +114,7 @@ function validateColumnsArray(arr) {
             const columnName = validatedColumn.name;
             if (columnName in columnMap) {
                 columnMap[validatedColumn.name].push(...validatedColumn.labelingRules);
-                logger.warn(`Found multiple columns with name:"${columnName}". Combining labeling rule lists.`);
+                logger.warn(`Found multiple columns with name:"${columnName}". Combining labeling rules.`);
             }
             else {
                 columnMap[validatedColumn.name] = validatedColumn.labelingRules;
@@ -315,6 +315,7 @@ function validateProjectsArray(arr) {
             }
             if (projectNumberMap.has(projectNumber)) {
                 projectNumberMap.get(projectNumber).push(...validatedProject.columns);
+                logger.warn(`Found multiple projects with owner:"${projectOwnerName}" and number:${projectNumber === 0 ? 'null' : projectNumber}. Combining columns.`);
             }
             else {
                 projectNumberMap.set(projectNumber, validatedProject.columns);

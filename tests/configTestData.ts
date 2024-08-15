@@ -178,10 +178,10 @@ export default {
     "repo": defaultRepoValue,
     "projects": [
       {
-        "ownerLogin": "duplicate project name 1",
+        "ownerLogin": "duplicate project name",
         "columns": [
           {
-            "name": "duplicate name",
+            "name": "duplicate column name",
             "labelingRules": [
               {
                 "action": " add ",
@@ -192,14 +192,23 @@ export default {
         ]
       },
       {
-        "ownerLogin": "duplicate project name 1",
+        "ownerLogin": "duplicate project name",
         "columns": [
           {
-            "name": "duplicate name",
+            "name": "duplicate column name",
             "labelingRules": [
               {
                 "action": "add",
                 "labels": ["label 2", "label 3"]
+              }
+            ]
+          },
+          {
+            "name": "non duplicate column name",
+            "labelingRules": [
+              {
+                "action": "add",
+                "labels": ["label"]
               }
             ]
           }
@@ -212,7 +221,7 @@ export default {
     "repo": defaultRepoValue,
     "projects": [
       {
-        "ownerLogin": "duplicate project name 2",
+        "ownerLogin": "duplicate project name",
         "number": 1,
         "columns": [
           {
@@ -227,7 +236,7 @@ export default {
         ]
       },
       {
-        "ownerLogin": "duplicate project name 2",
+        "ownerLogin": "duplicate project name",
         "number": 1,
         "columns": [
           {
@@ -248,7 +257,7 @@ export default {
     "repo": defaultRepoValue,
     "projects": [
       {
-        "ownerLogin": "duplicate project name 3",
+        "ownerLogin": "duplicate project name",
         "number": 1,
         "columns": [
           {
@@ -263,8 +272,44 @@ export default {
         ]
       },
       {
-        "ownerLogin": "duplicate project name 3",
+        "ownerLogin": "duplicate project name",
         "number": 2,
+        "columns": [
+          {
+            "name": "column 2",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectDuplicatesNumberButNotName: JSON.stringify({
+    "accessToken": "token",
+    "repo": defaultRepoValue,
+    "projects": [
+      {
+        "ownerLogin": "project name",
+        "number": 1,
+        "columns": [
+          {
+            "name": "column 2",
+            "labelingRules": [
+              {
+                "action": " add ",
+                "labels": ["label 1"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "ownerLogin": "different project name",
+        "number": 1,
         "columns": [
           {
             "name": "column 2",
