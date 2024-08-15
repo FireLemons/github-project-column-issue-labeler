@@ -29,26 +29,6 @@ const configObjects_1 = require("./configObjects");
 const typeChecker = __importStar(require("./typeChecker"));
 const util_1 = require("./util");
 const logger = new logger_1.Logger();
-function getUniqueLabelsByAction(rules) {
-    const consolidatedLabels = new Map();
-    for (const rule of rules) {
-        const { action } = rule;
-        if (consolidatedLabels.has(action)) {
-            consolidatedLabels.get(action).push(...rule.labels);
-        }
-        else {
-            consolidatedLabels.set(action, [...rule.labels]);
-        }
-    }
-    const consolidatedLabelingRules = [];
-    for (const [action, labels] of consolidatedLabels) {
-        consolidatedLabelingRules.push({
-            action,
-            labels
-        });
-    }
-    return consolidatedLabelingRules;
-}
 function determineLabelingRules(rules) {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === configObjects_1.LabelingAction.SET);
     let determinedLabelingRules;
@@ -81,6 +61,29 @@ function determineLabelingRules(rules) {
     }
     return determinedLabelingRules;
 }
+function getUniqueLabelsByAction(rules) {
+    const consolidatedLabels = new Map();
+    for (const rule of rules) {
+        const { action } = rule;
+        if (consolidatedLabels.has(action)) {
+            consolidatedLabels.get(action).push(...rule.labels);
+        }
+        else {
+            consolidatedLabels.set(action, [...rule.labels]);
+        }
+    }
+    const consolidatedLabelingRules = [];
+    for (const [action, labels] of consolidatedLabels) {
+        consolidatedLabelingRules.push({
+            action,
+            labels
+        });
+    }
+    return consolidatedLabelingRules;
+}
+function isLabelingAction(str) {
+    return Object.keys(configObjects_1.LabelingAction).includes(str);
+}
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
     let cursor1 = 0;
     let cursor2 = 0;
@@ -98,9 +101,6 @@ function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedA
             sortedArray2.splice(cursor2, 1);
         }
     }
-}
-function isLabelingAction(str) {
-    return Object.keys(configObjects_1.LabelingAction).includes(str);
 }
 function validateColumnsArray(arr) {
     const columnMap = {};
@@ -232,6 +232,21 @@ function validateConfig(config) {
     }
 }
 exports.validateConfig = validateConfig;
+function validateLabelingRule(object) {
+    if (!typeChecker.isObject(object)) {
+        throw new TypeError('Labeling rule must be an object');
+    }
+    typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
+    const formattedAction = object.action.toUpperCase().trim();
+    if (!isLabelingAction(formattedAction)) {
+        throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(configObjects_1.LabelingAction))}`);
+    }
+    typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
+    return {
+        action: formattedAction,
+        labels: validateLabelsArray(object.labels)
+    };
+}
 function validateLabelingRulesArray(arr) {
     const validatedLabelingRules = [];
     arr.forEach((labelingRule, index) => {
@@ -257,21 +272,6 @@ function validateLabelingRulesArray(arr) {
     });
     return validatedLabelingRules;
 }
-function validateLabelingRule(object) {
-    if (!typeChecker.isObject(object)) {
-        throw new TypeError('Labeling rule must be an object');
-    }
-    typeChecker.validateObjectMember(object, 'action', typeChecker.Type.string);
-    const formattedAction = object.action.toUpperCase().trim();
-    if (!isLabelingAction(formattedAction)) {
-        throw new RangeError(`Labeling action "${formattedAction}" is not supported. Supported actions are: ${JSON.stringify(Object.keys(configObjects_1.LabelingAction))}`);
-    }
-    typeChecker.validateObjectMember(object, 'labels', typeChecker.Type.array);
-    return {
-        action: formattedAction,
-        labels: validateLabelsArray(object.labels)
-    };
-}
 function validateLabelsArray(arr) {
     const validatedLabels = [];
     arr.forEach((label, index) => {
@@ -289,6 +289,32 @@ function validateLabelsArray(arr) {
         }
     });
     return validatedLabels;
+}
+function validateProject(object) {
+    if (!typeChecker.isObject(object)) {
+        throw new TypeError('Project must be an object');
+    }
+    typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array);
+    typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
+    const validatedOwnerLogin = object.ownerLogin.trim();
+    const validatedProject = {
+        columns: object.columns,
+        ownerLogin: validatedOwnerLogin
+    };
+    if ('number' in object) {
+        typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
+        if (!(Number.isInteger(object.number))) {
+            throw new TypeError('Number must be an integer');
+        }
+        if (object.number < 1) {
+            throw new RangeError('Number must be greater than 0');
+        }
+        validatedProject.number = object.number;
+    }
+    if (!(validatedOwnerLogin.length)) {
+        throw new ReferenceError('ownerLogin must contain at least one non whitespace character');
+    }
+    return validatedProject;
 }
 function validateProjectsArray(arr) {
     const projectMap = new Map();
@@ -369,30 +395,4 @@ function validateProjectsArray(arr) {
     }
     logger.addBaseIndentation(-4);
     return validatedProjects;
-}
-function validateProject(object) {
-    if (!typeChecker.isObject(object)) {
-        throw new TypeError('Project must be an object');
-    }
-    typeChecker.validateObjectMember(object, 'columns', typeChecker.Type.array);
-    typeChecker.validateObjectMember(object, 'ownerLogin', typeChecker.Type.string);
-    const validatedOwnerLogin = object.ownerLogin.trim();
-    const validatedProject = {
-        columns: object.columns,
-        ownerLogin: validatedOwnerLogin
-    };
-    if ('number' in object) {
-        typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number);
-        if (!(Number.isInteger(object.number))) {
-            throw new TypeError('Number must be an integer');
-        }
-        if (object.number < 1) {
-            throw new RangeError('Number must be greater than 0');
-        }
-        validatedProject.number = object.number;
-    }
-    if (!(validatedOwnerLogin.length)) {
-        throw new ReferenceError('ownerLogin must contain at least one non whitespace character');
-    }
-    return validatedProject;
 }
