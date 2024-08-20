@@ -25,19 +25,6 @@ function determineLabelingRules (rules: LabelingRule[]): Map<LabelingAction, str
     determinedLabelingRules = groupLabelsByAction(rules)
   }
 
-  for (const [action, labels] of determinedLabelingRules) {
-    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(labels))
-
-    if (labelsWithoutDuplicates.length < labels.length) {
-      logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`)
-      determinedLabelingRules.set(action, labelsWithoutDuplicates)
-    }
-  }
-
-  if (determinedLabelingRules.has(LabelingAction.ADD) && determinedLabelingRules.has(LabelingAction.REMOVE)) {
-    removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(LabelingAction.ADD)!, determinedLabelingRules.get(LabelingAction.REMOVE)!)
-  }
-
   return determinedLabelingRules
 }
 
@@ -71,6 +58,17 @@ function labelingRuleMapToArray (labelingRuleMap: Map<LabelingAction, string[]>)
   }
 
   return labelingRules
+}
+
+function removeDuplicateLabelsFromLabelingRules (labelingRuleMap: Map<LabelingAction, string[]>) {
+  for (const [action, labels] of labelingRuleMap) {
+    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(labels))
+
+    if (labelsWithoutDuplicates.length < labels.length) {
+      logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`)
+      labelingRuleMap.set(action, labelsWithoutDuplicates)
+    }
+  }
 }
 
 function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string[], sortedArray2: string[]) {
@@ -134,7 +132,16 @@ function validateColumnsArray (arr: any[]): Column[] {
     logger.info(`Validating labeling rules of column with name:"${columnName}"`)
 
     logger.addBaseIndentation(2)
-    const validatedLabelingRules = labelingRuleMapToArray(determineLabelingRules(validateLabelingRulesArray(columnMap[columnName])))
+
+    const determinedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]))
+
+    removeDuplicateLabelsFromLabelingRules(determinedLabelingRules)
+
+    if (determinedLabelingRules.has(LabelingAction.ADD) && determinedLabelingRules.has(LabelingAction.REMOVE)) {
+      removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(LabelingAction.ADD)!, determinedLabelingRules.get(LabelingAction.REMOVE)!)
+    }
+
+    const validatedLabelingRules = labelingRuleMapToArray(determinedLabelingRules)
 
     if (validatedLabelingRules.length !== 0) {
       validatedColumns.push({

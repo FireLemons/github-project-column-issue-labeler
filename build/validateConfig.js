@@ -45,16 +45,6 @@ function determineLabelingRules(rules) {
         logger.info('Grouping labels by action');
         determinedLabelingRules = groupLabelsByAction(rules);
     }
-    for (const [action, labels] of determinedLabelingRules) {
-        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicatesFromSortedArray)((0, util_1.caseInsensitiveAlphabetization)(labels));
-        if (labelsWithoutDuplicates.length < labels.length) {
-            logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`);
-            determinedLabelingRules.set(action, labelsWithoutDuplicates);
-        }
-    }
-    if (determinedLabelingRules.has(configObjects_1.LabelingAction.ADD) && determinedLabelingRules.has(configObjects_1.LabelingAction.REMOVE)) {
-        removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(configObjects_1.LabelingAction.ADD), determinedLabelingRules.get(configObjects_1.LabelingAction.REMOVE));
-    }
     return determinedLabelingRules;
 }
 function groupLabelsByAction(rules) {
@@ -82,6 +72,15 @@ function labelingRuleMapToArray(labelingRuleMap) {
         });
     }
     return labelingRules;
+}
+function removeDuplicateLabelsFromLabelingRules(labelingRuleMap) {
+    for (const [action, labels] of labelingRuleMap) {
+        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicatesFromSortedArray)((0, util_1.caseInsensitiveAlphabetization)(labels));
+        if (labelsWithoutDuplicates.length < labels.length) {
+            logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`);
+            labelingRuleMap.set(action, labelsWithoutDuplicates);
+        }
+    }
 }
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
     let cursor1 = 0;
@@ -133,7 +132,12 @@ function validateColumnsArray(arr) {
         logger.addBaseIndentation(2);
         logger.info(`Validating labeling rules of column with name:"${columnName}"`);
         logger.addBaseIndentation(2);
-        const validatedLabelingRules = labelingRuleMapToArray(determineLabelingRules(validateLabelingRulesArray(columnMap[columnName])));
+        const determinedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]));
+        removeDuplicateLabelsFromLabelingRules(determinedLabelingRules);
+        if (determinedLabelingRules.has(configObjects_1.LabelingAction.ADD) && determinedLabelingRules.has(configObjects_1.LabelingAction.REMOVE)) {
+            removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(configObjects_1.LabelingAction.ADD), determinedLabelingRules.get(configObjects_1.LabelingAction.REMOVE));
+        }
+        const validatedLabelingRules = labelingRuleMapToArray(determinedLabelingRules);
         if (validatedLabelingRules.length !== 0) {
             validatedColumns.push({
                 labelingRules: validatedLabelingRules,
