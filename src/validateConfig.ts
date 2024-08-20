@@ -5,46 +5,43 @@ import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsen
 
 const logger = new Logger()
 
-function determineLabelingRules (rules: LabelingRule[]): LabelingRule[] {
+function determineLabelingRules (rules: LabelingRule[]): Map<LabelingAction, string[]> {
   const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelingAction.SET)
-  let determinedLabelingRules
+  let determinedLabelingRules: Map<LabelingAction, string[]>
 
   if (lastSetRuleIndex >= 0) {
     logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`)
     logger.info('The column will be using only this rule', 2)
+    const lastSetRule = rules[lastSetRuleIndex]
 
-    determinedLabelingRules = [rules[lastSetRuleIndex]]
+    determinedLabelingRules = new Map(
+      [
+        [lastSetRule.action, lastSetRule.labels]
+      ]
+    )
   } else {
     logger.info('Labeling rules list only contains ADD or REMOVE rules. All rules will be used.')
+    logger.info('Grouping labels by action')
+    determinedLabelingRules = groupLabelsByAction(rules)
+  }
 
-    if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action)) {
-      logger.info('Filtering duplicate lables by action')
-      determinedLabelingRules = getUniqueLabelsByAction(rules)
-    } else {
-      determinedLabelingRules = rules
+  for (const [action, labels] of determinedLabelingRules) {
+    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(labels))
+
+    if (labelsWithoutDuplicates.length < labels.length) {
+      logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`)
+      determinedLabelingRules.set(action, labelsWithoutDuplicates)
     }
   }
 
-  for (const rule of determinedLabelingRules) {
-    const labelsWithoutDuplicates = removeCaseInsensitiveDuplicatesFromSortedArray(caseInsensitiveAlphabetization(rule.labels))
-
-    if (labelsWithoutDuplicates.length < rule.labels.length) {
-      logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`)
-      rule.labels = labelsWithoutDuplicates
-    }
-  }
-
-  const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
-  const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
-
-  if (addRule !== undefined && removeRule !== undefined) {
-    removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels)
+  if (determinedLabelingRules.has(LabelingAction.ADD) && determinedLabelingRules.has(LabelingAction.REMOVE)) {
+    removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(LabelingAction.ADD)!, determinedLabelingRules.get(LabelingAction.REMOVE)!)
   }
 
   return determinedLabelingRules
 }
 
-function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
+function groupLabelsByAction (rules: LabelingRule[]): Map<LabelingAction, string[]> {
   const consolidatedLabels: Map<LabelingAction, string[]> = new Map()
 
   for (const rule of rules) {
@@ -52,24 +49,28 @@ function getUniqueLabelsByAction (rules: LabelingRule[]): LabelingRule[] {
     if (consolidatedLabels.has(action)) {
       consolidatedLabels.get(action)!.push(...rule.labels)
     } else {
-      consolidatedLabels.set(action, [...rule.labels])
+      consolidatedLabels.set(action, rule.labels)
     }
   }
 
-  const consolidatedLabelingRules: LabelingRule[] = []
-
-  for (const [action, labels] of consolidatedLabels) {
-    consolidatedLabelingRules.push({
-      action,
-      labels
-    })
-  }
-
-  return consolidatedLabelingRules
+  return consolidatedLabels
 }
 
 function isLabelingAction (str: string): str is LabelingAction {
   return Object.keys(LabelingAction).includes(str)
+}
+
+function labelingRuleMapToArray (labelingRuleMap: Map<LabelingAction, string[]>): LabelingRule[] {
+  const labelingRules = []
+
+  for (const [labelingAction, labels] of labelingRuleMap) {
+    labelingRules.push({
+      action: labelingAction,
+      labels: labels
+    })
+  }
+
+  return labelingRules
 }
 
 function removeMatchingCaseInsensitiveStringsBetweenArrays (sortedArray1: string[], sortedArray2: string[]) {
@@ -133,7 +134,7 @@ function validateColumnsArray (arr: any[]): Column[] {
     logger.info(`Validating labeling rules of column with name:"${columnName}"`)
 
     logger.addBaseIndentation(2)
-    const validatedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]))
+    const validatedLabelingRules = labelingRuleMapToArray(determineLabelingRules(validateLabelingRulesArray(columnMap[columnName])))
 
     if (validatedLabelingRules.length !== 0) {
       validatedColumns.push({

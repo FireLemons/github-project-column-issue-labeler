@@ -35,33 +35,29 @@ function determineLabelingRules(rules) {
     if (lastSetRuleIndex >= 0) {
         logger.info(`Found SET labeling rule at index: ${lastSetRuleIndex}`);
         logger.info('The column will be using only this rule', 2);
-        determinedLabelingRules = [rules[lastSetRuleIndex]];
+        const lastSetRule = rules[lastSetRuleIndex];
+        determinedLabelingRules = new Map([
+            [lastSetRule.action, lastSetRule.labels]
+        ]);
     }
     else {
         logger.info('Labeling rules list only contains ADD or REMOVE rules. All rules will be used.');
-        if (rules.length > 2 || (rules.length === 2 && rules[0].action === rules[1].action)) {
-            logger.info('Filtering duplicate lables by action');
-            determinedLabelingRules = getUniqueLabelsByAction(rules);
-        }
-        else {
-            determinedLabelingRules = rules;
+        logger.info('Grouping labels by action');
+        determinedLabelingRules = groupLabelsByAction(rules);
+    }
+    for (const [action, labels] of determinedLabelingRules) {
+        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicatesFromSortedArray)((0, util_1.caseInsensitiveAlphabetization)(labels));
+        if (labelsWithoutDuplicates.length < labels.length) {
+            logger.warn(`Labels for action ${action} were found to have duplicate labels. Removed duplicate labels.`);
+            determinedLabelingRules.set(action, labelsWithoutDuplicates);
         }
     }
-    for (const rule of determinedLabelingRules) {
-        const labelsWithoutDuplicates = (0, util_1.removeCaseInsensitiveDuplicatesFromSortedArray)((0, util_1.caseInsensitiveAlphabetization)(rule.labels));
-        if (labelsWithoutDuplicates.length < rule.labels.length) {
-            logger.warn(`Labels for action ${rule.action} were found to have duplicate labels. Removed duplicate labels.`);
-            rule.labels = labelsWithoutDuplicates;
-        }
-    }
-    const addRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === configObjects_1.LabelingAction.ADD; });
-    const removeRule = determinedLabelingRules.find((labelingRule) => { return labelingRule.action === configObjects_1.LabelingAction.REMOVE; });
-    if (addRule !== undefined && removeRule !== undefined) {
-        removeMatchingCaseInsensitiveStringsBetweenArrays(addRule.labels, removeRule.labels);
+    if (determinedLabelingRules.has(configObjects_1.LabelingAction.ADD) && determinedLabelingRules.has(configObjects_1.LabelingAction.REMOVE)) {
+        removeMatchingCaseInsensitiveStringsBetweenArrays(determinedLabelingRules.get(configObjects_1.LabelingAction.ADD), determinedLabelingRules.get(configObjects_1.LabelingAction.REMOVE));
     }
     return determinedLabelingRules;
 }
-function getUniqueLabelsByAction(rules) {
+function groupLabelsByAction(rules) {
     const consolidatedLabels = new Map();
     for (const rule of rules) {
         const { action } = rule;
@@ -69,20 +65,23 @@ function getUniqueLabelsByAction(rules) {
             consolidatedLabels.get(action).push(...rule.labels);
         }
         else {
-            consolidatedLabels.set(action, [...rule.labels]);
+            consolidatedLabels.set(action, rule.labels);
         }
     }
-    const consolidatedLabelingRules = [];
-    for (const [action, labels] of consolidatedLabels) {
-        consolidatedLabelingRules.push({
-            action,
-            labels
-        });
-    }
-    return consolidatedLabelingRules;
+    return consolidatedLabels;
 }
 function isLabelingAction(str) {
     return Object.keys(configObjects_1.LabelingAction).includes(str);
+}
+function labelingRuleMapToArray(labelingRuleMap) {
+    const labelingRules = [];
+    for (const [labelingAction, labels] of labelingRuleMap) {
+        labelingRules.push({
+            action: labelingAction,
+            labels: labels
+        });
+    }
+    return labelingRules;
 }
 function removeMatchingCaseInsensitiveStringsBetweenArrays(sortedArray1, sortedArray2) {
     let cursor1 = 0;
@@ -134,7 +133,7 @@ function validateColumnsArray(arr) {
         logger.addBaseIndentation(2);
         logger.info(`Validating labeling rules of column with name:"${columnName}"`);
         logger.addBaseIndentation(2);
-        const validatedLabelingRules = determineLabelingRules(validateLabelingRulesArray(columnMap[columnName]));
+        const validatedLabelingRules = labelingRuleMapToArray(determineLabelingRules(validateLabelingRulesArray(columnMap[columnName])));
         if (validatedLabelingRules.length !== 0) {
             validatedColumns.push({
                 labelingRules: validatedLabelingRules,
