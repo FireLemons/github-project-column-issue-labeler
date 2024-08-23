@@ -15,6 +15,12 @@ export default {
     "columns": [
     ]
   }),
+  configWhiteSpaceOnlyAccessToken: JSON.stringify({
+    "accessToken": " ",
+    "repo": defaultRepoValue,
+    "columns": [
+    ]
+  }),
   configWrongTypeAccessToken: JSON.stringify({
     "accessToken": 3,
     "repo": defaultRepoValue,
@@ -31,10 +37,19 @@ export default {
     "repo": defaultRepoValue,
     "projects": "not supposed to be a string"
   }),
-  configWhiteSpaceOnlyAccessToken: JSON.stringify({
-    "accessToken": " ",
-    "repo": defaultRepoValue,
+  configWrongTypeRepo: JSON.stringify({
+    "accessToken": "token",
+    "repo": [],
     "columns": [
+      {
+        "name": "to do",
+        "labelingRules": [
+          {
+            "action": "add",
+            "labels": ["hacktoberfest"]
+          }
+        ]
+      }
     ]
   }),
   configInvalidNonEssentialSections: JSON.stringify({
@@ -145,6 +160,15 @@ export default {
     ]
   }),
 
+  repoWrongTypeName: JSON.stringify({
+    "accessToken": "token",
+    "repo": {
+      "name": {},
+      "ownerName": "repo owner"
+    },
+    "columns": [
+    ]
+  }),
   repoWrongTypeOwnerName: JSON.stringify({
     "accessToken": "token",
     "repo": {
@@ -154,11 +178,20 @@ export default {
     "columns": [
     ]
   }),
-  repoWrongTypeName: JSON.stringify({
+  repoWhitespaceOnlyName: JSON.stringify({
     "accessToken": "token",
     "repo": {
-      "name": {},
+      "name": "    ",
       "ownerName": "repo owner"
+    },
+    "columns": [
+    ]
+  }),
+  repoWhitespaceOnlyOwnerName: JSON.stringify({
+    "accessToken": "token",
+    "repo": {
+      "name": "repo name",
+      "ownerName": "         "
     },
     "columns": [
     ]

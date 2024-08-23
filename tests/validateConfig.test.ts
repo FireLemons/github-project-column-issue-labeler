@@ -76,7 +76,7 @@ describe('validateConfig()', () => {
   })
 
   describe('when the config contains all required keys', () => {
-    describe('when the github access token is not a string', () => {
+    describe('when the github access token is of the wrong type', () => {
       let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
       let validatedConfig: Config | null
 
@@ -124,13 +124,13 @@ describe('validateConfig()', () => {
       })
     })
 
-    describe('when the repo owner is not a string', () => {
+    describe('when the repo is of the wrong type', () => {
       let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
       let validatedConfig: Config | null
 
       beforeAll(() => {
         resetSpies()
-        const configContents = ConfigTestData.repoWrongTypeOwnerName
+        const configContents = ConfigTestData.configWrongTypeRepo
 
         validatedConfig = validateConfig(configContents.toString())
 
@@ -143,32 +143,106 @@ describe('validateConfig()', () => {
 
       it('prints an error describing why the config is invalid', () => {
         expect(consoleErrorCalls.find((consoleErrorCall) => {
-          return /Member "ownerName" was found not to be a string/.test(consoleErrorCall[0])
+          return /Member "repo" was found not to be an object/.test(consoleErrorCall[0])
         })).not.toBe(undefined)
       })
     })
 
-    describe('when the repo name is not a string', () => {
-      let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
-      let validatedConfig: Config | null
+    describe('repo', () => {
+      describe('when the repo owner is not a string', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
 
-      beforeAll(() => {
-        resetSpies()
-        const configContents = ConfigTestData.repoWrongTypeName
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.repoWrongTypeOwnerName
 
-        validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = validateConfig(configContents.toString())
 
-        consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /Member "ownerName" was found not to be a string/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
+        })
       })
 
-      it('returns null', () => {
-        expect(validatedConfig).toBe(null)
+      describe('when the repo owner contains only whitespace', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.repoWhitespaceOnlyOwnerName
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /ownerName must contain at least one non whitespace character/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
+        })
       })
 
-      it('prints an error describing why the config is invalid', () => {
-        expect(consoleErrorCalls.find((consoleErrorCall) => {
-          return /Member "name" was found not to be a string/.test(consoleErrorCall[0])
-        })).not.toBe(undefined)
+      describe('when the repo name is not a string', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.repoWrongTypeName
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /Member "name" was found not to be a string/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
+        })
+      })
+
+      describe('when the repo name contains only whitespace', () => {
+        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
+        let validatedConfig: Config | null
+
+        beforeAll(() => {
+          resetSpies()
+          const configContents = ConfigTestData.repoWhitespaceOnlyName
+
+          validatedConfig = validateConfig(configContents.toString())
+
+          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
+        })
+
+        it('returns null', () => {
+          expect(validatedConfig).toBe(null)
+        })
+
+        it('prints an error describing why the config is invalid', () => {
+          expect(consoleErrorCalls.find((consoleErrorCall) => {
+            return /name must contain at least one non whitespace character/.test(consoleErrorCall[0])
+          })).not.toBe(undefined)
+        })
       })
     })
 
