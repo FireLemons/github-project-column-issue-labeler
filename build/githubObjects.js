@@ -140,31 +140,30 @@ class GraphQLPageMergeable extends GraphQLPage {
 }
 exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
-    issue;
-    constructor(issuePOJO) {
+    number;
+    labels;
+    projectItems;
+    constructor(issuePOJO, projectsEnabled) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
         }
-        const issueState = {
-            number: issuePOJO.number
-        };
+        this.number = issuePOJO.number;
         try {
-            issueState.labels = new GraphQLPage(issuePOJO.labels, Label);
+            this.labels = new GraphQLPage(issuePOJO.labels, Label);
         }
         catch (error) {
             issuePOJO.labels = undefined;
         }
         try {
-            issueState.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem);
+            this.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem);
         }
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
-        this.issue = issueState;
     }
     findColumnName(projectNumber, projectOwnerLogin) {
         const remoteRecordQueryParams = [];
-        const projectEdges = this.issue.projectItems.getEdges();
+        const projectEdges = this.projectItems.getEdges();
         let i = projectEdges.length;
         while (i > 0) {
             i--;
@@ -172,7 +171,7 @@ class Issue {
             const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
             const columnNameSearchResult = projectItem.findColumnName();
             if (columnNameSearchResult === null) {
-                this.issue.projectItems.delete(i);
+                this.projectItems.delete(i);
             }
             else if (TypeChecker.isString(columnNameSearchResult)) {
                 if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
@@ -187,10 +186,10 @@ class Issue {
                 remoteRecordQueryParams.push(columnNameSearchResult);
             }
         }
-        if (!(this.issue.projectItems.isLastPage())) {
+        if (!(this.projectItems.isLastPage())) {
             remoteRecordQueryParams.push({
-                parentId: this.issue.number,
-                recordPage: this.issue.projectItems
+                parentId: this.number,
+                recordPage: this.projectItems
             });
         }
         if (remoteRecordQueryParams.length !== 0) {
@@ -201,15 +200,15 @@ class Issue {
         }
     }
     getLabels() {
-        if (this.issue.labels !== undefined) {
-            return this.issue.labels.getNodeArray().map((label) => {
+        if (this.labels !== undefined) {
+            return this.labels.getNodeArray().map((label) => {
                 return label.getName();
             });
         }
         return null;
     }
     getNumber() {
-        return this.issue.number;
+        return this.number;
     }
 }
 exports.Issue = Issue;
