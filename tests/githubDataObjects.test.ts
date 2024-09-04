@@ -33,15 +33,17 @@ const labelPagePOJO = {
   }
 }
 
+const projectPOJO = {
+  number: 1,
+  owner: {
+    login: "29;UhhP@%nooLB#ms"
+  }
+}
+
 const projectItemPOJO = {
   databaseId: 65248239,
   fieldValues: fieldValuePagePOJO,
-  project: {
-    number: 1,
-    owner: {
-      login: "29;UhhP@%nooLB#ms"
-    }
-  }
+  project: projectPOJO
 }
 
 const projectItemPagePOJO = {
@@ -516,7 +518,9 @@ describe('The Issue class', () => {
 
     it('successfully constructs the Issue when passed a valid object', () => {
       expect(() => {
-        new Issue(issuePOJO)
+        const issuePOJOCopy: any = structuredClone(issuePOJO)
+
+        new Issue(issuePOJOCopy)
       }).not.toThrow()
     })
 
@@ -543,98 +547,145 @@ describe('The Issue class', () => {
   })
 
   describe('findColumnName()', () => {
-    it('returns null when the column name could not be found with a complete search space', () => {
-      const issuePOJOCopy = structuredClone(issuePOJO)
+    describe('when the search space does not contain column names', () => {
+      describe('when the search space is complete', () => {
+        it('returns null when the column name could not be found', () => {
+          const issuePOJOCopy = structuredClone(issuePOJO)
 
-      issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
-      issuePOJOCopy.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage = false
+          issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+          issuePOJOCopy.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage = false
 
-      const issue = new Issue(issuePOJOCopy)
+          const issue = new Issue(issuePOJOCopy)
 
-      expect(issue.findColumnName()).toBe(null)
+          expect(issue.findColumnName()).toBe(null)
+        })
+      })
+
+      describe('when the search space is incomplete', () => {
+        describe('when projects are enabled', () => {
+          it('returns an issue as the remote query parameters when the extended column name search space has not yet been applied to the issue', () => {
+            const issuePOJOCopy = structuredClone(issuePOJO)
+
+            issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
+            issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+
+            const issue = new Issue(issuePOJOCopy, true)
+            const project = issuePOJO.projectItems.edges[0].node.project
+            const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
+
+            expect(Array.isArray(columnNameSearchResult)).toBe(true)
+
+            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
+              return queryParameters.recordContainer instanceof Issue
+            })).not.toBe(undefined)
+          })
+
+          it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
+            const issuePOJOCopy = structuredClone(issuePOJO)
+
+            issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
+            issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+
+            const issue = new Issue(issuePOJOCopy, true)
+            issue.hasExtendedSearchSpace = true
+
+            const project = issuePOJO.projectItems.edges[0].node.project
+            const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
+
+            expect(Array.isArray(columnNameSearchResult)).toBe(true)
+
+            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
+              return queryParameters.parentId === projectItemPOJO.databaseId &&
+                queryParameters.recordContainer instanceof GraphQLPage &&
+                queryParameters.recordContainer.lookupNodeClass() === FieldValue
+            })).not.toBe(undefined)
+
+            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
+              return queryParameters.parentId === issuePOJO.number &&
+                queryParameters.recordContainer instanceof GraphQLPage &&
+                queryParameters.recordContainer.lookupNodeClass() === ProjectItem
+            })).not.toBe(undefined)
+          })
+        })
+      })
     })
 
-    it('returns remote query parameters when the column name could not be found', () => {
-      const issuePOJOCopy = structuredClone(issuePOJO)
+    describe('when the search space contains column names', () => {
+      let issuePOJOCopy: any
 
-      issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
-      issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
+      beforeEach(() => {
+        issuePOJOCopy = structuredClone(issuePOJO)
 
-      const issue = new Issue(issuePOJOCopy)
-      const columnNameSearchResult = issue.findColumnName()
+        const extraProjectItem1 = {
+          "databaseId": 65248238,
+          "fieldValues": {
+            "edges": [],
+            "pageInfo": {
+              "endCursor": "MQ",
+              "hasNextPage": true
+            }
+          },
+          "project": {
+            "number": 1,
+            "owner": {
+              "login": "29;UhhP@%nooLB#ms"
+            }
+          }
+        }
 
-      expect(Array.isArray(columnNameSearchResult)).toBe(true)
+        const extraProjectItem2 = {
+          "databaseId": 65248240,
+          "fieldValues": {
+            "edges": [
+              {
+                node: {
+                  name: 'e?+aYAe8>^X6|xaM='
+                }
+              }
+            ],
+            "pageInfo": {
+              "endCursor": "MQ",
+              "hasNextPage": true
+            }
+          },
+          "project": {
+            "number": 2,
+            "owner": {
+              "login": "non matching project"
+            }
+          }
+        }
 
-      expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-        return queryParameters.parentId === projectItemPOJO.databaseId && queryParameters.recordPage.lookupNodeClass() === FieldValue
-      })).not.toBe(undefined)
+        issuePOJOCopy.projectItems.edges.unshift({ node: extraProjectItem1 })
+        issuePOJOCopy.projectItems.edges.push({ node: extraProjectItem2 })
+      })
 
-      expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-        return queryParameters.parentId === issue.getNumber() && queryParameters.recordPage.lookupNodeClass() === ProjectItem
-      })).not.toBe(undefined)
-    })
+      describe('when projects are not enabled', () => {
+        it('returns the column name', () => {
+          const issue = new Issue(issuePOJOCopy)
 
-    it('returns the column name on a successful search', () => {
-      const issuePOJOCopy = structuredClone(issuePOJO)
+          expect(TypeChecker.isString(issue.findColumnName())).toBe(true)
+        })
+      })
 
-      const issue = new Issue(issuePOJOCopy)
+      describe('when projects are enabled', () => {
+        it('does not return a column name if the project item does not match the passed project number', () => {
+          const issue = new Issue(issuePOJOCopy, true)
 
-      expect(issue.findColumnName()).toBe(fieldValuePOJO.name)
-    })
-
-    describe('when passed parameters to filter by', () => {
-      const columnNameB = '$JF+dA=Rha{gj/5@B'
-      const columnNameC = 'tcmV=m0)<,u$B(Kim'
-      const loginB = 'FUv4k60t,[]Fz~l?8'
-      const loginC = 'gv2C.p|z[e/J4y&~<'
-      const projectNumberB = 2
-      const projectNumberC = 3
-
-      let issue
-
-      beforeAll(() => {
-        const issuePOJOCopy = structuredClone(issuePOJO)
-        const projectItemB = structuredClone(projectItemPOJO)
-        const projectItemC = structuredClone(projectItemPOJO)
-        
-        projectItemB.project.number = projectNumberB
-        projectItemC.project.number = projectNumberC
-
-        projectItemB.project.owner.login = loginB
-        projectItemC.project.owner.login = loginC
-
-        projectItemB.fieldValues.edges[0].node.name = columnNameB
-        projectItemC.fieldValues.edges[0].node.name = columnNameC
-
-        issuePOJOCopy.projectItems.edges.push({
-          node: projectItemB
+          expect(issue.findColumnName(projectPOJO.owner.login, 100)).not.toBe(fieldValuePOJO.name)
         })
 
-        issuePOJOCopy.projectItems.edges.push({
-          node: projectItemC
+        it('does not return a column name if the project item does not match the passed project owner name', () => {
+          const issue = new Issue(issuePOJOCopy, true)
+
+          expect(issue.findColumnName('Non matching name', projectPOJO.number)).not.toBe(fieldValuePOJO.name)
         })
 
-        issue = new Issue(issuePOJOCopy)
-      })
+        it('returns a column name if the project owner and number match the project filtering parameters', () => {
+          const issue = new Issue(issuePOJOCopy, true)
 
-      it('returns the column name of the project item matching the passed project number', () => {
-        expect(issue!.findColumnName(projectItemPOJO.project.number)).toBe(fieldValuePOJO.name)
-        expect(issue!.findColumnName(projectNumberB)).toBe(columnNameB)
-        expect(issue!.findColumnName(projectNumberC)).toBe(columnNameC)
-      })
-
-      it('does not return a column name if no project item matches the passed project number', () => {
-        expect(TypeChecker.isString(issue!.findColumnName(-100))).not.toBe(true)
-      })
-
-      it('returns the column name of the project item matching the passed project owner name', () => {
-        expect(issue!.findColumnName(null, projectItemPOJO.project.owner.login)).toBe(fieldValuePOJO.name)
-        expect(issue!.findColumnName(null, loginB)).toBe(columnNameB)
-        expect(issue!.findColumnName(null, loginC)).toBe(columnNameC)
-      })
-
-      it('does not return a column name if no project item matches the passed project owner name', () => {
-        expect(TypeChecker.isString(issue!.findColumnName(null, 'nonexistant login'))).not.toBe(true)
+          expect(issue.findColumnName(projectPOJO.owner.login, projectPOJO.number)).toBe(fieldValuePOJO.name)
+        })
       })
     })
   })
@@ -670,7 +721,9 @@ describe('The Issue class', () => {
 
   describe('getNumber()', () => {
     it('returns the number of the Issue instance', () => {
-      const issue = new Issue(issuePOJO)
+      const issuePOJOCopy: any = structuredClone(issuePOJO)
+
+      const issue = new Issue(issuePOJOCopy)
 
       expect(issue.getNumber()).toBe(issuePOJO.number)
     })
@@ -759,7 +812,7 @@ describe('The ProjectItem class', () => {
 
       expect(projectItem.findColumnName()).toEqual({
         parentId: projectItemPOJO.databaseId,
-        recordPage: projectItem.fieldValues
+        recordContainer: projectItem.fieldValues
       })
     })
 
