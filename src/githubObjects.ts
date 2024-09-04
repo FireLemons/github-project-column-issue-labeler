@@ -6,7 +6,7 @@ interface Constructable<T> {
 
 export interface RemoteRecordPageQueryParameters {
   parentId?: number | string
-  recordPage: GraphQLPage<FieldValue | Issue | Label | ProjectItem>
+  recordContainer: Issue | GraphQLPage<FieldValue | Label | ProjectItem>
 }
 
 export class FieldValue {
@@ -165,16 +165,18 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
 }
 
 export class Issue {
-  number: number
+  columnName?: string
+  columnNameMap?: Map<string, string>
+  findColumnName: (projectOwnerLogin?: string, projectNumber?: number) => null | RemoteRecordPageQueryParameters[] | string
+  hasExtendedSearchSpace: boolean
   labels?: GraphQLPage<Label>
+  number: number
   projectItems: GraphQLPage<ProjectItem>
 
   constructor (issuePOJO: any, projectsEnabled?: boolean) {
     if (!(isIssue(issuePOJO))) {
       throw new TypeError('Param issuePOJO does not match a github issue object')
     }
-
-    this.number = issuePOJO.number
 
     try {
       this.labels = new GraphQLPage(issuePOJO.labels, Label)
@@ -187,49 +189,23 @@ export class Issue {
     } catch (error) {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
-  }
 
-  findColumnName (projectNumber?: number, projectOwnerLogin?: string) {
-    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
-    const projectEdges = this.projectItems.getEdges()
+    this.hasExtendedSearchSpace = false
+    this.number = issuePOJO.number
 
-    let i = projectEdges.length
-
-    while (i > 0) {
-      i--
-
-      const projectItem = projectEdges[i].node
-      const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
-      const columnNameSearchResult = projectItem.findColumnName()
-
-      if (columnNameSearchResult === null) {
-        this.projectItems.delete(i)
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        if (projectOwnerLogin && projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
-          continue
+    if (projectsEnabled) {
+      this.columnNameMap = new Map()
+      this.findColumnName = (projectOwnerLogin?: string, projectNumber: number = 0) => {
+        if (projectOwnerLogin === undefined) {
+          throw new ReferenceError('Param projectOwnerLogin is required for column name search when using projects')
         }
 
-        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
-          continue
-        }
-
-        return columnNameSearchResult
-      } else {
-        remoteRecordQueryParams.push(columnNameSearchResult)
+        return this.#findColumnNameMultipleProjects(projectOwnerLogin, projectNumber)
       }
-    }
-
-    if (!(this.projectItems.isLastPage())) {
-      remoteRecordQueryParams.push({
-        parentId: this.number,
-        recordPage: this.projectItems
-      })
-    }
-
-    if (remoteRecordQueryParams.length !== 0) {
-      return remoteRecordQueryParams
     } else {
-      return null
+      this.findColumnName = () => {
+        return this.#findColumnName()
+      }
     }
   }
 
@@ -245,6 +221,103 @@ export class Issue {
 
   getNumber () {
     return this.number
+  }
+
+  #includeProjectItemParamsIfPageIncomplete (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
+    if (!(this.projectItems.isLastPage())) {
+      remoteRecordQueryParams.push({
+        parentId: this.number,
+        recordContainer: this.projectItems
+      })
+    }
+  }
+
+  #determineSearchResult (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
+    if (remoteRecordQueryParams.length === 0) {
+      return null
+    } else if (!(this.hasExtendedSearchSpace)) {
+      return [
+        {
+          recordContainer: this
+        }
+      ]
+    } else {
+      return remoteRecordQueryParams
+    }
+  }
+
+  #findColumnName () {
+    if (this.columnName) {
+      return this.columnName
+    }
+
+    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
+    const projectItemEdges = this.projectItems.getEdges()
+
+    let i = projectItemEdges.length - 1
+
+    do {
+      const projectItem = projectItemEdges[i].node
+      const columnNameSearchResult = projectItem.findColumnName()
+
+      if (columnNameSearchResult === null) {
+        this.projectItems.delete(i)
+      } else if (TypeChecker.isString(columnNameSearchResult)) {
+        this.columnName = columnNameSearchResult
+        return columnNameSearchResult
+      } else {
+        remoteRecordQueryParams.push(columnNameSearchResult)
+        i--
+      }
+    } while (i > 0)
+
+    this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams)
+
+    return this.#determineSearchResult(remoteRecordQueryParams)
+  }
+
+  #findColumnNameMultipleProjects (projectOwnerLogin: string, projectNumber: number = 0) {
+    const projectKey = projectOwnerLogin + projectNumber
+
+    if (this.columnNameMap!.has(projectKey)) {
+      return this.columnNameMap!.get(projectKey)!
+    }
+
+    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
+    const projectItemEdges = this.projectItems.getEdges()
+
+    let i = projectItemEdges.length - 1
+
+    do {
+      const projectItem = projectItemEdges[i].node
+      const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
+      const columnNameSearchResult = projectItem.findColumnName()
+
+      if (columnNameSearchResult === null) {
+        this.projectItems.delete(i)
+        i--
+      } else if (TypeChecker.isString(columnNameSearchResult)) {
+        this.columnNameMap!.set(projectKey, columnNameSearchResult)
+        this.projectItems.delete(i)
+        i--
+        if (projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
+          continue
+        }
+
+        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
+          continue
+        }
+
+        return columnNameSearchResult
+      } else {
+        remoteRecordQueryParams.push(columnNameSearchResult)
+        i--
+      }
+    } while (i > 0)
+
+    this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams)
+
+    return this.#determineSearchResult(remoteRecordQueryParams)
   }
 }
 
@@ -306,7 +379,7 @@ export class ProjectItem extends RecordWithID {
     } else if (!(this.fieldValues.isLastPage())) {
       return {
         parentId: this.getId(),
-        recordPage: this.fieldValues
+        recordContainer: this.fieldValues
       }
     }
 
