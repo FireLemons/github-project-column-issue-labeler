@@ -122,7 +122,7 @@ describe('The FieldValue class', () => {
 
 describe('The GraphQLPage class', () => {
   describe('constructor', () => {
-    test('it throws an error when not passed an object', () => {
+    it('throws an error when not passed an object', () => {
       expect(() => {
         new GraphQLPage('')
       }).toThrow(TypeError)
@@ -140,7 +140,7 @@ describe('The GraphQLPage class', () => {
       }).toThrow(TypeError)
     })
 
-    test('it throws an error when passed an object not matching a graphQL page', () => {
+    it('throws an error when passed an object not matching a graphQL page', () => {
       const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePagePOJO)
       delete nearlyPageObject['pageInfo']['hasNextPage']
 
@@ -149,12 +149,28 @@ describe('The GraphQLPage class', () => {
       }).toThrow(TypeError)
     })
 
-    test('does not throw an error when passed a page', () => {
+    it('does not throw an error when passed a page', () => {
       const normalPage = structuredClone(projectItemPagePOJO)
 
       expect(() => {
         new GraphQLPage(normalPage)
       }).not.toThrow(TypeError)
+    })
+
+    it('can toggle issue paged between project and non project mode', () => {
+      const issuePagePOJOCopy = structuredClone(issuePagePOJO)
+      const issuePageProjectsDisabled = new GraphQLPage<Issue>(issuePagePOJOCopy, Issue, false)
+      const issuesWithProjectsDisabled = issuePageProjectsDisabled.getNodeArray()
+      expect(issuesWithProjectsDisabled.length).not.toBe(0)
+      expect(issuesWithProjectsDisabled[0].columnNameMap).not.toBe(undefined)
+      expect(issuesWithProjectsDisabled[0].columnName).toBe(undefined)
+
+      const issuePagePOJOCopy2 = structuredClone(issuePagePOJO)
+      const issuePageProjectsEnabled = new GraphQLPage<Issue>(issuePagePOJOCopy2, Issue, true)
+      const issuesWithProjectsEnabled = issuePageProjectsEnabled.getNodeArray()
+      expect(issuesWithProjectsEnabled.length).not.toBe(0)
+      expect(issuesWithProjectsEnabled[0].columnNameMap).not.toBe(undefined)
+      expect(issuesWithProjectsEnabled[0].columnName).toBe(undefined)
     })
   })
 
@@ -903,5 +919,19 @@ describe('initializeNodes()', () => {
     })).toBe(undefined)
 
     expect(instantiatedNodes.length).toBe(1)
+  })
+
+  it('passes the third argument onwards to the constructor of the class passed', () => {
+    const extraArg1 = 'extra argument'
+    const extraArg2 = ['extra argument 2']
+    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
+    const testClassJSONArg = fieldValuePagePOJOCopy.edges[0].node
+    const TestClass = require('./testClass')
+
+    initializeNodes(TestClass, new GraphQLPage<typeof TestClass>(fieldValuePagePOJOCopy), extraArg1, extraArg2)
+
+    jest.mock('./testClass')
+
+    expect(TestClass).toHaveBeenCalledWith(testClassJSONArg, extraArg1, extraArg2)
   })
 })

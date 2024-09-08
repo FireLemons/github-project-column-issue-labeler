@@ -50,7 +50,7 @@ export class GraphQLPage<T> {
     }
   }
 
-  constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
+  constructor (pagePOJO: any, NodeClass?: Constructable<any>, ...nodeClassArgs: any[]) {
     if (!(isGraphQLPage(pagePOJO))) {
       throw new TypeError('Param pagePOJO does not match a graphQL page')
     }
@@ -59,7 +59,7 @@ export class GraphQLPage<T> {
     this.nodeClass = NodeClass
 
     if (NodeClass !== undefined) {
-      initializeNodes(NodeClass, this)
+      initializeNodes(NodeClass, this, nodeClassArgs)
     }
   }
 
@@ -391,14 +391,14 @@ export class ProjectItem extends RecordWithID {
   }
 }
 
-export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
+export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>, ...githubObjectArgs: any[]): void {
   let i = 0
   const edges = graphQLPage.getEdges()
 
   while (i < edges.length) {
     try {
       edges[i] = {
-        node: new GithubObjectClass(edges[i].node)
+        node: new GithubObjectClass(edges[i].node, ...githubObjectArgs)
       }
 
       i++

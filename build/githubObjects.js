@@ -51,14 +51,14 @@ exports.RecordWithID = RecordWithID;
 class GraphQLPage {
     nodeClass;
     page;
-    constructor(pagePOJO, NodeClass) {
+    constructor(pagePOJO, NodeClass, ...nodeClassArgs) {
         if (!(isGraphQLPage(pagePOJO))) {
             throw new TypeError('Param pagePOJO does not match a graphQL page');
         }
         this.page = pagePOJO;
         this.nodeClass = NodeClass;
         if (NodeClass !== undefined) {
-            initializeNodes(NodeClass, this);
+            initializeNodes(NodeClass, this, nodeClassArgs);
         }
     }
     appendPage(page) {
@@ -332,13 +332,13 @@ class ProjectItem extends RecordWithID {
     }
 }
 exports.ProjectItem = ProjectItem;
-function initializeNodes(GithubObjectClass, graphQLPage) {
+function initializeNodes(GithubObjectClass, graphQLPage, ...githubObjectArgs) {
     let i = 0;
     const edges = graphQLPage.getEdges();
     while (i < edges.length) {
         try {
             edges[i] = {
-                node: new GithubObjectClass(edges[i].node)
+                node: new GithubObjectClass(edges[i].node, ...githubObjectArgs)
             };
             i++;
         }

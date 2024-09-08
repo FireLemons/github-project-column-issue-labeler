@@ -9,7 +9,7 @@ class GithubGraphQLPageAssembler {
     constructor(githubAPIClient) {
         this.githubAPIClient = githubAPIClient;
     }
-    async fetchAllIssues() {
+    async fetchAllIssues(projectsEnabled) {
         logger.addBaseIndentation(2);
         logger.info('Fetching Issues');
         let cursor;
@@ -18,7 +18,7 @@ class GithubGraphQLPageAssembler {
         do {
             try {
                 issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor);
-                const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues, githubObjects_1.Issue);
+                const issuePage = new githubObjects_1.GraphQLPage(issuePageResponse.repository?.issues, githubObjects_1.Issue, projectsEnabled);
                 cursor = issuePage.getEndCursor();
                 if (issues === undefined) {
                     issues = issuePage;

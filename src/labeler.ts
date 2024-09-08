@@ -2,7 +2,9 @@ import fs from 'fs'
 // Javascript destructuring assignment
 import { GithubAPIClient } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
+import { GraphQLPage, Issue } from './githubObjects'
 import { Logger } from './logger'
+import * as TypeChecker from './typeChecker'
 import { validateConfig } from './validateConfig'
 
 const fsPromises = fs.promises
@@ -53,11 +55,11 @@ async function main () {
   }
 
   logger.info('Initialized github API client')
-  let issuePage
+  let issuePage: GraphQLPage<Issue>
 
   try {
     logger.info('Fetching issues with labels and column data...')
-    issuePage = await githubGraphQLPageAssembler.fetchAllIssues()
+    issuePage = await githubGraphQLPageAssembler.fetchAllIssues('projects' in config)
 
     logger.info('Fetched issues with labels and column data', 2)
   } catch (error) {
@@ -71,11 +73,22 @@ async function main () {
   }
 
   const issues = issuePage.getNodeArray()
+  /*const issuesMissingSearchSpace: Issue[] = []
+  const issuesWithColumnNames: Issue[] = []
+  const issuesWithoutColumnNames: number[] = []
 
   for (let i = issues.length - 1; i >= 0; i--) {
     const issue = issues[i]
     const columnNameSearchResult = issue.findColumnName()
-  }
+
+    if (columnNameSearchResult === null) {
+      issuesWithoutColumnNames.push(issue.number)
+    } else if (TypeChecker.isString(columnNameSearchResult)) {
+      issuesWithColumnNames.push()
+    }
+  }*/
+
+  console.log(JSON.stringify(issues[0], null, 2))
 }
 
 module.exports = main
