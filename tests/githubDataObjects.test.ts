@@ -1,94 +1,6 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import GithubObjectsTestData from './githubObjectsTestData'
 import * as TypeChecker from '../src/typeChecker'
-
-const fieldValuePOJO = {
-  name: 'AnSVq5a_ibi2E*M<|/>'
-}
-
-const fieldValuePagePOJO = {
-  edges: [
-    {
-      node: fieldValuePOJO
-    }
-  ],
-  pageInfo: {
-    endCursor: 'MQ',
-    hasNextPage: true
-  }
-}
-
-const labelPOJO = {
-  name: '5~hg?<[kjHwGhUII-p:'
-}
-
-const labelPagePOJO = {
-  edges: [
-    {
-      node: labelPOJO
-    }
-  ],
-  pageInfo: {
-    endCursor: 'UjLu&s>NWO+eo_Z|Cg(',
-    hasNextPage: true
-  }
-}
-
-const projectPOJO = {
-  number: 1,
-  owner: {
-    login: "29;UhhP@%nooLB#ms"
-  }
-}
-
-const projectItemPOJO = {
-  databaseId: 65248239,
-  fieldValues: fieldValuePagePOJO,
-  project: projectPOJO
-}
-
-const projectItemPagePOJO = {
-  edges: [
-    {
-      node: projectItemPOJO
-    }
-  ],
-  pageInfo: {
-    endCursor: 'MQ',
-    hasNextPage: false
-  }
-}
-
-const issuePOJO = {
-  number: 1009,
-  labels: labelPagePOJO,
-  projectItems: projectItemPagePOJO
-}
-
-const issuePagePOJO = {
-  edges: [
-    {
-      node: issuePOJO
-    }
-  ],
-  pageInfo: {
-    endCursor: 'cursor',
-    hasNextPage: true
-  }
-}
-
-function addNodes (page: any, nodes: any[] | any) {
-  if (Array.isArray(nodes)) {
-    page.edges.push(...nodes.map((node) => {
-      return {
-        node: node
-      }
-    }))
-  } else {
-    page.edges.push({
-      node: nodes
-    })
-  }
-}
 
 describe('The FieldValue class', () => {
   describe('constructor', () => {
@@ -106,13 +18,14 @@ describe('The FieldValue class', () => {
 
     it('successfully constructs the FieldValue when passed a valid object', () => {
       expect(() => {
-        new FieldValue(fieldValuePOJO)
+        new FieldValue(GithubObjectsTestData.getFieldValuePOJO())
       }).not.toThrow()
     })
   })
 
   describe('getName()', () => {
     it('returns the name of the FieldValue instance', () => {
+      const fieldValuePOJO = GithubObjectsTestData.getFieldValuePOJO()
       const fieldValue = new FieldValue(fieldValuePOJO)
 
       expect(fieldValue.getName()).toBe(fieldValuePOJO.name)
@@ -141,32 +54,27 @@ describe('The GraphQLPage class', () => {
     })
 
     it('throws an error when passed an object not matching a graphQL page', () => {
-      const nearlyPageObject: { edges: any, pageInfo: { endCursor: string, hasNextPage?: boolean} } = structuredClone(issuePagePOJO)
-      delete nearlyPageObject['pageInfo']['hasNextPage']
-
       expect(() => {
-        new GraphQLPage<Issue>(nearlyPageObject)
+        new GraphQLPage<Issue>(GithubObjectsTestData.getInvalidIssuePagePOJO())
       }).toThrow(TypeError)
     })
 
     it('does not throw an error when passed a page', () => {
-      const normalPage = structuredClone(projectItemPagePOJO)
-
       expect(() => {
-        new GraphQLPage(normalPage)
+        new GraphQLPage(GithubObjectsTestData.getPagePOJOMinimal())
       }).not.toThrow(TypeError)
     })
 
     it('can toggle issue paged between project and non project mode', () => {
-      const issuePagePOJOCopy = structuredClone(issuePagePOJO)
-      const issuePageProjectsDisabled = new GraphQLPage<Issue>(issuePagePOJOCopy, Issue, false)
+      const issuePagePOJO = GithubObjectsTestData.getIssuePagePOJO()
+      const issuePageProjectsDisabled = new GraphQLPage<Issue>(issuePagePOJO, Issue, false)
       const issuesWithProjectsDisabled = issuePageProjectsDisabled.getNodeArray()
       expect(issuesWithProjectsDisabled.length).not.toBe(0)
       expect(issuesWithProjectsDisabled[0].columnNameMap).not.toBe(undefined)
       expect(issuesWithProjectsDisabled[0].columnName).toBe(undefined)
 
-      const issuePagePOJOCopy2 = structuredClone(issuePagePOJO)
-      const issuePageProjectsEnabled = new GraphQLPage<Issue>(issuePagePOJOCopy2, Issue, true)
+      const issuePagePOJO2 = GithubObjectsTestData.getIssuePagePOJO()
+      const issuePageProjectsEnabled = new GraphQLPage<Issue>(issuePagePOJO2, Issue, true)
       const issuesWithProjectsEnabled = issuePageProjectsEnabled.getNodeArray()
       expect(issuesWithProjectsEnabled.length).not.toBe(0)
       expect(issuesWithProjectsEnabled[0].columnNameMap).not.toBe(undefined)
@@ -175,28 +83,30 @@ describe('The GraphQLPage class', () => {
   })
 
   describe('appendPage()', () => {
+    let appendedPageFieldValueName: string
+    let originalPageFieldValueName: string
+    let appendedPageEndCursor: string
+    let appendedPageHasNextPage: boolean
     let combinedPage: GraphQLPage<FieldValue>
-    const appendedPageFieldValueName = '~o9{5S/WT|<>FLuMS'
-    const appendedPageEndCursor = 'D=if(!.SUZ+H=h"+Ae'
 
     beforeAll(() => {
-      combinedPage = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO))
-      const appendedPageFieldValuePOJO = structuredClone(fieldValuePagePOJO)
+      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
+      const fieldValuePagePOJOAppended = GithubObjectsTestData.getDifferentValuePagePOJO()
 
-      appendedPageFieldValuePOJO.edges[0].node.name = appendedPageFieldValueName
-      appendedPageFieldValuePOJO.pageInfo = {
-        endCursor: appendedPageEndCursor,
-        hasNextPage: false
-      }
+      originalPageFieldValueName = fieldValuePagePOJO.edges[0].node.name
+      appendedPageFieldValueName = fieldValuePagePOJOAppended.edges[0].node.name
+      appendedPageEndCursor = fieldValuePagePOJOAppended.pageInfo.endCursor
+      appendedPageHasNextPage = fieldValuePagePOJOAppended.pageInfo.hasNextPage
 
-      const appendedPage = new GraphQLPage<FieldValue>(appendedPageFieldValuePOJO)
+      combinedPage = new GraphQLPage<FieldValue>(fieldValuePagePOJO)
+      const pageToBeAppended = new GraphQLPage<FieldValue>(GithubObjectsTestData.getDifferentValuePagePOJO())
 
-      combinedPage.appendPage(appendedPage)
+      combinedPage.appendPage(pageToBeAppended)
     })
 
     it('appends the edges from the page passed as an argument to the page', () => {
       expect(combinedPage.getEdges().find((edge) => {
-        return edge.node.name === fieldValuePOJO.name
+        return edge.node.name === originalPageFieldValueName
       })).not.toBe(undefined)
 
       expect(combinedPage.getEdges().find((edge) => {
@@ -208,33 +118,27 @@ describe('The GraphQLPage class', () => {
       const combinedPagePageInfo = combinedPage.getPageInfo()
 
       expect(combinedPagePageInfo.endCursor).toBe(appendedPageEndCursor)
-      expect(combinedPagePageInfo.hasNextPage).toBe(false)
+      expect(combinedPagePageInfo.hasNextPage).toBe(appendedPageHasNextPage)
     })
   })
 
   describe('delete()', () => {
     it('removes the edge at the index passed from the graphQL page', () => {
-      const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-      const newFieldValueName = '7ZM@fyoDrP!i8-mf(M'
-
-      fieldValuePagePOJOCopy.edges.push({
-        node: {
-          name: newFieldValueName
-        }
-      })
-
-      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJOCopy, FieldValue)
+      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJOWithMultipleFieldValues()
+      const fieldValueName1 = fieldValuePagePOJO.edges[0].node.name
+      const fieldValueName2 = fieldValuePagePOJO.edges[1].node.name
+      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue)
 
       page.delete(1)
 
       const nodes = page.getNodeArray()
 
       expect(nodes.find((fieldValue) => {
-        return fieldValue.name === fieldValuePOJO.name
+        return fieldValue.name === fieldValueName1
       })).not.toBe(undefined)
 
       expect(nodes.find((fieldValue) => {
-        return fieldValue.name === newFieldValueName
+        return fieldValue.name === fieldValueName2
       })).toBe(undefined)
 
       page.delete(0)
@@ -243,13 +147,15 @@ describe('The GraphQLPage class', () => {
     })
 
     it('returns the removed node', () => {
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
+      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
+      const onlyFieldValueName = fieldValuePagePOJO.edges[0].node.name
+      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue)
 
-      expect(page.delete(0).getName()).toBe(fieldValuePOJO.name)
+      expect(page.delete(0).getName()).toBe(onlyFieldValueName)
     })
 
     it('throws an error when the index is out of bounds', () => {
-      const page = new GraphQLPage<FieldValue>(structuredClone(fieldValuePagePOJO), FieldValue)
+      const page = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
 
       expect(() => {
         page.delete(1)
@@ -259,6 +165,7 @@ describe('The GraphQLPage class', () => {
 
   describe('getEdges()', () => {
     it('returns the edges of the graphQL page', () => {
+      const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
       const page = new GraphQLPage(labelPagePOJO)
 
       expect(page.getEdges()).toBe(labelPagePOJO.edges)
@@ -267,6 +174,7 @@ describe('The GraphQLPage class', () => {
 
   describe('getEndCursor()', () => {
     it('returns the end cursor of the graphQL page', () => {
+      const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
       const page = new GraphQLPage(labelPagePOJO)
 
       expect(page.getEndCursor()).toBe(labelPagePOJO.pageInfo.endCursor)
@@ -275,16 +183,19 @@ describe('The GraphQLPage class', () => {
 
   describe('getNodeArray()', () => {
     it('returns the nodes of the graphQL page as an array', () => {
+      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
+      const fieldValuePageOnlyNode = fieldValuePagePOJO.edges[0].node
       const page = new GraphQLPage(fieldValuePagePOJO)
 
       expect(page.getNodeArray()).toEqual([
-        fieldValuePOJO
+        fieldValuePageOnlyNode
       ])
     })
   })
 
   describe('getPageInfo()', () => {
     it('returns the page info of the graphQL page', () => {
+      const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
       const page = new GraphQLPage(labelPagePOJO)
 
       expect(page.getPageInfo()).toBe(labelPagePOJO.pageInfo)
@@ -293,17 +204,13 @@ describe('The GraphQLPage class', () => {
 
   describe('isEmpty()', () => {
     it('returns true if the page does not have nodes', () => {
-      const labelPagePOJOCopy = structuredClone(labelPagePOJO)
-
-      labelPagePOJOCopy.edges = []
-
-      const labelPage = new GraphQLPage(labelPagePOJOCopy)
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getEmptyLabelPagePOJO())
 
       expect(labelPage.isEmpty()).toBeTruthy()
     })
 
     it('returns false if the page has nodes', () => {
-      const labelPage = new GraphQLPage(labelPagePOJO)
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getLabelPagePOJO())
 
       expect(labelPage.isEmpty()).toBeFalsy()
     })
@@ -311,17 +218,13 @@ describe('The GraphQLPage class', () => {
 
   describe('isLastPage()', () => {
     it('returns true if the pageInfo indicates the page is the last page', () => {
-      const labelPagePOJOCopy = structuredClone(labelPagePOJO)
-
-      labelPagePOJOCopy.pageInfo.hasNextPage = false
-
-      const labelPage = new GraphQLPage(labelPagePOJOCopy)
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getCompleteLabelPagePOJO())
 
       expect(labelPage.isLastPage()).toBeTruthy()
     })
 
     it('returns false if the pageInfo indicates the page is not the last page', () => {
-      const labelPage = new GraphQLPage(labelPagePOJO)
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getLabelPagePOJO())
 
       expect(labelPage.isLastPage()).toBeFalsy()
     })
@@ -331,34 +234,22 @@ describe('The GraphQLPage class', () => {
 describe('The GraphQLPageMergeable class', () => {
   describe('delete()', () => {
     it('removes the edge at the index passed from the graphQL page', () => {
-      const projectItemPagePOJOCopy = structuredClone(projectItemPagePOJO)
-      const newProjectItemId = 38209138093218
+      const projectItemPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
+      const firstProjectItemId = projectItemPagePOJO.edges[0].node.databaseId
+      const secondProjectItemId = projectItemPagePOJO.edges[1].node.databaseId
 
-      projectItemPagePOJOCopy.edges.push({
-        node: {
-          databaseId: newProjectItemId,
-          fieldValues: structuredClone(fieldValuePagePOJO),
-          project: {
-            number: 2,
-            owner: {
-              login: ''
-            }
-          }
-        }
-      })
-
-      const page = new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJOCopy, ProjectItem)
+      const page = new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem)
 
       page.delete(1)
 
       const nodes = page.getNodeArray()
 
       expect(nodes.find((projectItem) => {
-        return projectItem.getId() === projectItemPOJO.databaseId
+        return projectItem.getId() === firstProjectItemId
       })).not.toBe(undefined)
 
       expect(nodes.find((projectItem) => {
-        return projectItem.getId() === newProjectItemId
+        return projectItem.getId() === secondProjectItemId
       })).toBe(undefined)
 
       page.delete(0)
@@ -367,77 +258,48 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('returns the removed node', () => {
-      const page = new GraphQLPageMergeable<ProjectItem>(structuredClone(projectItemPagePOJO), ProjectItem)
+      const pagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
+      const firstRecordId = pagePOJO.edges[0].node.databaseId
+      const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
 
-      expect(page.delete(0).getId()).toBe(projectItemPOJO.databaseId)
+      expect(page.delete(0).getId()).toBe(firstRecordId)
     })
 
     it('stores the id of deleted nodes', () => {
-      const page = new GraphQLPageMergeable<ProjectItem>(structuredClone(projectItemPagePOJO), ProjectItem)
+      const pagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
+      const firstRecordId = pagePOJO.edges[0].node.databaseId
+      const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
 
-      expect(page.deletedNodeIds.has(projectItemPOJO.databaseId)).toBe(false)
+      expect(page.deletedNodeIds.has(firstRecordId)).toBe(false)
 
       page.delete(0)
 
-      expect(page.deletedNodeIds.has(projectItemPOJO.databaseId)).toBe(true)
+      expect(page.deletedNodeIds.has(firstRecordId)).toBe(true)
     })
   })
 
   describe('merge()', () => {
-    const existingProjectItemUpdatedFieldValueName = '6lY,9xOuv5VX0AUoE)'
-
+    const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJO()
+    let deletedProjectItemPOJO: typeof projectItemPOJO
     let existingProjectItemPOJO: typeof projectItemPOJO
+    let existingProjectItemPOJOUpdated: typeof projectItemPOJO
     let newProjectItemPOJO: typeof projectItemPOJO
     let page: GraphQLPageMergeable<ProjectItem>
     let pageToBeMerged: GraphQLPageMergeable<ProjectItem>
 
     beforeEach(() => {
-      const deletedProjectItemPOJO = structuredClone(projectItemPOJO)
-
-      existingProjectItemPOJO = structuredClone(projectItemPOJO)
-
-      existingProjectItemPOJO.databaseId = 90285654630
-      existingProjectItemPOJO.fieldValues.edges = []
-      existingProjectItemPOJO.project.owner.login = '#vuO;QJ@xywt@(Hy*#'
-
-      newProjectItemPOJO = structuredClone(projectItemPOJO)
-
-      newProjectItemPOJO.databaseId = 984379821739
-      existingProjectItemPOJO.project.owner.login = 'T~{dZqN%M~i=0<KAwa'
-
-      const existingPagePOJO = {
-        edges: [
-          {
-            node: deletedProjectItemPOJO
-          },
-          {
-            node: existingProjectItemPOJO
-          }
-        ],
-        pageInfo: {
-          endCursor: 'AB',
-          hasNextPage: true
-        }
-      }
-
-      const newPagePojo = structuredClone(existingPagePOJO)
-
-      newPagePojo.edges[1].node.fieldValues.edges.push({
-        node: {
-          name: existingProjectItemUpdatedFieldValueName
-        }
-      })
-
-      newPagePojo.edges.push({
-        node: newProjectItemPOJO
-      })
-      newPagePojo.pageInfo.endCursor = 'XY'
-      newPagePojo.pageInfo.hasNextPage = false
+      const existingPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
+      const newPagePOJO = GithubObjectsTestData.getProjectItemPagePOJOToBeMerged()
+  
+      deletedProjectItemPOJO = existingPagePOJO.edges[0].node
+      existingProjectItemPOJO = existingPagePOJO.edges[1].node
+      existingProjectItemPOJOUpdated = newPagePOJO.edges[1].node
+      newProjectItemPOJO = newPagePOJO.edges[2].node
 
       page = new GraphQLPageMergeable<ProjectItem>(existingPagePOJO, ProjectItem)
       page.delete(0)
 
-      pageToBeMerged = new GraphQLPageMergeable<ProjectItem>(newPagePojo, ProjectItem)
+      pageToBeMerged = new GraphQLPageMergeable<ProjectItem>(newPagePOJO, ProjectItem)
     })
 
     it('adds all the records from the page passed as an argument not found in the page to be merged into', () => {
@@ -455,7 +317,7 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('does not re-add deleted nodes', () => {
-      const deletedId = projectItemPOJO.databaseId
+      const deletedId = deletedProjectItemPOJO.databaseId
 
       expect(page.deletedNodeIds.has(deletedId)).toBe(true)
 
@@ -468,6 +330,7 @@ describe('The GraphQLPageMergeable class', () => {
 
     it('overwrites records found in both pages using records from the page passed as an argument', () => {
       const existingProjectItemId = existingProjectItemPOJO.databaseId
+      const existingProjectItemUpdatedFieldValueName = existingProjectItemPOJOUpdated.fieldValues.edges[0].node.name
       const existingProjectItem = page.getNodeArray().find((projectItem) => {
         return projectItem.id === existingProjectItemId
       })
@@ -495,14 +358,6 @@ describe('The GraphQLPageMergeable class', () => {
 })
 
 describe('The Issue class', () => {
-  beforeEach(() => { // The Issue constructor mutates the projectItemPOJO sub-object. This avoids the mutation persisting through to other tests
-    projectItemPagePOJO.edges[0].node = structuredClone(projectItemPOJO)
-  })
-
-  afterEach(() => {
-    projectItemPagePOJO.edges[0].node = projectItemPOJO
-  })
-
   describe('constructor', () => {
     it('throws an error when passed a non object value', () => {
       expect(() => {
@@ -512,52 +367,31 @@ describe('The Issue class', () => {
 
     it('throws an error when passed an object not matching an issue', () => {
       expect(() => {
-        new Issue({
-          number: 'wrong type for number',
-          labels: [],
-          projectItems: projectItemPagePOJO
-        })
+        new Issue(GithubObjectsTestData.getIssuePOJOWithInvalidValueTypes())
       }).toThrow(TypeError)
     })
 
     it('throws an error when passed an issue object with an invalid project item page', () => {
       expect(() => {
-        new Issue({
-          number: 1,
-          labels: labelPagePOJO,
-          projectItems: {
-            pageInfo: null
-          }
-        })
+        new Issue(GithubObjectsTestData.getIssuePOJOWithInvalidProjectItemPage())
       }).toThrow(ReferenceError)
     })
 
     it('successfully constructs the Issue when passed a valid object', () => {
       expect(() => {
-        const issuePOJOCopy: any = structuredClone(issuePOJO)
-
-        new Issue(issuePOJOCopy)
+        new Issue(GithubObjectsTestData.getIssuePOJO())
       }).not.toThrow()
     })
 
     it('successfully constructs the Issue when passed an issue object with an invalid label page', () => {
       expect(() => {
-        new Issue({
-          number: 1,
-          labels: {
-            pageInfo: null
-          },
-          projectItems: projectItemPagePOJO
-        })
+        new Issue(GithubObjectsTestData.getIssuePOJOWithInvalidLabelPage())
       }).not.toThrow()
     })
 
     it('successfully constructs the Issue when passed an issue object without a label page', () => {
       expect(() => {
-        new Issue({
-          number: 1,
-          projectItems: projectItemPagePOJO
-        })
+        new Issue(GithubObjectsTestData.getIssuePOJOWithoutLabels())
       }).not.toThrow()
     })
   })
@@ -566,12 +400,7 @@ describe('The Issue class', () => {
     describe('when the search space does not contain column names', () => {
       describe('when the search space is complete', () => {
         it('returns null when the column name could not be found', () => {
-          const issuePOJOCopy = structuredClone(issuePOJO)
-
-          issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
-          issuePOJOCopy.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage = false
-
-          const issue = new Issue(issuePOJOCopy)
+          const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithoutColumnNames())
 
           expect(issue.findColumnName()).toBe(null)
         })
@@ -580,14 +409,10 @@ describe('The Issue class', () => {
       describe('when the search space is incomplete', () => {
         describe('when projects are enabled', () => {
           it('returns an issue as the remote query parameters when the extended column name search space has not yet been applied to the issue', () => {
-            const issuePOJOCopy = structuredClone(issuePOJO)
-
-            issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
-            issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
-
-            const issue = new Issue(issuePOJOCopy, true)
-            const project = issuePOJO.projectItems.edges[0].node.project
-            const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
+            const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
+            const issue = new Issue(issuePOJO, true)
+            const projectIdenifiers = issue.projectItems.getNodeArray()[0].getProjectHumanAccessibleUniqueIdentifiers()
+            const columnNameSearchResult = issue.findColumnName(projectIdenifiers.ownerLoginName, projectIdenifiers.number)
 
             expect(Array.isArray(columnNameSearchResult)).toBe(true)
 
@@ -597,21 +422,19 @@ describe('The Issue class', () => {
           })
 
           it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
-            const issuePOJOCopy = structuredClone(issuePOJO)
+            const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
+            const project = issuePOJO.projectItems.edges[0].node.project
+            const projectItemId = issuePOJO.projectItems.edges[0].node.databaseId
+            const issue = new Issue(issuePOJO, true)
 
-            issuePOJOCopy.projectItems.pageInfo.hasNextPage = true
-            issuePOJOCopy.projectItems.edges[0].node.fieldValues.edges = []
-
-            const issue = new Issue(issuePOJOCopy, true)
             issue.hasExtendedSearchSpace = true
 
-            const project = issuePOJO.projectItems.edges[0].node.project
             const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
 
             expect(Array.isArray(columnNameSearchResult)).toBe(true)
 
             expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-              return queryParameters.parentId === projectItemPOJO.databaseId &&
+              return queryParameters.parentId === projectItemId &&
                 queryParameters.recordContainer instanceof GraphQLPage &&
                 queryParameters.recordContainer.lookupNodeClass() === FieldValue
             })).not.toBe(undefined)
@@ -627,58 +450,15 @@ describe('The Issue class', () => {
     })
 
     describe('when the search space contains column names', () => {
-      let issuePOJOCopy: any
+      let issuePOJO: any
 
       beforeEach(() => {
-        issuePOJOCopy = structuredClone(issuePOJO)
-
-        const extraProjectItem1 = {
-          "databaseId": 65248238,
-          "fieldValues": {
-            "edges": [],
-            "pageInfo": {
-              "endCursor": "MQ",
-              "hasNextPage": true
-            }
-          },
-          "project": {
-            "number": 1,
-            "owner": {
-              "login": "29;UhhP@%nooLB#ms"
-            }
-          }
-        }
-
-        const extraProjectItem2 = {
-          "databaseId": 65248240,
-          "fieldValues": {
-            "edges": [
-              {
-                node: {
-                  name: 'e?+aYAe8>^X6|xaM='
-                }
-              }
-            ],
-            "pageInfo": {
-              "endCursor": "MQ",
-              "hasNextPage": true
-            }
-          },
-          "project": {
-            "number": 2,
-            "owner": {
-              "login": "non matching project"
-            }
-          }
-        }
-
-        issuePOJOCopy.projectItems.edges.unshift({ node: extraProjectItem1 })
-        issuePOJOCopy.projectItems.edges.push({ node: extraProjectItem2 })
+        issuePOJO = GithubObjectsTestData.getIssuePOJOWithManyProjectItems()
       })
 
       describe('when projects are not enabled', () => {
         it('returns the column name', () => {
-          const issue = new Issue(issuePOJOCopy)
+          const issue = new Issue(issuePOJO)
 
           expect(TypeChecker.isString(issue.findColumnName())).toBe(true)
         })
@@ -686,21 +466,28 @@ describe('The Issue class', () => {
 
       describe('when projects are enabled', () => {
         it('does not return a column name if the project item does not match the passed project number', () => {
-          const issue = new Issue(issuePOJOCopy, true)
+          const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
+          const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+          const issue = new Issue(issuePOJO, true)
 
-          expect(issue.findColumnName(projectPOJO.owner.login, 100)).not.toBe(fieldValuePOJO.name)
+          expect(issue.findColumnName(projectOwnerName, 100)).not.toBe(nonMatchingColumnName)
         })
 
         it('does not return a column name if the project item does not match the passed project owner name', () => {
-          const issue = new Issue(issuePOJOCopy, true)
+          const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
+          const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+          const issue = new Issue(issuePOJO, true)
 
-          expect(issue.findColumnName('Non matching name', projectPOJO.number)).not.toBe(fieldValuePOJO.name)
+          expect(issue.findColumnName('Non matching name', projectNumber)).not.toBe(nonMatchingColumnName)
         })
 
         it('returns a column name if the project owner and number match the project filtering parameters', () => {
-          const issue = new Issue(issuePOJOCopy, true)
+          const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
+          const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
+          const columnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+          const issue = new Issue(issuePOJO, true)
 
-          expect(issue.findColumnName(projectPOJO.owner.login, projectPOJO.number)).toBe(fieldValuePOJO.name)
+          expect(issue.findColumnName(projectOwnerName, projectNumber)).toBe(columnName)
         })
       })
     })
@@ -708,28 +495,13 @@ describe('The Issue class', () => {
 
   describe('getLabels()', () => {
     it('returns the labels of the Issue instance as an array', () => {
-      const issuePOJOCopy = structuredClone(issuePOJO)
-
-      addNodes(issuePOJOCopy.labels, [
-        {
-          name: 'jC8?&U0V`Cch4)II/10#'
-        },
-        {
-          name: 'lA0$,&jb.>d<Hi3{*[B'
-        }
-      ])
-
-      const issue = new Issue(issuePOJOCopy)
+      const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithManyLabels())
 
       expect(issue.getLabels()).toEqual(expect.arrayContaining(['jC8?&U0V`Cch4)II/10#', 'lA0$,&jb.>d<Hi3{*[B', '5~hg?<[kjHwGhUII-p:']))
     })
 
     it('returns null when the label page cannot be initialized', () => {
-      const issuePOJOCopy: any = structuredClone(issuePOJO)
-
-      issuePOJOCopy.labels = {}
-
-      const issue = new Issue(issuePOJOCopy)
+      const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithInvalidLabelPage())
 
       expect(issue.getLabels()).toBe(null)
     })
@@ -737,9 +509,8 @@ describe('The Issue class', () => {
 
   describe('getNumber()', () => {
     it('returns the number of the Issue instance', () => {
-      const issuePOJOCopy: any = structuredClone(issuePOJO)
-
-      const issue = new Issue(issuePOJOCopy)
+      const issuePOJO = GithubObjectsTestData.getIssuePOJO()
+      const issue = new Issue(issuePOJO)
 
       expect(issue.getNumber()).toBe(issuePOJO.number)
     })
@@ -762,13 +533,14 @@ describe('The Label class', () => {
 
     it('successfully constructs the Label when passed a valid object', () => {
       expect(() => {
-        new Label(labelPOJO)
+        new Label(GithubObjectsTestData.getLabelPOJO())
       }).not.toThrow()
     })
   })
 
   describe('getName()', () => {
     it('returns the name of the Label instance', () => {
+      const labelPOJO = GithubObjectsTestData.getLabelPOJO()
       const label = new Label(labelPOJO)
 
       expect(label.getName()).toBe(labelPOJO.name)
@@ -791,61 +563,50 @@ describe('The ProjectItem class', () => {
     })
 
     it('throws an error when passed a project item object with an invalid field value page', () => {
-      const projectItemPOJOCopy: any = structuredClone(projectItemPOJO)
-
-      projectItemPOJOCopy.fieldValues = {}
-
       expect(() => {
-        new ProjectItem(projectItemPOJOCopy)
+        new ProjectItem(GithubObjectsTestData.getProjectItemPOJOWithInvalidFieldValuePage())
       }).toThrow(ReferenceError)
     })
 
     it('successfully constructs the ProjectItem when passed a valid object', () => {
       expect(() => {
-        new ProjectItem(structuredClone(projectItemPOJO))
+        new ProjectItem(structuredClone(GithubObjectsTestData.getProjectItemPOJO()))
       }).not.toThrow()
     })
   })
 
   describe('findColumnName()', () => {
     it('returns null if the column name could not be found with complete pages', () => {
-      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
-
-      projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false
-      projectItemPOJOCopy.fieldValues.edges.splice(0, 1)
-
-      const projectItem = new ProjectItem(projectItemPOJOCopy)
+      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJOWithoutColumnName()
+      const projectItem = new ProjectItem(projectItemPOJO)
 
       expect(projectItem.findColumnName()).toBe(null)
     })
 
     it('returns an object containing parameters to fetch more data on a fail', () => {
-      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
-
-      projectItemPOJOCopy.fieldValues.edges.splice(0, 1)
-
-      const projectItem = new ProjectItem(projectItemPOJOCopy)
+      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJOWithoutLocalColumnName()
+      const projectItemId = projectItemPOJO.databaseId
+      const projectItem = new ProjectItem(projectItemPOJO)
 
       expect(projectItem.findColumnName()).toEqual({
-        parentId: projectItemPOJO.databaseId,
+        parentId: projectItemId,
         recordContainer: projectItem.fieldValues
       })
     })
 
     it('returns the column name on a successful search', () => {
-      const projectItemPOJOCopy = structuredClone(projectItemPOJO)
-
-      projectItemPOJOCopy.fieldValues.pageInfo.hasNextPage = false
-
+      const projectItemPOJOCopy = GithubObjectsTestData.getProjectItemPOJO()
+      const projectName = projectItemPOJOCopy.fieldValues.edges[0].node.name
       const projectItem = new ProjectItem(projectItemPOJOCopy)
 
-      expect(projectItem.findColumnName()).toBe(fieldValuePOJO.name)
+      expect(projectItem.findColumnName()).toBe(projectName)
     })
   })
 
   describe('getProjectHumanAccessibleUniqueIdentifiers()', () => {
     it('returns the name of the ProjectItem\'s parent project', () => {
-      const projectItem = new ProjectItem(structuredClone(projectItemPOJO))
+      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJO()
+      const projectItem = new ProjectItem(projectItemPOJO)
 
       expect(projectItem.getProjectHumanAccessibleUniqueIdentifiers()).toEqual({
         number: projectItemPOJO.project.number,
@@ -872,50 +633,38 @@ describe('The RecordWithID class', () => {
 
 describe('initializeNodes()', () => {
   it('converts all valid nodes to instances of the class parameter', () => {
-    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-    const fieldValuePOJO2 = {
-      name: '+=Xh(TZCqK}e\@]O1s[@'
-    }
+    const pagePOJO = GithubObjectsTestData.getPagePOJOWithMultipleNodes()
+    const fieldValueName1 = pagePOJO.edges[0].node.name
+    const fieldValueName2 = pagePOJO.edges[1].node.name
 
-    fieldValuePagePOJOCopy.edges.push({
-      node: fieldValuePOJO2
-    })
-
-    const graphQLPage = new GraphQLPage(fieldValuePagePOJOCopy)
-
-    initializeNodes(FieldValue, graphQLPage)
+    const graphQLPage = new GraphQLPage(pagePOJO, FieldValue)
 
     const instantiatedNodes = graphQLPage.getNodeArray()
 
     expect(instantiatedNodes.find((node) => {
-      return node instanceof FieldValue && node.getName() === fieldValuePOJO.name
+      return node instanceof FieldValue && node.getName() === fieldValueName1
     })).not.toBe(undefined)
 
     expect(instantiatedNodes.find((node) => {
-      return node instanceof FieldValue && node.getName() === fieldValuePOJO2.name
+      return node instanceof FieldValue && node.getName() === fieldValueName2
     })).not.toBe(undefined)
   })
 
   it('discards edges containing nodes that could not be instantiated', () => {
-    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-    const fieldValuePOJOInvalid: any = {
-      columnName: '+=Xh(TZCqK}e\@]O1s[@'
-    }
+    const pagePOJOWithInvalidNode = GithubObjectsTestData.getPagePOJOWithInvalidNode()
+    const validNodeFieldValue = pagePOJOWithInvalidNode.edges[0].node.name
+    const invalidNodeValue = pagePOJOWithInvalidNode.edges[1].node.wrongKey
 
-    fieldValuePagePOJOCopy.edges.push({
-      node: fieldValuePOJOInvalid
-    })
-
-    const graphQLPage = new GraphQLPage(fieldValuePagePOJOCopy, FieldValue)
+    const graphQLPage = new GraphQLPage(pagePOJOWithInvalidNode, FieldValue)
 
     const instantiatedNodes = graphQLPage.getNodeArray()
 
     expect(instantiatedNodes.find((node) => {
-      return node instanceof FieldValue && node.getName() === fieldValuePOJO.name
+      return node instanceof FieldValue && node.getName() === validNodeFieldValue
     })).not.toBe(undefined)
 
     expect(instantiatedNodes.find((node) => {
-      return node instanceof FieldValue && node.getName() === fieldValuePOJOInvalid.name
+      return node instanceof FieldValue && node.getName() === invalidNodeValue
     })).toBe(undefined)
 
     expect(instantiatedNodes.length).toBe(1)
@@ -924,11 +673,11 @@ describe('initializeNodes()', () => {
   it('passes the third argument onwards to the constructor of the class passed', () => {
     const extraArg1 = 'extra argument'
     const extraArg2 = ['extra argument 2']
-    const fieldValuePagePOJOCopy = structuredClone(fieldValuePagePOJO)
-    const testClassJSONArg = fieldValuePagePOJOCopy.edges[0].node
+    const pagePOJO = GithubObjectsTestData.getPagePOJOMinimal()
+    const testClassJSONArg = pagePOJO.edges[0].node
     const TestClass = require('./testClass')
 
-    initializeNodes(TestClass, new GraphQLPage<typeof TestClass>(fieldValuePagePOJOCopy), extraArg1, extraArg2)
+    initializeNodes(TestClass, new GraphQLPage<typeof TestClass>(pagePOJO), extraArg1, extraArg2)
 
     jest.mock('./testClass')
 
