@@ -11,7 +11,7 @@ export class GithubGraphQLPageAssembler {
     this.githubAPIClient = githubAPIClient
   }
 
-  async fetchAllIssues (projectsEnabled?: boolean): Promise<GraphQLPage<Issue>> {
+  async fetchAllIssues (): Promise<GraphQLPage<Issue>> {
     logger.addBaseIndentation(2)
     logger.info('Fetching Issues')
     let cursor
@@ -22,7 +22,7 @@ export class GithubGraphQLPageAssembler {
       try {
         issuePageResponse = await this.githubAPIClient.fetchIssuePage(cursor)
 
-        const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues, Issue, projectsEnabled)
+        const issuePage = new GraphQLPage<Issue>(issuePageResponse.repository?.issues, Issue)
         cursor = issuePage.getEndCursor()
 
         if (issues === undefined) {

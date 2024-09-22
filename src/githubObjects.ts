@@ -50,7 +50,7 @@ export class GraphQLPage<T> {
     }
   }
 
-  constructor (pagePOJO: any, NodeClass?: Constructable<any>, ...nodeClassArgs: any[]) {
+  constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
     if (!(isGraphQLPage(pagePOJO))) {
       throw new TypeError('Param pagePOJO does not match a graphQL page')
     }
@@ -59,7 +59,7 @@ export class GraphQLPage<T> {
     this.nodeClass = NodeClass
 
     if (NodeClass !== undefined) {
-      initializeNodes(NodeClass, this, nodeClassArgs)
+      initializeNodes(NodeClass, this)
     }
   }
 
@@ -167,13 +167,15 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
 export class Issue {
   columnName?: string
   columnNameMap?: Map<string, string>
-  findColumnName: (projectOwnerLogin?: string, projectNumber?: number) => null | RemoteRecordPageQueryParameters[] | string
   hasExtendedSearchSpace: boolean
   labels?: GraphQLPage<Label>
   number: number
   projectItems: GraphQLPage<ProjectItem>
+  #cacheSearchResult: (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber?: number) => boolean
+  #lookupCachedColumnName: (projectOwnerLogin?: string, projectNumber?: number) => string | undefined
+  #modeAction: (projectOwnerLogin?: string, projectNumber?: number) => void
 
-  constructor (issuePOJO: any, projectsEnabled?: boolean) {
+  constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
       throw new TypeError('Param issuePOJO does not match a github issue object')
     }
@@ -193,20 +195,9 @@ export class Issue {
     this.hasExtendedSearchSpace = false
     this.number = issuePOJO.number
 
-    if (projectsEnabled) {
-      this.columnNameMap = new Map()
-      this.findColumnName = (projectOwnerLogin?: string, projectNumber: number = 0) => {
-        if (projectOwnerLogin === undefined) {
-          throw new ReferenceError('Param projectOwnerLogin is required for column name search when using projects')
-        }
-
-        return this.#findColumnNameMultipleProjects(projectOwnerLogin, projectNumber)
-      }
-    } else {
-      this.findColumnName = () => {
-        return this.#findColumnName()
-      }
-    }
+    this.#cacheSearchResult = this.#cacheSearchResultDefault
+    this.#modeAction = this.#setMode
+    this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault
   }
 
   getLabels () {
@@ -223,16 +214,66 @@ export class Issue {
     return this.number
   }
 
-  #includeProjectItemParamsIfPageIncomplete (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
+  findColumnName (projectOwnerLogin?: string, projectNumber?: number) {
+    this.#modeAction(projectOwnerLogin, projectNumber)
+
+    const cachedSearch = this.#lookupCachedColumnName(projectOwnerLogin, projectNumber)
+
+    if (cachedSearch) {
+      return cachedSearch
+    }
+
+    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
+    const projectItemEdges = this.projectItems.getEdges()
+
+    let i = projectItemEdges.length - 1
+
+    do {
+      const projectItem = projectItemEdges[i].node
+      const columnNameSearchResult = projectItem.findColumnName()
+
+      if (columnNameSearchResult === null) {
+        this.projectItems.delete(i)
+        i--
+      } else if (TypeChecker.isString(columnNameSearchResult)) {
+        this.projectItems.delete(i)
+        i--
+
+        if(this.#cacheSearchResult(projectItem, projectOwnerLogin, projectNumber)) {
+          return columnNameSearchResult
+        }
+      } else {
+        remoteRecordQueryParams.push(columnNameSearchResult)
+        i--
+      }
+    } while (i > 0)
+
     if (!(this.projectItems.isLastPage())) {
       remoteRecordQueryParams.push({
         parentId: this.number,
         recordContainer: this.projectItems
       })
     }
+
+    return this.#determineRemoteQueryParams(remoteRecordQueryParams)
   }
 
-  #determineSearchResult (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
+  #cacheSearchResultDefault (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber?: number) {
+    this.columnName = projectItem.findColumnName() as string
+    return true
+  }
+
+  #cacheSearchResultProjectMode (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber: number = 0) {
+    const projectKey = projectOwnerLogin! + projectNumber
+
+    this.columnNameMap!.set(projectKey, projectItem.findColumnName() as string)
+
+    const projectItemProjectUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
+
+    return projectItemProjectUniqueIdentifiers.ownerLoginName === projectOwnerLogin && projectItemProjectUniqueIdentifiers.number === projectNumber
+  }
+
+  #determineRemoteQueryParams (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
     if (remoteRecordQueryParams.length === 0) {
       return null
     } else if (!(this.hasExtendedSearchSpace)) {
@@ -246,78 +287,35 @@ export class Issue {
     }
   }
 
-  #findColumnName () {
-    if (this.columnName) {
-      return this.columnName
-    }
-
-    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
-    const projectItemEdges = this.projectItems.getEdges()
-
-    let i = projectItemEdges.length - 1
-
-    do {
-      const projectItem = projectItemEdges[i].node
-      const columnNameSearchResult = projectItem.findColumnName()
-
-      if (columnNameSearchResult === null) {
-        this.projectItems.delete(i)
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        this.columnName = columnNameSearchResult
-        return columnNameSearchResult
-      } else {
-        remoteRecordQueryParams.push(columnNameSearchResult)
-        i--
-      }
-    } while (i > 0)
-
-    this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams)
-
-    return this.#determineSearchResult(remoteRecordQueryParams)
+  #lookupCachedColumnNameProjectMode (projectOwnerLogin?: string, projectNumber: number = 0) {
+    return this.columnNameMap?.get(projectOwnerLogin! + projectNumber)
   }
 
-  #findColumnNameMultipleProjects (projectOwnerLogin: string, projectNumber: number = 0) {
-    const projectKey = projectOwnerLogin + projectNumber
+  #lookupCachedColumnNameDefault (projectOwnerLogin?: string, projectNumber?: number) {
+    return this.columnName
+  }
 
-    if (this.columnNameMap!.has(projectKey)) {
-      return this.columnNameMap!.get(projectKey)!
+  #setMode (projectOwnerLogin?: string, projectNumber?: number) {
+    if (TypeChecker.isString(projectOwnerLogin)) {
+      this.columnNameMap = new Map()
+      this.#cacheSearchResult = this.#cacheSearchResultProjectMode
+      this.#modeAction = this.#validateProjectMode
+      this.#lookupCachedColumnName = this.#lookupCachedColumnNameProjectMode
+    } else {
+      this.#modeAction = this.#validateProjectModeDisabled
     }
+  }
 
-    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
-    const projectItemEdges = this.projectItems.getEdges()
+  #validateProjectMode (projectOwnerLogin?: string, projectNumber?: number) {
+    if (!(TypeChecker.isString(projectOwnerLogin))) {
+      throw new Error('The issue is configured for project mode. findColumnName requires projectOwnerLogin')
+    }
+  }
 
-    let i = projectItemEdges.length - 1
-
-    do {
-      const projectItem = projectItemEdges[i].node
-      const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
-      const columnNameSearchResult = projectItem.findColumnName()
-
-      if (columnNameSearchResult === null) {
-        this.projectItems.delete(i)
-        i--
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        this.columnNameMap!.set(projectKey, columnNameSearchResult)
-        this.projectItems.delete(i)
-        i--
-        if (projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
-          continue
-        }
-
-        if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
-          continue
-        }
-
-        return columnNameSearchResult
-      } else {
-        remoteRecordQueryParams.push(columnNameSearchResult)
-        i--
-      }
-    } while (i > 0)
-
-    this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams)
-
-    return this.#determineSearchResult(remoteRecordQueryParams)
+  #validateProjectModeDisabled (projectOwnerLogin?: string, projectNumber?: number) {
+    if (TypeChecker.isString(projectOwnerLogin)) {
+      throw new Error('The issue is not configured for project mode. projectOwnerLogin is not an accepted parameter')
+    }
   }
 }
 
@@ -391,14 +389,14 @@ export class ProjectItem extends RecordWithID {
   }
 }
 
-export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>, ...githubObjectArgs: any[]): void {
+export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
   let i = 0
   const edges = graphQLPage.getEdges()
 
   while (i < edges.length) {
     try {
       edges[i] = {
-        node: new GithubObjectClass(edges[i].node, ...githubObjectArgs)
+        node: new GithubObjectClass(edges[i].node)
       }
 
       i++

@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -8,12 +31,16 @@ const fs_1 = __importDefault(require("fs"));
 const githubAPIClient_1 = require("./githubAPIClient");
 const githubGraphQLPageAssembler_1 = require("./githubGraphQLPageAssembler");
 const logger_1 = require("./logger");
+const TypeChecker = __importStar(require("./typeChecker"));
 const validateConfig_1 = require("./validateConfig");
 const fsPromises = fs_1.default.promises;
 const logger = new logger_1.Logger();
 async function loadConfig() {
     const configContents = await fsPromises.readFile('./config.json');
     return '' + configContents;
+}
+async function searchIssuesForColumnNames() {
+    const incompleteSearchSpace = [];
 }
 async function main() {
     let configFileContents;
@@ -51,7 +78,7 @@ async function main() {
     let issuePage;
     try {
         logger.info('Fetching issues with labels and column data...');
-        issuePage = await githubGraphQLPageAssembler.fetchAllIssues('projects' in config);
+        issuePage = await githubGraphQLPageAssembler.fetchAllIssues();
         logger.info('Fetched issues with labels and column data', 2);
     }
     catch (error) {
@@ -63,20 +90,23 @@ async function main() {
         return;
     }
     const issues = issuePage.getNodeArray();
-    /*const issuesMissingSearchSpace: Issue[] = []
-    const issuesWithColumnNames: Issue[] = []
-    const issuesWithoutColumnNames: number[] = []
-  
+    const issuesMissingSearchSpace = [];
+    const issuesWithColumnNames = [];
+    const issuesWithoutColumnNames = [];
+    const issuesWithUnsucessfulSearches = [];
     for (let i = issues.length - 1; i >= 0; i--) {
-      const issue = issues[i]
-      const columnNameSearchResult = issue.findColumnName()
-  
-      if (columnNameSearchResult === null) {
-        issuesWithoutColumnNames.push(issue.number)
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        issuesWithColumnNames.push()
-      }
-    }*/
+        const issue = issues[i];
+        const columnNameSearchResult = issue.findColumnName();
+        if (columnNameSearchResult === null) {
+            issuesWithoutColumnNames.push(issue.number);
+        }
+        else if (TypeChecker.isString(columnNameSearchResult)) {
+            issuesWithColumnNames.push(issue);
+        }
+        else {
+            issuesMissingSearchSpace.push(...columnNameSearchResult);
+        }
+    }
     console.log(JSON.stringify(issues[0], null, 2));
 }
 module.exports = main;

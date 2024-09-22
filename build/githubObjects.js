@@ -51,14 +51,14 @@ exports.RecordWithID = RecordWithID;
 class GraphQLPage {
     nodeClass;
     page;
-    constructor(pagePOJO, NodeClass, ...nodeClassArgs) {
+    constructor(pagePOJO, NodeClass) {
         if (!(isGraphQLPage(pagePOJO))) {
             throw new TypeError('Param pagePOJO does not match a graphQL page');
         }
         this.page = pagePOJO;
         this.nodeClass = NodeClass;
         if (NodeClass !== undefined) {
-            initializeNodes(NodeClass, this, nodeClassArgs);
+            initializeNodes(NodeClass, this);
         }
     }
     appendPage(page) {
@@ -142,12 +142,14 @@ exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     columnName;
     columnNameMap;
-    findColumnName;
     hasExtendedSearchSpace;
     labels;
     number;
     projectItems;
-    constructor(issuePOJO, projectsEnabled) {
+    #cacheSearchResult;
+    #lookupCachedColumnName;
+    #modeAction;
+    constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
         }
@@ -165,20 +167,9 @@ class Issue {
         }
         this.hasExtendedSearchSpace = false;
         this.number = issuePOJO.number;
-        if (projectsEnabled) {
-            this.columnNameMap = new Map();
-            this.findColumnName = (projectOwnerLogin, projectNumber = 0) => {
-                if (projectOwnerLogin === undefined) {
-                    throw new ReferenceError('Param projectOwnerLogin is required for column name search when using projects');
-                }
-                return this.#findColumnNameMultipleProjects(projectOwnerLogin, projectNumber);
-            };
-        }
-        else {
-            this.findColumnName = () => {
-                return this.#findColumnName();
-            };
-        }
+        this.#cacheSearchResult = this.#cacheSearchResultDefault;
+        this.#modeAction = this.#setMode;
+        this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault;
     }
     getLabels() {
         if (this.labels !== undefined) {
@@ -191,15 +182,53 @@ class Issue {
     getNumber() {
         return this.number;
     }
-    #includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams) {
+    findColumnName(projectOwnerLogin, projectNumber) {
+        this.#modeAction(projectOwnerLogin, projectNumber);
+        const cachedSearch = this.#lookupCachedColumnName(projectOwnerLogin, projectNumber);
+        if (cachedSearch) {
+            return cachedSearch;
+        }
+        const remoteRecordQueryParams = [];
+        const projectItemEdges = this.projectItems.getEdges();
+        let i = projectItemEdges.length - 1;
+        do {
+            const projectItem = projectItemEdges[i].node;
+            const columnNameSearchResult = projectItem.findColumnName();
+            if (columnNameSearchResult === null) {
+                this.projectItems.delete(i);
+                i--;
+            }
+            else if (TypeChecker.isString(columnNameSearchResult)) {
+                this.projectItems.delete(i);
+                i--;
+                if (this.#cacheSearchResult(projectItem, projectOwnerLogin, projectNumber)) {
+                    return columnNameSearchResult;
+                }
+            }
+            else {
+                remoteRecordQueryParams.push(columnNameSearchResult);
+                i--;
+            }
+        } while (i > 0);
         if (!(this.projectItems.isLastPage())) {
             remoteRecordQueryParams.push({
                 parentId: this.number,
                 recordContainer: this.projectItems
             });
         }
+        return this.#determineRemoteQueryParams(remoteRecordQueryParams);
     }
-    #determineSearchResult(remoteRecordQueryParams) {
+    #cacheSearchResultDefault(projectItem, projectOwnerLogin, projectNumber) {
+        this.columnName = projectItem.findColumnName();
+        return true;
+    }
+    #cacheSearchResultProjectMode(projectItem, projectOwnerLogin, projectNumber = 0) {
+        const projectKey = projectOwnerLogin + projectNumber;
+        this.columnNameMap.set(projectKey, projectItem.findColumnName());
+        const projectItemProjectUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
+        return projectItemProjectUniqueIdentifiers.ownerLoginName === projectOwnerLogin && projectItemProjectUniqueIdentifiers.number === projectNumber;
+    }
+    #determineRemoteQueryParams(remoteRecordQueryParams) {
         if (remoteRecordQueryParams.length === 0) {
             return null;
         }
@@ -214,66 +243,32 @@ class Issue {
             return remoteRecordQueryParams;
         }
     }
-    #findColumnName() {
-        if (this.columnName) {
-            return this.columnName;
-        }
-        const remoteRecordQueryParams = [];
-        const projectItemEdges = this.projectItems.getEdges();
-        let i = projectItemEdges.length - 1;
-        do {
-            const projectItem = projectItemEdges[i].node;
-            const columnNameSearchResult = projectItem.findColumnName();
-            if (columnNameSearchResult === null) {
-                this.projectItems.delete(i);
-            }
-            else if (TypeChecker.isString(columnNameSearchResult)) {
-                this.columnName = columnNameSearchResult;
-                return columnNameSearchResult;
-            }
-            else {
-                remoteRecordQueryParams.push(columnNameSearchResult);
-                i--;
-            }
-        } while (i > 0);
-        this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams);
-        return this.#determineSearchResult(remoteRecordQueryParams);
+    #lookupCachedColumnNameProjectMode(projectOwnerLogin, projectNumber = 0) {
+        return this.columnNameMap?.get(projectOwnerLogin + projectNumber);
     }
-    #findColumnNameMultipleProjects(projectOwnerLogin, projectNumber = 0) {
-        const projectKey = projectOwnerLogin + projectNumber;
-        if (this.columnNameMap.has(projectKey)) {
-            return this.columnNameMap.get(projectKey);
+    #lookupCachedColumnNameDefault(projectOwnerLogin, projectNumber) {
+        return this.columnName;
+    }
+    #setMode(projectOwnerLogin, projectNumber) {
+        if (TypeChecker.isString(projectOwnerLogin)) {
+            this.columnNameMap = new Map();
+            this.#cacheSearchResult = this.#cacheSearchResultProjectMode;
+            this.#modeAction = this.#validateProjectMode;
+            this.#lookupCachedColumnName = this.#lookupCachedColumnNameProjectMode;
         }
-        const remoteRecordQueryParams = [];
-        const projectItemEdges = this.projectItems.getEdges();
-        let i = projectItemEdges.length - 1;
-        do {
-            const projectItem = projectItemEdges[i].node;
-            const projectItemHumanAccessibleUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
-            const columnNameSearchResult = projectItem.findColumnName();
-            if (columnNameSearchResult === null) {
-                this.projectItems.delete(i);
-                i--;
-            }
-            else if (TypeChecker.isString(columnNameSearchResult)) {
-                this.columnNameMap.set(projectKey, columnNameSearchResult);
-                this.projectItems.delete(i);
-                i--;
-                if (projectOwnerLogin !== projectItemHumanAccessibleUniqueIdentifiers.ownerLoginName) {
-                    continue;
-                }
-                if (projectNumber && projectNumber !== projectItemHumanAccessibleUniqueIdentifiers.number) {
-                    continue;
-                }
-                return columnNameSearchResult;
-            }
-            else {
-                remoteRecordQueryParams.push(columnNameSearchResult);
-                i--;
-            }
-        } while (i > 0);
-        this.#includeProjectItemParamsIfPageIncomplete(remoteRecordQueryParams);
-        return this.#determineSearchResult(remoteRecordQueryParams);
+        else {
+            this.#modeAction = this.#validateProjectModeDisabled;
+        }
+    }
+    #validateProjectMode(projectOwnerLogin, projectNumber) {
+        if (!(TypeChecker.isString(projectOwnerLogin))) {
+            throw new Error('The issue is configured for project mode. findColumnName requires projectOwnerLogin');
+        }
+    }
+    #validateProjectModeDisabled(projectOwnerLogin, projectNumber) {
+        if (TypeChecker.isString(projectOwnerLogin)) {
+            throw new Error('The issue is not configured for project mode. projectOwnerLogin is not an accepted parameter');
+        }
     }
 }
 exports.Issue = Issue;
@@ -332,13 +327,13 @@ class ProjectItem extends RecordWithID {
     }
 }
 exports.ProjectItem = ProjectItem;
-function initializeNodes(GithubObjectClass, graphQLPage, ...githubObjectArgs) {
+function initializeNodes(GithubObjectClass, graphQLPage) {
     let i = 0;
     const edges = graphQLPage.getEdges();
     while (i < edges.length) {
         try {
             edges[i] = {
-                node: new GithubObjectClass(edges[i].node, ...githubObjectArgs)
+                node: new GithubObjectClass(edges[i].node)
             };
             i++;
         }

@@ -64,22 +64,6 @@ describe('The GraphQLPage class', () => {
         new GraphQLPage(GithubObjectsTestData.getPagePOJOMinimal())
       }).not.toThrow(TypeError)
     })
-
-    it('can toggle issue paged between project and non project mode', () => {
-      const issuePagePOJO = GithubObjectsTestData.getIssuePagePOJO()
-      const issuePageProjectsDisabled = new GraphQLPage<Issue>(issuePagePOJO, Issue, false)
-      const issuesWithProjectsDisabled = issuePageProjectsDisabled.getNodeArray()
-      expect(issuesWithProjectsDisabled.length).not.toBe(0)
-      expect(issuesWithProjectsDisabled[0].columnNameMap).not.toBe(undefined)
-      expect(issuesWithProjectsDisabled[0].columnName).toBe(undefined)
-
-      const issuePagePOJO2 = GithubObjectsTestData.getIssuePagePOJO()
-      const issuePageProjectsEnabled = new GraphQLPage<Issue>(issuePagePOJO2, Issue, true)
-      const issuesWithProjectsEnabled = issuePageProjectsEnabled.getNodeArray()
-      expect(issuesWithProjectsEnabled.length).not.toBe(0)
-      expect(issuesWithProjectsEnabled[0].columnNameMap).not.toBe(undefined)
-      expect(issuesWithProjectsEnabled[0].columnName).toBe(undefined)
-    })
   })
 
   describe('appendPage()', () => {
@@ -407,10 +391,10 @@ describe('The Issue class', () => {
       })
 
       describe('when the search space is incomplete', () => {
-        describe('when projects are enabled', () => {
+        describe('when project parameters are passed to findColumnName', () => {
           it('returns an issue as the remote query parameters when the extended column name search space has not yet been applied to the issue', () => {
             const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
-            const issue = new Issue(issuePOJO, true)
+            const issue = new Issue(issuePOJO)
             const projectIdenifiers = issue.projectItems.getNodeArray()[0].getProjectHumanAccessibleUniqueIdentifiers()
             const columnNameSearchResult = issue.findColumnName(projectIdenifiers.ownerLoginName, projectIdenifiers.number)
 
@@ -425,7 +409,7 @@ describe('The Issue class', () => {
             const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
             const project = issuePOJO.projectItems.edges[0].node.project
             const projectItemId = issuePOJO.projectItems.edges[0].node.databaseId
-            const issue = new Issue(issuePOJO, true)
+            const issue = new Issue(issuePOJO)
 
             issue.hasExtendedSearchSpace = true
 
@@ -444,6 +428,26 @@ describe('The Issue class', () => {
                 queryParameters.recordContainer instanceof GraphQLPage &&
                 queryParameters.recordContainer.lookupNodeClass() === ProjectItem
             })).not.toBe(undefined)
+          })
+
+          it('does not allow a call with project parameters after findColumnName has been called without parameters', () => {
+            const issue = new Issue(GithubObjectsTestData.getIssuePOJO())
+
+            issue.findColumnName()
+
+            expect(() => {
+              issue.findColumnName('a project owner name', 1)
+            }).toThrow(/projectOwnerLogin is not an accepted parameter/)
+          })
+
+          it('does not allow a call without parameters after findColumnName has been called with project parameters', () => {
+            const issue = new Issue(GithubObjectsTestData.getIssuePOJO())
+
+            issue.findColumnName('a project owner name', 1)
+
+            expect(() => {
+              issue.findColumnName()
+            }).toThrow(/findColumnName requires projectOwnerLogin/)
           })
         })
       })
@@ -464,11 +468,11 @@ describe('The Issue class', () => {
         })
       })
 
-      describe('when projects are enabled', () => {
+      describe('when projects parameters are passed', () => {
         it('does not return a column name if the project item does not match the passed project number', () => {
           const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
           const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO, true)
+          const issue = new Issue(issuePOJO)
 
           expect(issue.findColumnName(projectOwnerName, 100)).not.toBe(nonMatchingColumnName)
         })
@@ -476,16 +480,16 @@ describe('The Issue class', () => {
         it('does not return a column name if the project item does not match the passed project owner name', () => {
           const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
           const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO, true)
+          const issue = new Issue(issuePOJO)
 
           expect(issue.findColumnName('Non matching name', projectNumber)).not.toBe(nonMatchingColumnName)
         })
 
         it('returns a column name if the project owner and number match the project filtering parameters', () => {
-          const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
-          const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
+          const projectNumber = issuePOJO.projectItems.edges[1].node.project.number
+          const projectOwnerName = issuePOJO.projectItems.edges[1].node.project.owner.login
           const columnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO, true)
+          const issue = new Issue(issuePOJO)
 
           expect(issue.findColumnName(projectOwnerName, projectNumber)).toBe(columnName)
         })
@@ -668,19 +672,5 @@ describe('initializeNodes()', () => {
     })).toBe(undefined)
 
     expect(instantiatedNodes.length).toBe(1)
-  })
-
-  it('passes the third argument onwards to the constructor of the class passed', () => {
-    const extraArg1 = 'extra argument'
-    const extraArg2 = ['extra argument 2']
-    const pagePOJO = GithubObjectsTestData.getPagePOJOMinimal()
-    const testClassJSONArg = pagePOJO.edges[0].node
-    const TestClass = require('./testClass')
-
-    initializeNodes(TestClass, new GraphQLPage<typeof TestClass>(pagePOJO), extraArg1, extraArg2)
-
-    jest.mock('./testClass')
-
-    expect(TestClass).toHaveBeenCalledWith(testClassJSONArg, extraArg1, extraArg2)
   })
 })

@@ -2,7 +2,7 @@ import fs from 'fs'
 // Javascript destructuring assignment
 import { GithubAPIClient } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
-import { GraphQLPage, Issue } from './githubObjects'
+import { GraphQLPage, Issue, RemoteRecordPageQueryParameters } from './githubObjects'
 import { Logger } from './logger'
 import * as TypeChecker from './typeChecker'
 import { validateConfig } from './validateConfig'
@@ -14,6 +14,10 @@ async function loadConfig (): Promise<string> {
   const configContents = await fsPromises.readFile('./config.json')
 
   return '' + configContents
+}
+
+async function searchIssuesForColumnNames () {
+  const incompleteSearchSpace: RemoteRecordPageQueryParameters[] = []
 }
 
 async function main () {
@@ -59,7 +63,7 @@ async function main () {
 
   try {
     logger.info('Fetching issues with labels and column data...')
-    issuePage = await githubGraphQLPageAssembler.fetchAllIssues('projects' in config)
+    issuePage = await githubGraphQLPageAssembler.fetchAllIssues()
 
     logger.info('Fetched issues with labels and column data', 2)
   } catch (error) {
@@ -73,9 +77,10 @@ async function main () {
   }
 
   const issues = issuePage.getNodeArray()
-  /*const issuesMissingSearchSpace: Issue[] = []
+  const issuesMissingSearchSpace: RemoteRecordPageQueryParameters[] = []
   const issuesWithColumnNames: Issue[] = []
   const issuesWithoutColumnNames: number[] = []
+  const issuesWithUnsucessfulSearches: number[] = []
 
   for (let i = issues.length - 1; i >= 0; i--) {
     const issue = issues[i]
@@ -84,9 +89,13 @@ async function main () {
     if (columnNameSearchResult === null) {
       issuesWithoutColumnNames.push(issue.number)
     } else if (TypeChecker.isString(columnNameSearchResult)) {
-      issuesWithColumnNames.push()
+      issuesWithColumnNames.push(issue)
+    } else {
+      issuesMissingSearchSpace.push(...columnNameSearchResult)
     }
-  }*/
+  }
+
+
 
   console.log(JSON.stringify(issues[0], null, 2))
 }
