@@ -76,6 +76,10 @@ export class GraphQLPage<T> {
     return this.page.edges.splice(index, 1)[0].node
   }
 
+  disableRemoteDataFetching () {
+    this.page.pageInfo.hasNextPage = false
+  }
+
   getEdges () {
     return this.page.edges
   }

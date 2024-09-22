@@ -147,6 +147,18 @@ describe('The GraphQLPage class', () => {
     })
   })
 
+  describe('disableRemoteDataFetching()', () => {
+    it('simply marks this GraphQLPage as not having any more pages to fetch', () => {
+      const page = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
+
+      expect(page.isLastPage()).toBe(false)
+
+      page.disableRemoteDataFetching()
+
+      expect(page.isLastPage()).toBe(true)
+    })
+  })
+
   describe('getEdges()', () => {
     it('returns the edges of the graphQL page', () => {
       const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
