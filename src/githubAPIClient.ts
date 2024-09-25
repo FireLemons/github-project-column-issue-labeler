@@ -1,6 +1,61 @@
-import { Issue, GraphQLPage } from './githubObjects'
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
+
+interface FieldValuePageNodePOJO {
+  name?: string
+}
+
+interface GitHubGraphQLError {
+  type: string
+  path: [
+    string | number
+  ]
+  locations: [
+    {
+      line: number
+      column: number
+    }
+  ]
+  message: string
+}
+
+interface GraphQLPagePOJO<T> {
+  edges: {
+    node: T
+  }[]
+  pageInfo: {
+    endCursor: string
+    hasNextPage: boolean
+  }
+}
+
+interface IssuePOJO {
+  number: number,
+  labels: GraphQLPagePOJO<LabelPOJO>
+  projectItems: GraphQLPagePOJO<ProjectItemPOJO>
+}
+
+export interface IssuePageResponse {
+  repository?: {
+    issues: GraphQLPagePOJO<IssuePOJO>
+  }
+  errors?: GitHubGraphQLError[]
+}
+
+interface LabelPOJO {
+  name: string
+}
+
+interface ProjectItemPOJO {
+  databaseId: number
+  fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>,
+  project: {
+    number: number,
+    owner: {
+      login: string
+    }
+  }
+}
 
 const MAX_PAGE_SIZE = 100
 const SMALL_PAGE_SIZE = 20
@@ -63,27 +118,6 @@ fragment projectItemPage on ProjectV2ItemConnection {
   }
 }`
 
-interface GitHubGraphQLError {
-  type: string
-  path: [
-    string | number
-  ]
-  locations: [
-    {
-      line: number
-      column: number
-    }
-  ]
-  message: string
-}
-
-export interface IssuePageResponse {
-  repository?: {
-    issues: GraphQLPage<Issue>
-  }
-  errors?: GitHubGraphQLError[]
-}
-
 export class GithubAPIClient {
   octokit: Octokit
   repoOwnerName: string
@@ -95,7 +129,7 @@ export class GithubAPIClient {
     this.repoOwnerName = repoOwnerName
   }
 
-  expandColumnNameSearchSpace (issueNumber: number): Promise<Issue> {
+  expandColumnNameSearchSpace (issueNumber: number): Promise<IssuePOJO> {
     return this.octokit.graphql(`
       query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
         repository (name: $repoName, owner: $repoOwnerName) {
