@@ -31,12 +31,20 @@ export class GithubGraphQLPageAssembler {
           issues.appendPage(issuePage)
         }
       } catch (error) {
-        if (issuePageResponse?.repository !== undefined) {
-          const pageMessageIndex = cursor !== undefined ? `page with cursor ${cursor}` : 'first page'
-          logger.warn('Encountered errors while fetching ' + pageMessageIndex)
-        } else {
+        if (issues === undefined || issues.isEmpty()) {
           throw error
+        } else {
+          logger.warn('Failed to fetch all issues. Continuing with subset of successfully fetched issues')
+
+          if (error instanceof Error) {
+            logger.warn(error.stack ?? error.message, 2)
+          }
+
+          issues.disableRemoteDataFetching()
+
+          return issues
         }
+
       }
     } while (!(issues?.isLastPage()))
 

@@ -28,12 +28,16 @@ class GithubGraphQLPageAssembler {
                 }
             }
             catch (error) {
-                if (issuePageResponse?.repository !== undefined) {
-                    const pageMessageIndex = cursor !== undefined ? `page with cursor ${cursor}` : 'first page';
-                    logger.warn('Encountered errors while fetching ' + pageMessageIndex);
+                if (issues === undefined || issues.isEmpty()) {
+                    throw error;
                 }
                 else {
-                    throw error;
+                    logger.warn('Failed to fetch all issues. Continuing with subset of successfully fetched issues');
+                    if (error instanceof Error) {
+                        logger.warn(error.stack ?? error.message, 2);
+                    }
+                    issues.disableRemoteDataFetching();
+                    return issues;
                 }
             }
         } while (!(issues?.isLastPage()));
