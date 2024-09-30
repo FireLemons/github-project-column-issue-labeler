@@ -1,6 +1,13 @@
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
 
+interface ExtendedColumnNameSearchSpaceResponse {
+  repository?: {
+    issue: IssuePOJO
+  }
+  errors?: GitHubGraphQLError[]
+}
+
 interface FieldValuePageNodePOJO {
   name?: string
 }
@@ -129,7 +136,7 @@ export class GithubAPIClient {
     this.repoOwnerName = repoOwnerName
   }
 
-  expandColumnNameSearchSpace (issueNumber: number): Promise<IssuePOJO> {
+  fetchExpandedColumnNameSearchSpace (issueNumber: number): Promise<ExtendedColumnNameSearchSpaceResponse> {
     return this.octokit.graphql(`
       query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
         repository (name: $repoName, owner: $repoOwnerName) {

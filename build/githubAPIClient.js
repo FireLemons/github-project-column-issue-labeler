@@ -69,7 +69,7 @@ class GithubAPIClient {
         this.repoName = repoName;
         this.repoOwnerName = repoOwnerName;
     }
-    expandColumnNameSearchSpace(issueNumber) {
+    fetchExpandedColumnNameSearchSpace(issueNumber) {
         return this.octokit.graphql(`
       query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
         repository (name: $repoName, owner: $repoOwnerName) {
