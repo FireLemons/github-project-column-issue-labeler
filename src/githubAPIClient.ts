@@ -2,10 +2,9 @@
 import { Octokit, App } from 'octokit'
 
 interface ExtendedColumnNameSearchSpaceResponse {
-  repository?: {
+  repository: {
     issue: IssueContainingExpandedSearchSpacePOJO
   }
-  errors?: GitHubGraphQLError[]
 }
 
 interface FieldValuePageNodePOJO {
@@ -48,10 +47,9 @@ interface IssueContainingExpandedSearchSpacePOJO {
 }
 
 export interface IssuePageResponse {
-  repository?: {
+  repository: {
     issues: GraphQLPagePOJO<IssuePOJO>
   }
-  errors?: GitHubGraphQLError[]
 }
 
 interface LabelPOJO {
