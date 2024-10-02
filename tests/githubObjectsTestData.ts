@@ -485,6 +485,98 @@ export default { // all test data returns a unique copy to avoid complications f
       }
     }
   },
+  getIssuePOJOWithManyProjectItemsAndAllGraphQLPagesHavingAdditionalRemoteData () {
+    return {
+      number: defaultIssueId,
+      labels: {
+        edges: [
+          {
+            node: {
+              name: defaultLabelNameValue
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultLabelPageEndCursor,
+          hasNextPage: true
+        }
+      },
+      projectItems: {
+        edges: [
+          {
+            node: {
+              databaseId: 65248238,
+              fieldValues: {
+                edges: [],
+                pageInfo: {
+                  endCursor: '2N>VOeNZnx8"}7\'}-E',
+                  hasNextPage: true
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          },
+          {
+            node: {
+              databaseId: defaultProjectItemId,
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: defaultFieldValueName
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: defaultFieldValuePageEndCursor,
+                  hasNextPage: true
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          },
+          {
+            node: {
+              databaseId: 65248240,
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'e?+aYAe8>^X6|xaM='
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: '=0HoWr%^z3QjW5W%:%',
+                  hasNextPage: true
+                }
+              },
+              project: {
+                number: 2,
+                owner: {
+                  login: 'non matching project'
+                }
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultFieldValuePageEndCursor,
+          hasNextPage: true
+        }
+      }
+    }
+  },
   getIssuePOJOWithoutColumnNames () {
     return {
       number: defaultIssueId,
