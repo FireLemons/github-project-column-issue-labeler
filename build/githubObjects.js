@@ -145,9 +145,9 @@ exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     columnName;
     columnNameMap;
-    hasExtendedSearchSpace;
+    hasExpandedSearchSpace;
     labels;
-    number;
+    #number;
     projectItems;
     #cacheSearchResult;
     #lookupCachedColumnName;
@@ -163,13 +163,13 @@ class Issue {
             issuePOJO.labels = undefined;
         }
         try {
-            this.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem);
+            this.projectItems = new GraphQLPageMergeable(issuePOJO.projectItems, ProjectItem);
         }
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
-        this.hasExtendedSearchSpace = false;
-        this.number = issuePOJO.number;
+        this.hasExpandedSearchSpace = false;
+        this.#number = issuePOJO.number;
         this.#cacheSearchResult = this.#cacheSearchResultDefault;
         this.#modeAction = this.#setMode;
         this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault;
@@ -183,7 +183,17 @@ class Issue {
         return null;
     }
     getNumber() {
-        return this.number;
+        return this.#number;
+    }
+    getProjectItemPage() {
+        return this.projectItems;
+    }
+    disableColumnNameRemoteSearchSpace() {
+        const { projectItems } = this;
+        for (const projectItem of projectItems.getNodeArray()) {
+            projectItem.getFieldValuePage().disableRemoteDataFetching();
+        }
+        projectItems.disableRemoteDataFetching();
     }
     findColumnName(projectOwnerLogin, projectNumber) {
         this.#modeAction(projectOwnerLogin, projectNumber);
@@ -215,8 +225,8 @@ class Issue {
         } while (i > 0);
         if (!(this.projectItems.isLastPage())) {
             remoteRecordQueryParams.push({
-                parentId: this.number,
-                recordContainer: this.projectItems
+                parentId: this.#number,
+                localPage: this.projectItems
             });
         }
         return this.#determineRemoteQueryParams(remoteRecordQueryParams);
@@ -235,12 +245,8 @@ class Issue {
         if (remoteRecordQueryParams.length === 0) {
             return null;
         }
-        else if (!(this.hasExtendedSearchSpace)) {
-            return [
-                {
-                    recordContainer: this
-                }
-            ];
+        else if (!(this.hasExpandedSearchSpace)) {
+            return this;
         }
         else {
             return remoteRecordQueryParams;
@@ -290,7 +296,7 @@ class Label {
 exports.Label = Label;
 class ProjectItem extends RecordWithID {
     columnName;
-    fieldValues;
+    #fieldValues;
     projectHumanReadableUniqueIdentifiers;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
@@ -298,7 +304,7 @@ class ProjectItem extends RecordWithID {
         }
         super(projectItemPOJO.databaseId);
         try {
-            this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue);
+            this.#fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue);
         }
         catch (error) {
             throw new ReferenceError('The field value page could not be initialized');
@@ -312,18 +318,21 @@ class ProjectItem extends RecordWithID {
         if (this.columnName !== undefined) {
             return this.columnName;
         }
-        const columnNameList = this.fieldValues.getNodeArray();
+        const columnNameList = this.#fieldValues.getNodeArray();
         if (columnNameList.length !== 0) {
             this.columnName = columnNameList[0].getName();
             return this.columnName;
         }
-        else if (!(this.fieldValues.isLastPage())) {
+        else if (!(this.#fieldValues.isLastPage())) {
             return {
                 parentId: this.getId(),
-                recordContainer: this.fieldValues
+                localPage: this.#fieldValues
             };
         }
         return null;
+    }
+    getFieldValuePage() {
+        return this.#fieldValues;
     }
     getProjectHumanAccessibleUniqueIdentifiers() {
         return this.projectHumanReadableUniqueIdentifiers;

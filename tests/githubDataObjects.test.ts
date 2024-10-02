@@ -332,12 +332,12 @@ describe('The GraphQLPageMergeable class', () => {
       })
 
       expect(existingProjectItem).not.toBe(undefined)
-      expect(existingProjectItem?.fieldValues.getNodeArray().length).toBe(0)
+      expect(existingProjectItem?.getFieldValuePage().getNodeArray().length).toBe(0)
 
       page.merge(pageToBeMerged)
 
       expect(page.getNodeArray().find((projectItem) => {
-        return projectItem.getId() === existingProjectItemId && projectItem.fieldValues.getNodeArray().find((fieldValue) => {
+        return projectItem.getId() === existingProjectItemId && projectItem.getFieldValuePage().getNodeArray().find((fieldValue) => {
           return fieldValue.name === existingProjectItemUpdatedFieldValueName
         })
       })).not.toBe(undefined)
@@ -392,6 +392,38 @@ describe('The Issue class', () => {
     })
   })
 
+  describe('disableColumnNameRemoteSearchSpace()', () => {
+    let issue: Issue
+
+    beforeEach(() => {
+      issue = new Issue(GithubObjectsTestData.getIssuePOJOWithManyProjectItemsAndAllGraphQLPagesHavingAdditionalRemoteData())
+    })
+
+    it('marks the ProjectItem page as not having any additional remote records to fetch', () => {
+      expect(issue.getProjectItemPage().isLastPage()).toBe(false)
+
+      issue.disableColumnNameRemoteSearchSpace()
+
+      expect(issue.getProjectItemPage().isLastPage()).toBe(true)
+    })
+
+    it('marks all child FieldValue graphql pages as not having any additional remote records to fetch', () => {
+      const fieldValuePages = issue.getProjectItemPage().getNodeArray().map((projectItem) => {
+        return projectItem.getFieldValuePage()
+      })
+
+      for (const fieldValuePage of fieldValuePages) {
+        expect(fieldValuePage.isLastPage()).toBe(false)
+      }
+
+      issue.disableColumnNameRemoteSearchSpace()
+
+      for (const fieldValuePage of fieldValuePages) {
+        expect(fieldValuePage.isLastPage()).toBe(true)
+      }
+    })
+  })
+
   describe('findColumnName()', () => {
     describe('when the search space does not contain column names', () => {
       describe('when the search space is complete', () => {
@@ -404,17 +436,12 @@ describe('The Issue class', () => {
 
       describe('when the search space is incomplete', () => {
         describe('when project parameters are passed to findColumnName', () => {
-          it('returns an issue as the remote query parameters when the extended column name search space has not yet been applied to the issue', () => {
+          it('returns an issue when the expanded column name search space has not yet been applied to the issue', () => {
             const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
             const issue = new Issue(issuePOJO)
             const projectIdenifiers = issue.projectItems.getNodeArray()[0].getProjectHumanAccessibleUniqueIdentifiers()
-            const columnNameSearchResult = issue.findColumnName(projectIdenifiers.ownerLoginName, projectIdenifiers.number)
 
-            expect(Array.isArray(columnNameSearchResult)).toBe(true)
-
-            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-              return queryParameters.recordContainer instanceof Issue
-            })).not.toBe(undefined)
+            expect(issue.findColumnName(projectIdenifiers.ownerLoginName, projectIdenifiers.number)).toBeInstanceOf(Issue)
           })
 
           it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
@@ -423,7 +450,7 @@ describe('The Issue class', () => {
             const projectItemId = issuePOJO.projectItems.edges[0].node.databaseId
             const issue = new Issue(issuePOJO)
 
-            issue.hasExtendedSearchSpace = true
+            issue.hasExpandedSearchSpace = true
 
             const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
 
@@ -431,14 +458,12 @@ describe('The Issue class', () => {
 
             expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
               return queryParameters.parentId === projectItemId &&
-                queryParameters.recordContainer instanceof GraphQLPage &&
-                queryParameters.recordContainer.lookupNodeClass() === FieldValue
+                queryParameters.localPage.lookupNodeClass() === FieldValue
             })).not.toBe(undefined)
 
             expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
               return queryParameters.parentId === issuePOJO.number &&
-                queryParameters.recordContainer instanceof GraphQLPage &&
-                queryParameters.recordContainer.lookupNodeClass() === ProjectItem
+                queryParameters.localPage.lookupNodeClass() === ProjectItem
             })).not.toBe(undefined)
           })
 
@@ -531,6 +556,16 @@ describe('The Issue class', () => {
       expect(issue.getNumber()).toBe(issuePOJO.number)
     })
   })
+
+  describe('getProjectItemPage()', () => {
+    it('returns the project item page of the Issue instance', () => {
+      const issuePOJO = GithubObjectsTestData.getIssuePOJO()
+      const issueProjectItemsPOJOCopy = structuredClone(issuePOJO.projectItems)
+      const issue = new Issue(issuePOJO)
+
+      expect(issue.getProjectItemPage()).toEqual(new GraphQLPageMergeable<ProjectItem>(issueProjectItemsPOJOCopy, ProjectItem))
+    })
+  })
 })
 
 describe('The Label class', () => {
@@ -606,7 +641,7 @@ describe('The ProjectItem class', () => {
 
       expect(projectItem.findColumnName()).toEqual({
         parentId: projectItemId,
-        recordContainer: projectItem.fieldValues
+        localPage: projectItem.getFieldValuePage()
       })
     })
 
@@ -616,6 +651,16 @@ describe('The ProjectItem class', () => {
       const projectItem = new ProjectItem(projectItemPOJOCopy)
 
       expect(projectItem.findColumnName()).toBe(projectName)
+    })
+  })
+
+  describe('getFieldValuePage()', () => {
+    it('returns the FieldValue page of the ProjectItem instance', () => {
+      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJO()
+      const projectItemFieldValuePagePOJOCopy = structuredClone(projectItemPOJO.fieldValues)
+      const issue = new ProjectItem(projectItemPOJO)
+
+      expect(issue.getFieldValuePage()).toEqual(new GraphQLPage<FieldValue>(projectItemFieldValuePagePOJOCopy, FieldValue))
     })
   })
 

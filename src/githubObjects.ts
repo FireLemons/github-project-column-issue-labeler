@@ -5,8 +5,8 @@ interface Constructable<T> {
 }
 
 export interface RemoteRecordPageQueryParameters {
-  parentId?: number | string
-  recordContainer: Issue | GraphQLPage<FieldValue | Label | ProjectItem>
+  parentId: number | string
+  localPage: GraphQLPage<FieldValue | Label | ProjectItem>
 }
 
 export class FieldValue {
@@ -171,10 +171,10 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
 export class Issue {
   columnName?: string
   columnNameMap?: Map<string, string>
-  hasExtendedSearchSpace: boolean
+  hasExpandedSearchSpace: boolean
   labels?: GraphQLPage<Label>
-  number: number
-  projectItems: GraphQLPage<ProjectItem>
+  #number: number
+  projectItems: GraphQLPageMergeable<ProjectItem>
   #cacheSearchResult: (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber?: number) => boolean
   #lookupCachedColumnName: (projectOwnerLogin?: string, projectNumber?: number) => string | undefined
   #modeAction: (projectOwnerLogin?: string, projectNumber?: number) => void
@@ -191,20 +191,20 @@ export class Issue {
     }
 
     try {
-      this.projectItems = new GraphQLPage(issuePOJO.projectItems, ProjectItem)
+      this.projectItems = new GraphQLPageMergeable(issuePOJO.projectItems, ProjectItem)
     } catch (error) {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.hasExtendedSearchSpace = false
-    this.number = issuePOJO.number
+    this.hasExpandedSearchSpace = false
+    this.#number = issuePOJO.number
 
     this.#cacheSearchResult = this.#cacheSearchResultDefault
     this.#modeAction = this.#setMode
     this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault
   }
 
-  getLabels () {
+  getLabels ():string[] | null {
     if (this.labels !== undefined) {
       return this.labels.getNodeArray().map((label: Label) => {
         return label.getName()
@@ -214,8 +214,22 @@ export class Issue {
     return null
   }
 
-  getNumber () {
-    return this.number
+  getNumber ():number {
+    return this.#number
+  }
+
+  getProjectItemPage ():GraphQLPageMergeable<ProjectItem> {
+    return this.projectItems
+  }
+
+  disableColumnNameRemoteSearchSpace () {
+    const { projectItems } = this
+
+    for(const projectItem of projectItems.getNodeArray()) {
+      projectItem.getFieldValuePage().disableRemoteDataFetching()
+    }
+
+    projectItems.disableRemoteDataFetching()
   }
 
   findColumnName (projectOwnerLogin?: string, projectNumber?: number) {
@@ -254,8 +268,8 @@ export class Issue {
 
     if (!(this.projectItems.isLastPage())) {
       remoteRecordQueryParams.push({
-        parentId: this.number,
-        recordContainer: this.projectItems
+        parentId: this.#number,
+        localPage: this.projectItems
       })
     }
 
@@ -280,12 +294,8 @@ export class Issue {
   #determineRemoteQueryParams (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
     if (remoteRecordQueryParams.length === 0) {
       return null
-    } else if (!(this.hasExtendedSearchSpace)) {
-      return [
-        {
-          recordContainer: this
-        }
-      ]
+    } else if (!(this.hasExpandedSearchSpace)) {
+      return this
     } else {
       return remoteRecordQueryParams
     }
@@ -341,7 +351,7 @@ export class Label {
 
 export class ProjectItem extends RecordWithID {
   columnName?: string
-  fieldValues: GraphQLPage<FieldValue>
+  #fieldValues: GraphQLPage<FieldValue>
   declare id: number
   projectHumanReadableUniqueIdentifiers: {
     number: number
@@ -356,7 +366,7 @@ export class ProjectItem extends RecordWithID {
     super(projectItemPOJO.databaseId)
 
     try {
-      this.fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue)
+      this.#fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue)
     } catch (error) {
       throw new ReferenceError('The field value page could not be initialized')
     }
@@ -372,20 +382,24 @@ export class ProjectItem extends RecordWithID {
       return this.columnName
     }
 
-    const columnNameList = this.fieldValues.getNodeArray()
+    const columnNameList = this.#fieldValues.getNodeArray()
 
     if (columnNameList.length !== 0) {
       this.columnName = columnNameList[0].getName()
 
       return this.columnName
-    } else if (!(this.fieldValues.isLastPage())) {
+    } else if (!(this.#fieldValues.isLastPage())) {
       return {
         parentId: this.getId(),
-        recordContainer: this.fieldValues
+        localPage: this.#fieldValues
       }
     }
 
     return null
+  }
+
+  getFieldValuePage () {
+    return this.#fieldValues
   }
 
   getProjectHumanAccessibleUniqueIdentifiers () {
