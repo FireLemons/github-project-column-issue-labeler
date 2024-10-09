@@ -36,7 +36,7 @@ const fragmentProjectItemPage = `
 fragment projectItemPage on ProjectV2ItemConnection {
   edges {
     node {
-      databaseId
+      id
 
       fieldValues (first: $pageSizeFieldValue) {
         ...fieldValuePage
@@ -92,6 +92,11 @@ class GithubAPIClient {
             repoOwnerName: this.repoOwnerName
         });
     }
+    fetchFieldValuePage() {
+        return this.octokit.graphql(`
+    
+    `, {});
+    }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
       query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoName: String!, $repoOwnerName: String!){
@@ -133,8 +138,8 @@ class GithubAPIClient {
             repoOwnerName: this.repoOwnerName
         });
     }
-    fetchIssueLabelPage(cursor, issueNumber) {
-        return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String!, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
+    fetchIssueLabelPage(issueNumber, cursor) {
+        return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
       repository(name: $repoName, owner: $repoOwnerName){
         issue(number: $issueNumber){
           labels(after: $cursor, first: $pageSize){

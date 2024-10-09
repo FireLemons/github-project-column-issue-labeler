@@ -11,6 +11,10 @@ interface FieldValuePageNodePOJO {
   name?: string
 }
 
+interface FieldValuePageResponse {
+  
+}
+
 interface GitHubGraphQLError {
   type: string
   path: [
@@ -46,6 +50,10 @@ interface IssueContainingExpandedSearchSpacePOJO {
   projectItems: GraphQLPagePOJO<ProjectItemPOJO>
 }
 
+interface IssueContainingLabelPagePOJO {
+  labels: GraphQLPagePOJO<LabelPOJO>
+}
+
 export interface IssuePageResponse {
   repository: {
     issues: GraphQLPagePOJO<IssuePOJO>
@@ -56,8 +64,14 @@ interface LabelPOJO {
   name: string
 }
 
+interface LabelPageResponse {
+  repository: {
+    issue: IssueContainingLabelPagePOJO
+  }
+}
+
 interface ProjectItemPOJO {
-  databaseId: number
+  id: string
   fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>,
   project: {
     number: number,
@@ -103,7 +117,7 @@ const fragmentProjectItemPage = `
 fragment projectItemPage on ProjectV2ItemConnection {
   edges {
     node {
-      databaseId
+      id
 
       fieldValues (first: $pageSizeFieldValue) {
         ...fieldValuePage
@@ -163,6 +177,14 @@ export class GithubAPIClient {
     })
   }
 
+  fetchFieldValuePage (): Promise<FieldValuePageResponse> {
+    return this.octokit.graphql(`
+    
+    `, {
+
+    })
+  }
+
   fetchIssuePage (cursor?: string): Promise<IssuePageResponse> {
     return this.octokit.graphql(`
       query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoName: String!, $repoOwnerName: String!){
@@ -206,8 +228,8 @@ export class GithubAPIClient {
     )
   }
 
-  fetchIssueLabelPage (cursor: string, issueNumber: number) {
-    return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String!, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
+  fetchIssueLabelPage (issueNumber: number, cursor?: string): Promise<LabelPageResponse> {
+    return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
       repository(name: $repoName, owner: $repoOwnerName){
         issue(number: $issueNumber){
           labels(after: $cursor, first: $pageSize){

@@ -132,4 +132,4 @@ out
 config.json
 
 # place to put api responses with real prod data
-request_responses/
+temp/
