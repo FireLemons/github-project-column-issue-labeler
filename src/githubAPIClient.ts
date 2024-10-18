@@ -2,34 +2,23 @@
 import { Octokit, App } from 'octokit'
 
 interface ExtendedColumnNameSearchSpaceResponse {
-  repository: {
-    issue: IssueContainingExpandedSearchSpacePOJO
+  node: {
+    number: number,
+    projectItems: GraphQLPagePOJO<ProjectItemPOJO>
   }
 }
 
-interface FieldValuePageNodePOJO {
+export interface FieldValuePageNodePOJO {
   name?: string
 }
 
 interface FieldValuePageResponse {
-  
+  node: {
+    fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>
+  }
 }
 
-interface GitHubGraphQLError {
-  type: string
-  path: [
-    string | number
-  ]
-  locations: [
-    {
-      line: number
-      column: number
-    }
-  ]
-  message: string
-}
-
-interface GraphQLPagePOJO<T> {
+export interface GraphQLPagePOJO<T> {
   edges: {
     node: T
   }[]
@@ -40,18 +29,10 @@ interface GraphQLPagePOJO<T> {
 }
 
 interface IssuePOJO {
+  id: string,
   number: number,
   labels: GraphQLPagePOJO<LabelPOJO>
   projectItems: GraphQLPagePOJO<ProjectItemPOJO>
-}
-
-interface IssueContainingExpandedSearchSpacePOJO {
-  number: number,
-  projectItems: GraphQLPagePOJO<ProjectItemPOJO>
-}
-
-interface IssueContainingLabelPagePOJO {
-  labels: GraphQLPagePOJO<LabelPOJO>
 }
 
 export interface IssuePageResponse {
@@ -60,13 +41,19 @@ export interface IssuePageResponse {
   }
 }
 
-interface LabelPOJO {
+export interface LabelPOJO {
   name: string
 }
 
 interface LabelPageResponse {
-  repository: {
-    issue: IssueContainingLabelPagePOJO
+  node: {
+    labels: GraphQLPagePOJO<LabelPOJO>
+  }
+}
+
+interface ProjectItemPageResponse {
+  node: {
+    projectItems: GraphQLPagePOJO<ProjectItemPOJO>
   }
 }
 
@@ -153,11 +140,11 @@ export class GithubAPIClient {
     this.repoOwnerName = repoOwnerName
   }
 
-  fetchExpandedColumnNameSearchSpace (issueNumber: number): Promise<ExtendedColumnNameSearchSpaceResponse> {
+  fetchExpandedColumnNameSearchSpace (issueId: string): Promise<ExtendedColumnNameSearchSpaceResponse> {
     return this.octokit.graphql(`
-      query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
-        repository (name: $repoName, owner: $repoOwnerName) {
-          issue (number: $issueNumber) {
+      query expandedColumnNameSearchSpace($issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!){
+        node(id: $issueId) {
+          ... on Issue {
             number
             projectItems (first: $pageSizeProjectItem) {
               ...projectItemPage
@@ -169,20 +156,30 @@ export class GithubAPIClient {
       ${fragmentFieldValuePage}
       ${fragmentProjectItemPage}
     `, {
-      issueNumber,
+      issueId,
       pageSizeFieldValue: MAX_PAGE_SIZE,
-      pageSizeProjectItem: MAX_PAGE_SIZE,
-      repoName: this.repoName,
-      repoOwnerName: this.repoOwnerName
+      pageSizeProjectItem: MAX_PAGE_SIZE
     })
   }
 
-  fetchFieldValuePage (): Promise<FieldValuePageResponse> {
+  fetchFieldValuePage (projectItemId: string): Promise<FieldValuePageResponse> {
     return this.octokit.graphql(`
-    
-    `, {
+      query fieldValuePage ($cursor: String, $pageSizeFieldValue: Int!, $projectItemId: ID!) {
+        node (id: $projectItemId) {
+          ... on ProjectV2Item {
+            fieldValues (first: $pageSizeFieldValue, after: $cursor) {
+              ...fieldValuePage
+            }
+          }
+        }
+      }
 
-    })
+      ${fragmentFieldValuePage}
+      `, {
+        pageSizeFieldValue: MAX_PAGE_SIZE,
+        projectItemId
+      }
+    )
   }
 
   fetchIssuePage (cursor?: string): Promise<IssuePageResponse> {
@@ -198,6 +195,7 @@ export class GithubAPIClient {
       fragment issuePage on IssueConnection {
         edges {
           node {
+            id
             number
             labels (first: $pageSizeLabel) {
               ...labelPage
@@ -228,24 +226,46 @@ export class GithubAPIClient {
     )
   }
 
-  fetchIssueLabelPage (issueNumber: number, cursor?: string): Promise<LabelPageResponse> {
-    return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
-      repository(name: $repoName, owner: $repoOwnerName){
-        issue(number: $issueNumber){
-          labels(after: $cursor, first: $pageSize){
-            ...labelPage
+  fetchLabelPage (issueId: string, cursor?: string): Promise<LabelPageResponse> {
+    return this.octokit.graphql(`
+      query pageOfLabelsOfIssue($cursor: String, $issueId: ID!, $pageSize: Int!) {
+        node (id: $issueId) {
+          ... on Issue {
+            labels(after: $cursor, first: $pageSize){
+              ...labelPage
+            }
           }
         }
       }
-    }
 
-    ${fragmentLabelPage}
-    `, {
-      cursor,
-      issueNumber,
-      pageSize: MAX_PAGE_SIZE,
-      repoName: this.repoName,
-      repoOwnerName: this.repoOwnerName
-    })
+      ${fragmentLabelPage}
+      `, {
+        cursor,
+        issueId,
+        pageSize: MAX_PAGE_SIZE
+      }
+    )
+  }
+
+  fetchProjectItemPage (issueId: string, cursor?: string): Promise<ProjectItemPageResponse> {
+    return this.octokit.graphql(`
+      query pageOfProjectItemsOfIssue($cursor: String, $issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!) {
+        node (id: $issueId) {
+          ... on Issue {
+            projectItems(after: $cursor, first: $pageSizeProjectItem){
+              ...projectItemPage
+            }
+          }
+        }
+      }
+
+      ${fragmentProjectItemPage}
+      ${fragmentFieldValuePage}
+      `, {
+        cursor,
+        issueId,
+        pageSizeFieldValue: MAX_PAGE_SIZE,
+        pageSizeProjectItem: MAX_PAGE_SIZE
+      })
   }
 }

@@ -1,10 +1,12 @@
 const defaultFieldValueName = 'AnSVq5a_ibi2E*M<|/>'
 const defaultFieldValuePageEndCursor = 'JcYjI~m.<HQ%j}hv1%'
-const defaultIssueId = 1009
+const defaultIssueId = 'njp\\.B#27utGAE~,k^'
+const defaultIssueNumber = 1009
 const defaultLabelNameValue = '5~hg?<[kjHwGhUII-p:'
 const defaultLabelPageEndCursor = 'UjLu&s>NWO+eo_Z|Cg('
-const defaultProjectItemId = 65248239
+const defaultProjectItemId = '8dU\\=8EB6bdGGTu.CL'
 const defaultProjectOwnerLogin = '29;UhhP@%nooLB#ms'
+const idOfProjectItemToBeMerged = 'B)\')eMiV\'I~$jVoNlw'
 
 export default { // all test data returns a unique copy to avoid complications from side effects
   getFieldValuePOJO () {
@@ -69,7 +71,8 @@ export default { // all test data returns a unique copy to avoid complications f
       edges: [
         {
           node: {
-            number: defaultIssueId,
+            id: defaultIssueId,
+            number: defaultIssueNumber,
             labels: {
               edges: [
                 {
@@ -87,7 +90,7 @@ export default { // all test data returns a unique copy to avoid complications f
               edges: [
                 {
                   node: {
-                    databaseId: defaultProjectItemId,
+                    id: defaultProjectItemId,
                     fieldValues: {
                       edges: [
                         {
@@ -129,7 +132,8 @@ export default { // all test data returns a unique copy to avoid complications f
       edges: [
         {
           node: {
-            number: defaultIssueId,
+            id: defaultIssueId,
+            number: defaultIssueNumber,
             labels: {
               edges: [
                 {
@@ -147,7 +151,7 @@ export default { // all test data returns a unique copy to avoid complications f
               edges: [
                 {
                   node: {
-                    databaseId: defaultProjectItemId,
+                    id: defaultProjectItemId,
                     fieldValues: {
                       edges: [
                         {
@@ -186,7 +190,8 @@ export default { // all test data returns a unique copy to avoid complications f
 
   getIssuePOJO () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -204,7 +209,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -236,7 +241,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithInvalidLabelPage () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         pageInfo: null
       },
@@ -244,7 +250,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -276,13 +282,14 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithInvalidValueTypes () {
     return {
+      id: defaultIssueId,
       number: 'wrong type for number',
       labels: [],
       projectItems: {
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -314,7 +321,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithInvalidProjectItemPage () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -335,7 +343,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithManyLabels () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -363,7 +372,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -395,7 +404,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithManyProjectItems () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -413,7 +423,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: 65248238,
+              id: '4H<ganM?"L."N!KJ&h',
               fieldValues: {
                 edges: [],
                 pageInfo: {
@@ -431,7 +441,7 @@ export default { // all test data returns a unique copy to avoid complications f
           },
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -455,7 +465,7 @@ export default { // all test data returns a unique copy to avoid complications f
           },
           {
             node: {
-              databaseId: 65248240,
+              id: 'N|D$Fw7#/`)]^&i)~8',
               fieldValues: {
                 edges: [
                   {
@@ -487,7 +497,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithManyProjectItemsAndAllGraphQLPagesHavingAdditionalRemoteData () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -505,7 +516,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: 65248238,
+              id: 'n<:=&7FB#yklU()"p^',
               fieldValues: {
                 edges: [],
                 pageInfo: {
@@ -523,7 +534,7 @@ export default { // all test data returns a unique copy to avoid complications f
           },
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -547,7 +558,7 @@ export default { // all test data returns a unique copy to avoid complications f
           },
           {
             node: {
-              databaseId: 65248240,
+              id: 'p.#a]F.*<K#d_"IqbL',
               fieldValues: {
                 edges: [
                   {
@@ -579,7 +590,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithoutColumnNames () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -597,7 +609,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [],
                 pageInfo: {
@@ -623,7 +635,8 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       labels: {
         edges: [
           {
@@ -641,7 +654,7 @@ export default { // all test data returns a unique copy to avoid complications f
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [],
                 pageInfo: {
@@ -667,12 +680,13 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getIssuePOJOWithoutLabels () {
     return {
-      number: defaultIssueId,
+      id: defaultIssueId,
+      number: defaultIssueNumber,
       projectItems: {
         edges: [
           {
             node: {
-              databaseId: defaultProjectItemId,
+              id: defaultProjectItemId,
               fieldValues: {
                 edges: [
                   {
@@ -806,7 +820,7 @@ export default { // all test data returns a unique copy to avoid complications f
 
   getProjectItemPOJO () {
     return {
-      databaseId: defaultProjectItemId,
+      id: defaultProjectItemId,
       fieldValues: {
         edges: [
           {
@@ -830,7 +844,7 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getProjectItemPOJOWithInvalidFieldValuePage () {
     return {
-      databaseId: defaultProjectItemId,
+      id: defaultProjectItemId,
       fieldValues: {},
       project: {
         number: 1,
@@ -842,7 +856,7 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getProjectItemPOJOWithoutColumnName () {
     return {
-      databaseId: defaultProjectItemId,
+      id: defaultProjectItemId,
       fieldValues: {
         edges: [
           {
@@ -864,7 +878,7 @@ export default { // all test data returns a unique copy to avoid complications f
   },
   getProjectItemPOJOWithoutLocalColumnName () {
     return {
-      databaseId: defaultProjectItemId,
+      id: defaultProjectItemId,
       fieldValues: {
         edges: [
           {
@@ -889,7 +903,7 @@ export default { // all test data returns a unique copy to avoid complications f
       edges: [
         {
           node: {
-            databaseId: defaultProjectItemId,
+            id: defaultProjectItemId,
             fieldValues: {
               edges: [
                 {
@@ -913,7 +927,7 @@ export default { // all test data returns a unique copy to avoid complications f
         },
         {
           node: {
-            databaseId: 90285654630,
+            id: idOfProjectItemToBeMerged,
             fieldValues: {
               edges: [],
               pageInfo: {
@@ -941,7 +955,7 @@ export default { // all test data returns a unique copy to avoid complications f
       edges: [
         {
           node: {
-            databaseId: defaultProjectItemId,
+            id: defaultProjectItemId,
             fieldValues: {
               edges: [
                 {
@@ -965,7 +979,7 @@ export default { // all test data returns a unique copy to avoid complications f
         },
         {
           node: {
-            databaseId: 90285654630,
+            id: idOfProjectItemToBeMerged,
             fieldValues: {
               edges: [
                 {
@@ -989,7 +1003,7 @@ export default { // all test data returns a unique copy to avoid complications f
         },
         {
           node: {
-            databaseId: 984379821739,
+            id: 'f,WS(FpfN|:9qP6vf"',
             fieldValues: {
               edges: [
                 {

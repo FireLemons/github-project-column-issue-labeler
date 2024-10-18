@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithID = exports.FieldValue = void 0;
+exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithGraphQLID = exports.FieldValue = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
 class FieldValue {
     name; // Column Name
@@ -38,16 +38,16 @@ class FieldValue {
     }
 }
 exports.FieldValue = FieldValue;
-class RecordWithID {
-    id;
+class RecordWithGraphQLID {
+    #id;
     constructor(uid) {
-        this.id = uid;
+        this.#id = uid;
     }
     getId() {
-        return this.id;
+        return this.#id;
     }
 }
-exports.RecordWithID = RecordWithID;
+exports.RecordWithGraphQLID = RecordWithGraphQLID;
 class GraphQLPage {
     nodeClass;
     page;
@@ -121,7 +121,7 @@ class GraphQLPageMergeable extends GraphQLPage {
     }
     merge(page) {
         const firstNode = this.page.edges[0].node;
-        if (!(firstNode instanceof RecordWithID)) {
+        if (!(firstNode instanceof RecordWithGraphQLID)) {
             throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.');
         }
         for (const edge of page.getEdges()) {
@@ -146,6 +146,7 @@ class Issue {
     columnName;
     columnNameMap;
     hasExpandedSearchSpace;
+    #id;
     labels;
     #number;
     projectItems;
@@ -170,9 +171,13 @@ class Issue {
         }
         this.hasExpandedSearchSpace = false;
         this.#number = issuePOJO.number;
+        this.#id = issuePOJO.id;
         this.#cacheSearchResult = this.#cacheSearchResultDefault;
         this.#modeAction = this.#setMode;
         this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault;
+    }
+    getId() {
+        return this.#id;
     }
     getLabels() {
         if (this.labels !== undefined) {
@@ -225,7 +230,7 @@ class Issue {
         } while (i > 0);
         if (!(this.projectItems.isLastPage())) {
             remoteRecordQueryParams.push({
-                parentId: this.#number,
+                parentId: this.#id,
                 localPage: this.projectItems
             });
         }
@@ -294,7 +299,7 @@ class Label {
     }
 }
 exports.Label = Label;
-class ProjectItem extends RecordWithID {
+class ProjectItem extends RecordWithGraphQLID {
     columnName;
     #fieldValues;
     projectHumanReadableUniqueIdentifiers;
@@ -302,7 +307,7 @@ class ProjectItem extends RecordWithID {
         if (!isProjectItem(projectItemPOJO)) {
             throw new TypeError('Param projectItemPOJO does not match a project item object');
         }
-        super(projectItemPOJO.databaseId);
+        super(projectItemPOJO.id);
         try {
             this.#fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue);
         }
@@ -392,6 +397,7 @@ function isIssue(object) {
         return false;
     }
     try {
+        TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string);
         TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number);
         TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object);
     }
@@ -417,7 +423,7 @@ function isProjectItem(object) {
         return false;
     }
     try {
-        TypeChecker.validateObjectMember(object, 'databaseId', TypeChecker.Type.number);
+        TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string);
         TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object);
         TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object);
         const { project } = object;

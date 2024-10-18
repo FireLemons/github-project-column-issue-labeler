@@ -5,8 +5,8 @@ interface Constructable<T> {
 }
 
 export interface RemoteRecordPageQueryParameters {
-  parentId: number | string
-  localPage: GraphQLPage<FieldValue | Label | ProjectItem>
+  parentId: string
+  localPage: GraphQLPage<FieldValue | Label> | GraphQLPageMergeable<ProjectItem>
 }
 
 export class FieldValue {
@@ -25,15 +25,15 @@ export class FieldValue {
   }
 }
 
-export class RecordWithID {
-  id: number | string
+export class RecordWithGraphQLID {
+  #id: string
 
-  constructor (uid: number | string) {
-    this.id = uid
+  constructor (uid: string) {
+    this.#id = uid
   }
 
   getId () {
-    return this.id
+    return this.#id
   }
 }
 
@@ -109,7 +109,7 @@ export class GraphQLPage<T> {
   }
 }
 
-export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T> {
+export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQLPage<T> {
   activeNodeFastAccessMap: Map<string | number, { node: T }>
   deletedNodeIds: Map<string | number, null>
 
@@ -144,7 +144,7 @@ export class GraphQLPageMergeable<T extends RecordWithID> extends GraphQLPage<T>
   merge (page: GraphQLPageMergeable<T>) {
     const firstNode = this.page.edges[0].node
 
-    if (!(firstNode instanceof RecordWithID)) {
+    if (!(firstNode instanceof RecordWithGraphQLID)) {
       throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.')
     }
 
@@ -172,6 +172,7 @@ export class Issue {
   columnName?: string
   columnNameMap?: Map<string, string>
   hasExpandedSearchSpace: boolean
+  #id: string
   labels?: GraphQLPage<Label>
   #number: number
   projectItems: GraphQLPageMergeable<ProjectItem>
@@ -198,10 +199,15 @@ export class Issue {
 
     this.hasExpandedSearchSpace = false
     this.#number = issuePOJO.number
+    this.#id = issuePOJO.id
 
     this.#cacheSearchResult = this.#cacheSearchResultDefault
     this.#modeAction = this.#setMode
     this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault
+  }
+
+  getId ():string {
+    return this.#id
   }
 
   getLabels ():string[] | null {
@@ -268,7 +274,7 @@ export class Issue {
 
     if (!(this.projectItems.isLastPage())) {
       remoteRecordQueryParams.push({
-        parentId: this.#number,
+        parentId: this.#id,
         localPage: this.projectItems
       })
     }
@@ -349,10 +355,9 @@ export class Label {
   }
 }
 
-export class ProjectItem extends RecordWithID {
+export class ProjectItem extends RecordWithGraphQLID {
   columnName?: string
   #fieldValues: GraphQLPage<FieldValue>
-  declare id: number
   projectHumanReadableUniqueIdentifiers: {
     number: number
     ownerLoginName: string
@@ -363,7 +368,7 @@ export class ProjectItem extends RecordWithID {
       throw new TypeError('Param projectItemPOJO does not match a project item object')
     }
 
-    super(projectItemPOJO.databaseId)
+    super(projectItemPOJO.id)
 
     try {
       this.#fieldValues = new GraphQLPage(projectItemPOJO.fieldValues, FieldValue)
@@ -465,6 +470,7 @@ function isIssue (object: any): boolean {
   }
 
   try {
+    TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string)
     TypeChecker.validateObjectMember(object, 'number', TypeChecker.Type.number)
     TypeChecker.validateObjectMember(object, 'projectItems', TypeChecker.Type.object)
   } catch (error) {
@@ -494,7 +500,7 @@ function isProjectItem (object: any): boolean {
   }
 
   try {
-    TypeChecker.validateObjectMember(object, 'databaseId', TypeChecker.Type.number)
+    TypeChecker.validateObjectMember(object, 'id', TypeChecker.Type.string)
     TypeChecker.validateObjectMember(object, 'fieldValues', TypeChecker.Type.object)
     TypeChecker.validateObjectMember(object, 'project', TypeChecker.Type.object)
 

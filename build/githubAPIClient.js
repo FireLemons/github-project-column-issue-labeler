@@ -69,11 +69,11 @@ class GithubAPIClient {
         this.repoName = repoName;
         this.repoOwnerName = repoOwnerName;
     }
-    fetchExpandedColumnNameSearchSpace(issueNumber) {
+    fetchExpandedColumnNameSearchSpace(issueId) {
         return this.octokit.graphql(`
-      query expandedColumnNameSearchSpace($issueNumber: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoOwnerName: String!, $repoName: String!){
-        repository (name: $repoName, owner: $repoOwnerName) {
-          issue (number: $issueNumber) {
+      query expandedColumnNameSearchSpace($issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!){
+        node(id: $issueId) {
+          ... on Issue {
             number
             projectItems (first: $pageSizeProjectItem) {
               ...projectItemPage
@@ -85,17 +85,28 @@ class GithubAPIClient {
       ${fragmentFieldValuePage}
       ${fragmentProjectItemPage}
     `, {
-            issueNumber,
+            issueId,
             pageSizeFieldValue: MAX_PAGE_SIZE,
-            pageSizeProjectItem: MAX_PAGE_SIZE,
-            repoName: this.repoName,
-            repoOwnerName: this.repoOwnerName
+            pageSizeProjectItem: MAX_PAGE_SIZE
         });
     }
-    fetchFieldValuePage() {
+    fetchFieldValuePage(projectItemId) {
         return this.octokit.graphql(`
-    
-    `, {});
+      query fieldValuePage ($cursor: String, $pageSizeFieldValue: Int!, $projectItemId: ID!) {
+        node (id: $projectItemId) {
+          ... on ProjectV2Item {
+            fieldValues (first: $pageSizeFieldValue, after: $cursor) {
+              ...fieldValuePage
+            }
+          }
+        }
+      }
+
+      ${fragmentFieldValuePage}
+      `, {
+            pageSizeFieldValue: MAX_PAGE_SIZE,
+            projectItemId
+        });
     }
     fetchIssuePage(cursor) {
         return this.octokit.graphql(`
@@ -110,6 +121,7 @@ class GithubAPIClient {
       fragment issuePage on IssueConnection {
         edges {
           node {
+            id
             number
             labels (first: $pageSizeLabel) {
               ...labelPage
@@ -138,24 +150,44 @@ class GithubAPIClient {
             repoOwnerName: this.repoOwnerName
         });
     }
-    fetchIssueLabelPage(issueNumber, cursor) {
-        return this.octokit.graphql(`query pageOfLabelsOfIssue($cursor: String, $issueNumber: Int!, $pageSize: Int!, $repoName: String!, $repoOwnerName: String!) {
-      repository(name: $repoName, owner: $repoOwnerName){
-        issue(number: $issueNumber){
-          labels(after: $cursor, first: $pageSize){
-            ...labelPage
+    fetchLabelPage(issueId, cursor) {
+        return this.octokit.graphql(`
+      query pageOfLabelsOfIssue($cursor: String, $issueId: ID!, $pageSize: Int!) {
+        node (id: $issueId) {
+          ... on Issue {
+            labels(after: $cursor, first: $pageSize){
+              ...labelPage
+            }
           }
         }
       }
-    }
 
-    ${fragmentLabelPage}
-    `, {
+      ${fragmentLabelPage}
+      `, {
             cursor,
-            issueNumber,
-            pageSize: MAX_PAGE_SIZE,
-            repoName: this.repoName,
-            repoOwnerName: this.repoOwnerName
+            issueId,
+            pageSize: MAX_PAGE_SIZE
+        });
+    }
+    fetchProjectItemPage(issueId, cursor) {
+        return this.octokit.graphql(`
+      query pageOfProjectItemsOfIssue($cursor: String, $issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!) {
+        node (id: $issueId) {
+          ... on Issue {
+            projectItems(after: $cursor, first: $pageSizeProjectItem){
+              ...projectItemPage
+            }
+          }
+        }
+      }
+
+      ${fragmentProjectItemPage}
+      ${fragmentFieldValuePage}
+      `, {
+            cursor,
+            issueId,
+            pageSizeFieldValue: MAX_PAGE_SIZE,
+            pageSizeProjectItem: MAX_PAGE_SIZE
         });
     }
 }

@@ -64,15 +64,18 @@ async function main () {
     return
   }
 
-  let issuePage: IssuePageResponse
+  let issueId: string
   let issueNumber: number
+  let issuePage: IssuePageResponse
 
   try {
     logger.info('Fetching issue page')
     issuePage = await githubAPIClient.fetchIssuePage()
 
     writeStringToFile(issuePage, 'issue_page')
-    issueNumber = issuePage.repository.issues.edges[0]?.node.number
+    const issue = issuePage.repository.issues.edges[0]?.node
+    issueId = issue.id
+    issueNumber = issue.number
 
     logger.info('Fetched issue page', 2)
   } catch (error) {
@@ -85,11 +88,9 @@ async function main () {
     return
   }
 
-  let issueWithExpandedColumnNameSearchSpace
-
   try {
     logger.info('Fetching expanded column name search space for issue')
-    issueWithExpandedColumnNameSearchSpace = await githubAPIClient.fetchExpandedColumnNameSearchSpace(issueNumber)
+    const issueWithExpandedColumnNameSearchSpace = await githubAPIClient.fetchExpandedColumnNameSearchSpace(issueId)
 
     writeStringToFile(issueWithExpandedColumnNameSearchSpace, 'issue_with_expanded_column_name_search_space')
 
@@ -101,27 +102,53 @@ async function main () {
     }
   }
 
-  let fieldValuePage
-
   try {
-    logger.info('Fetching field value page')
-    fieldValuePage = await githubAPIClient.fetchFieldValuePage()
+    logger.info(`Fetching project item page of issue #${issueNumber}`)
+    const projectItemPageOfIssue = await githubAPIClient.fetchProjectItemPage(issueId)
 
-    writeStringToFile(fieldValuePage, 'field_value_page')
+    writeStringToFile(projectItemPageOfIssue, 'project_item_page')
 
-    logger.info('Fetched field value page', 2)
+    logger.info('Fetched project item page', 2)
   } catch (error) {
     if (error instanceof Error) {
-      logger.error('Failed to fetch field value page', 2)
+      logger.error('Failed to fetch project item page', 2)
       logger.error(error.stack ?? error.message, 4)
     }
   }
 
-  let labelPageOfIssue
+  logger.info('Searching for project item id')
+  let projectItemId = issuePage.repository.issues.edges.find((issueEdge) => {
+    return issueEdge.node.projectItems.edges.length >= 1
+  })?.node.projectItems.edges[0].node.id
+
+  if (projectItemId) {
+    logger.addBaseIndentation(2)
+    logger.info('Found project item id')
+    logger.info('Using project item id for field value page request')
+    let fieldValuePage
+
+    try {
+      logger.info('Fetching field value page')
+      fieldValuePage = await githubAPIClient.fetchFieldValuePage(projectItemId)
+
+      writeStringToFile(fieldValuePage, 'field_value_page')
+
+      logger.info('Fetched field value page', 2)
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error('Failed to fetch field value page', 2)
+        logger.error(error.stack ?? error.message, 4)
+      }
+    }
+
+    logger.addBaseIndentation(-2)
+  } else {
+    logger.warn('Failed to find project item id. Skipping field value page response.', 2)
+  }
 
   try {
     logger.info(`Fetching label page of issue #${issueNumber}`)
-    labelPageOfIssue = await githubAPIClient.fetchIssueLabelPage(issueNumber)
+    const labelPageOfIssue = await githubAPIClient.fetchLabelPage(issueId)
 
     writeStringToFile(labelPageOfIssue, 'label_page')
 

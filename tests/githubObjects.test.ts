@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithGraphQLID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
 import * as TypeChecker from '../src/typeChecker'
 
@@ -231,8 +231,8 @@ describe('The GraphQLPageMergeable class', () => {
   describe('delete()', () => {
     it('removes the edge at the index passed from the graphQL page', () => {
       const projectItemPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
-      const firstProjectItemId = projectItemPagePOJO.edges[0].node.databaseId
-      const secondProjectItemId = projectItemPagePOJO.edges[1].node.databaseId
+      const firstProjectItemId = projectItemPagePOJO.edges[0].node.id
+      const secondProjectItemId = projectItemPagePOJO.edges[1].node.id
 
       const page = new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem)
 
@@ -255,7 +255,7 @@ describe('The GraphQLPageMergeable class', () => {
 
     it('returns the removed node', () => {
       const pagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
-      const firstRecordId = pagePOJO.edges[0].node.databaseId
+      const firstRecordId = pagePOJO.edges[0].node.id
       const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
 
       expect(page.delete(0).getId()).toBe(firstRecordId)
@@ -263,7 +263,7 @@ describe('The GraphQLPageMergeable class', () => {
 
     it('stores the id of deleted nodes', () => {
       const pagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
-      const firstRecordId = pagePOJO.edges[0].node.databaseId
+      const firstRecordId = pagePOJO.edges[0].node.id
       const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
 
       expect(page.deletedNodeIds.has(firstRecordId)).toBe(false)
@@ -299,7 +299,7 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('adds all the records from the page passed as an argument not found in the page to be merged into', () => {
-      const newProjectItemId = newProjectItemPOJO.databaseId
+      const newProjectItemId = newProjectItemPOJO.id
 
       expect(page.getNodeArray().find((projectItem) => {
         return projectItem.getId() === newProjectItemId
@@ -313,7 +313,7 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('does not re-add deleted nodes', () => {
-      const deletedId = deletedProjectItemPOJO.databaseId
+      const deletedId = deletedProjectItemPOJO.id
 
       expect(page.deletedNodeIds.has(deletedId)).toBe(true)
 
@@ -325,10 +325,10 @@ describe('The GraphQLPageMergeable class', () => {
     })
 
     it('overwrites records found in both pages using records from the page passed as an argument', () => {
-      const existingProjectItemId = existingProjectItemPOJO.databaseId
+      const existingProjectItemId = existingProjectItemPOJO.id
       const existingProjectItemUpdatedFieldValueName = existingProjectItemPOJOUpdated.fieldValues.edges[0].node.name
       const existingProjectItem = page.getNodeArray().find((projectItem) => {
-        return projectItem.id === existingProjectItemId
+        return projectItem.getId() === existingProjectItemId
       })
 
       expect(existingProjectItem).not.toBe(undefined)
@@ -447,7 +447,7 @@ describe('The Issue class', () => {
           it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
             const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
             const project = issuePOJO.projectItems.edges[0].node.project
-            const projectItemId = issuePOJO.projectItems.edges[0].node.databaseId
+            const projectItemId = issuePOJO.projectItems.edges[0].node.id
             const issue = new Issue(issuePOJO)
 
             issue.hasExpandedSearchSpace = true
@@ -462,7 +462,7 @@ describe('The Issue class', () => {
             })).not.toBe(undefined)
 
             expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-              return queryParameters.parentId === issuePOJO.number &&
+              return queryParameters.parentId === issuePOJO.id &&
                 queryParameters.localPage.lookupNodeClass() === ProjectItem
             })).not.toBe(undefined)
           })
@@ -531,6 +531,15 @@ describe('The Issue class', () => {
           expect(issue.findColumnName(projectOwnerName, projectNumber)).toBe(columnName)
         })
       })
+    })
+  })
+
+  describe('getId()', () => {
+    it('returns the number of the Issue instance', () => {
+      const issuePOJO = GithubObjectsTestData.getIssuePOJO()
+      const issue = new Issue(issuePOJO)
+
+      expect(issue.getId()).toBe(issuePOJO.id)
     })
   })
 
@@ -636,7 +645,7 @@ describe('The ProjectItem class', () => {
 
     it('returns an object containing parameters to fetch more data on a fail', () => {
       const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJOWithoutLocalColumnName()
-      const projectItemId = projectItemPOJO.databaseId
+      const projectItemId = projectItemPOJO.id
       const projectItem = new ProjectItem(projectItemPOJO)
 
       expect(projectItem.findColumnName()).toEqual({
@@ -680,14 +689,11 @@ describe('The ProjectItem class', () => {
 describe('The RecordWithID class', () => {
   describe('getId', () => {
     it('returns the id of the record', () => {
-      const numericId = 40372098174
-      const stringId = '?1>Yd]i|IZfLJI?HGg'
+      const id = '?1>Yd]i|IZfLJI?HGg'
 
-      const numericIdRecord = new RecordWithID(numericId)
-      const stringIdRecord = new RecordWithID(stringId)
+      const stringIdRecord = new RecordWithGraphQLID(id)
 
-      expect(numericIdRecord.getId()).toBe(numericId)
-      expect(stringIdRecord.getId()).toBe(stringId)
+      expect(stringIdRecord.getId()).toBe(id)
     })
   })
 })

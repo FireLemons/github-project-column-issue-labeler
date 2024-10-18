@@ -78,7 +78,7 @@ describe('fetchAllIssues()', () => {
       const issueFetchResult = await pageAssembler.fetchAllIssues()
 
       expect(issueFetchResult.getNodeArray().find((node) => {
-        return node.number === 1009
+        return node.getNumber() === 1009
       })).not.toBe(undefined)
     })
   })

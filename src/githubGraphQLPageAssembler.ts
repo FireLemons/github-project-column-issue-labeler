@@ -1,5 +1,5 @@
-import { GithubAPIClient, IssuePageResponse } from './githubAPIClient'
-import { Issue, GraphQLPage } from './githubObjects'
+import { FieldValuePageNodePOJO, GithubAPIClient, GraphQLPagePOJO, IssuePageResponse, LabelPOJO } from './githubAPIClient'
+import { Issue, GraphQLPage, RemoteRecordPageQueryParameters, FieldValue, Label, ProjectItem, GraphQLPageMergeable } from './githubObjects'
 import { Logger } from './logger'
 
 const logger = new Logger()
@@ -9,6 +9,14 @@ export class GithubGraphQLPageAssembler {
 
   constructor (githubAPIClient: GithubAPIClient) {
     this.githubAPIClient = githubAPIClient
+  }
+
+  async fetchAdditionalSearchSpace (queryParams: Issue | RemoteRecordPageQueryParameters) {
+    if (queryParams instanceof Issue) {
+      await this.#expandIssueSearchSpace(queryParams)
+    } else {
+      await this.#expandPage(queryParams.localPage, queryParams.parentId)
+    }
   }
 
   async fetchAllIssues (): Promise<GraphQLPage<Issue>> {
@@ -50,5 +58,36 @@ export class GithubGraphQLPageAssembler {
 
     logger.addBaseIndentation(-2)
     return issues
+  }
+
+  async #expandPage (page: GraphQLPage<FieldValue> | GraphQLPage<Label> | GraphQLPageMergeable<ProjectItem>, parentId: string) {
+    const PageNodeClass = page.lookupNodeClass()
+    const { endCursor } = page.getPageInfo()
+
+    switch (PageNodeClass) {
+      case FieldValue:
+        const fieldValuePagePOJO: GraphQLPagePOJO<FieldValuePageNodePOJO> = (await this.githubAPIClient.fetchFieldValuePage(parentId)).node.fieldValues;
+        (page as GraphQLPage<FieldValue>).appendPage(new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue))
+        break
+      case Label:
+        const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId)).node.labels;
+        (page as GraphQLPage<Label>).appendPage(new GraphQLPage<Label>(labelPagePOJO, Label))
+        break
+      case ProjectItem:
+        const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId)).node.projectItems;
+        (page as GraphQLPageMergeable<ProjectItem>).merge(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
+        break
+    }
+  }
+
+  async #expandIssueSearchSpace (issue: Issue) {
+    try {
+      const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems
+      const expandedColumnNameSearchSpace = new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO, ProjectItem)
+
+      issue.getProjectItemPage().merge(expandedColumnNameSearchSpace)
+    } catch (error) {
+      issue.disableColumnNameRemoteSearchSpace()
+    }
   }
 }
