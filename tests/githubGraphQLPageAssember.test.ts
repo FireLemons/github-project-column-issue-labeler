@@ -4,6 +4,93 @@ import GithubObjectsTestData from './githubObjectsTestData'
 
 jest.mock('../src/githubAPIClient')
 
+describe('fetchAdditionalSearchSpace()', () => {
+  describe('when the query parameters are passed as a field value GraphQLPage', () => {
+    it('does not intercept errors thrown by the github API client', () => {
+
+    })
+
+    it('appends the values from the retrieved page to the local field value page', () => {
+
+    })
+
+    it('updates the end cursor of the local field value page to the value of the retrieved page', () => {
+      
+    })
+
+    it('updates the hasNextPage value of the local field value page to the value of the retrieved page', () => {
+      
+    })
+  })
+  describe('when the query parameters are passed as a label GraphQLPage', () => {
+    it('does not intercept errors thrown by the github API client', () => {
+
+    })
+
+    it('appends the values from the retrieved page to the local label page', () => {
+
+    })
+
+    it('updates the end cursor of the local label page to the value of the retrieved page', () => {
+      
+    })
+
+    it('updates the hasNextPage value of the local label page to the value of the retrieved page', () => {
+      
+    })
+  })
+  describe('when the query parameters are passed as a project item GraphQLPage', () => {
+    it('does not intercept errors thrown by the github API client', () => {
+
+    })
+
+    it('appends the values from the retrieved page to the local project item page', () => {
+
+    })
+
+    it('updates the end cursor of the local project item page to the value of the retrieved page', () => {
+      
+    })
+
+    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', () => {
+      
+    })
+  })
+  describe('when the query parameters are passed as an Issue', () => {
+    it('does not intercept errors thrown by the github API client', () => {
+
+    })
+
+    it('does not restore locally deleted project items', () => {
+
+    })
+
+    it('adds new values from the retrieved pages to the local project item page', () => {
+
+    })
+
+    it('adds new values from the retrieved pages to the local field value pages', () => {
+
+    })
+
+    it('updates the end cursor of the local project item page to the value of the retrieved page', () => {
+      
+    })
+
+    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', () => {
+      
+    })
+
+    it('updates the end cursors of the local field value pages to the values of the retrieved pages', () => {
+      
+    })
+
+    it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', () => {
+      
+    })
+  })
+})
+
 describe('fetchAllIssues()', () => {
   describe('when none of the issues could be fetched', () => {
     it('throws an error when none of the issues could be fetched', async () => {
