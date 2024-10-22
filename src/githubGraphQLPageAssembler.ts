@@ -75,7 +75,7 @@ export class GithubGraphQLPageAssembler {
         break
       case ProjectItem:
         const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId)).node.projectItems;
-        (page as GraphQLPageMergeable<ProjectItem>).merge(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
+        (page as GraphQLPageMergeable<ProjectItem>).appendPage(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
         break
     }
   }

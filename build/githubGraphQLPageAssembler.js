@@ -66,7 +66,7 @@ class GithubGraphQLPageAssembler {
                 break;
             case githubObjects_1.ProjectItem:
                 const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId)).node.projectItems;
-                page.merge(new githubObjects_1.GraphQLPageMergeable(projectItemPagePOJO, githubObjects_1.ProjectItem));
+                page.appendPage(new githubObjects_1.GraphQLPageMergeable(projectItemPagePOJO, githubObjects_1.ProjectItem));
                 break;
         }
     }
