@@ -54,7 +54,7 @@ class GithubGraphQLPageAssembler {
     }
     async #expandPage(page, parentId) {
         const PageNodeClass = page.lookupNodeClass();
-        const { endCursor } = page.getPageInfo();
+        const endCursor = page.getEndCursor();
         switch (PageNodeClass) {
             case githubObjects_1.FieldValue:
                 const fieldValuePagePOJO = (await this.githubAPIClient.fetchFieldValuePage(parentId)).node.fieldValues;
@@ -71,14 +71,9 @@ class GithubGraphQLPageAssembler {
         }
     }
     async #expandIssueSearchSpace(issue) {
-        try {
-            const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems;
-            const expandedColumnNameSearchSpace = new githubObjects_1.GraphQLPageMergeable(expandedColumnNameSearchSpacePOJO, githubObjects_1.ProjectItem);
-            issue.getProjectItemPage().merge(expandedColumnNameSearchSpace);
-        }
-        catch (error) {
-            issue.disableColumnNameRemoteSearchSpace();
-        }
+        const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems;
+        const expandedColumnNameSearchSpace = new githubObjects_1.GraphQLPageMergeable(expandedColumnNameSearchSpacePOJO, githubObjects_1.ProjectItem);
+        issue.getProjectItemPage().merge(expandedColumnNameSearchSpace);
     }
 }
 exports.GithubGraphQLPageAssembler = GithubGraphQLPageAssembler;

@@ -62,7 +62,7 @@ export class GithubGraphQLPageAssembler {
 
   async #expandPage (page: GraphQLPage<FieldValue> | GraphQLPage<Label> | GraphQLPageMergeable<ProjectItem>, parentId: string) {
     const PageNodeClass = page.lookupNodeClass()
-    const { endCursor } = page.getPageInfo()
+    const endCursor = page.getEndCursor()
 
     switch (PageNodeClass) {
       case FieldValue:
@@ -81,13 +81,9 @@ export class GithubGraphQLPageAssembler {
   }
 
   async #expandIssueSearchSpace (issue: Issue) {
-    try {
-      const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems
-      const expandedColumnNameSearchSpace = new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO, ProjectItem)
+    const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems
+    const expandedColumnNameSearchSpace = new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO, ProjectItem)
 
-      issue.getProjectItemPage().merge(expandedColumnNameSearchSpace)
-    } catch (error) {
-      issue.disableColumnNameRemoteSearchSpace()
-    }
+    issue.getProjectItemPage().merge(expandedColumnNameSearchSpace)
   }
 }

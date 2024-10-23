@@ -1,91 +1,166 @@
 import { GithubAPIClient } from '../src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from '../src/githubGraphQLPageAssembler'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
 
 jest.mock('../src/githubAPIClient')
 
 describe('fetchAdditionalSearchSpace()', () => {
+  let githubClient: GithubAPIClient
+  let pageAssembler: GithubGraphQLPageAssembler
+
+  beforeEach(() => {
+    githubClient = new GithubAPIClient('api key', 'repo name', 'repo owner name')
+    pageAssembler = new GithubGraphQLPageAssembler(githubClient)
+  })
   describe('when the query parameters are passed as a field value GraphQLPage', () => {
-    it('does not intercept errors thrown by the github API client', () => {
+    let localPage: GraphQLPage<FieldValue>
+
+    beforeEach(() => {
+      localPage = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
+    })
+
+    it('does not intercept errors thrown by the github API client', async () => {
+      const error = new Error('mock failure')
+
+      jest.spyOn(githubClient, 'fetchFieldValuePage').mockRejectedValue(error)
+
+      await expect(pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })).rejects.toMatchObject(error)
+    })
+
+    it('appends the values from the retrieved page to the local field value page', async () => {
 
     })
 
-    it('appends the values from the retrieved page to the local field value page', () => {
+    it('converts the nodes of the fetched page to FieldValue objects', async () => {
 
     })
 
-    it('updates the end cursor of the local field value page to the value of the retrieved page', () => {
+    it('updates the end cursor of the local field value page to the value of the retrieved page', async () => {
       
     })
 
-    it('updates the hasNextPage value of the local field value page to the value of the retrieved page', () => {
+    it('updates the hasNextPage value of the local field value page to the value of the retrieved page', async () => {
       
     })
   })
   describe('when the query parameters are passed as a label GraphQLPage', () => {
-    it('does not intercept errors thrown by the github API client', () => {
+    let localPage: GraphQLPage<Label>
+
+    beforeEach(() => {
+      localPage = new GraphQLPage<Label>(GithubObjectsTestData.getLabelPagePOJO(), Label)
+    })
+    it('does not intercept errors thrown by the github API client', async () => {
+      const error = new Error('mock failure')
+
+      jest.spyOn(githubClient, 'fetchLabelPage').mockRejectedValue(error)
+
+      await expect(pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })).rejects.toMatchObject(error)
+    })
+
+    it('appends the values from the retrieved page to the local label page', async () => {
 
     })
 
-    it('appends the values from the retrieved page to the local label page', () => {
+    it('converts the nodes of the fetched page to Label objects', async () => {
 
     })
 
-    it('updates the end cursor of the local label page to the value of the retrieved page', () => {
+    it('updates the end cursor of the local label page to the value of the retrieved page', async () => {
       
     })
 
-    it('updates the hasNextPage value of the local label page to the value of the retrieved page', () => {
+    it('updates the hasNextPage value of the local label page to the value of the retrieved page', async () => {
       
     })
   })
   describe('when the query parameters are passed as a project item GraphQLPage', () => {
-    it('does not intercept errors thrown by the github API client', () => {
+    let localPage: GraphQLPageMergeable<ProjectItem>
+
+    beforeEach(() => {
+      localPage = new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getMergeableProjectItemPagePOJO(), ProjectItem)
+    })
+    it('does not intercept errors thrown by the github API client', async () => {
+      const error = new Error('mock failure')
+
+      jest.spyOn(githubClient, 'fetchProjectItemPage').mockRejectedValue(error)
+
+      await expect(pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })).rejects.toMatchObject(error)
+    })
+
+    it('appends the values from the retrieved page to the local project item page', async () => {
 
     })
 
-    it('appends the values from the retrieved page to the local project item page', () => {
+    it('converts the nodes of the fetched page to ProjectItem objects', async () => {
 
     })
 
-    it('updates the end cursor of the local project item page to the value of the retrieved page', () => {
+    it('updates the end cursor of the local project item page to the value of the retrieved page', async () => {
       
     })
 
-    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', () => {
+    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', async () => {
       
     })
   })
   describe('when the query parameters are passed as an Issue', () => {
-    it('does not intercept errors thrown by the github API client', () => {
+    let issue: Issue
+
+    beforeEach(() => {
+      issue = new Issue(GithubObjectsTestData.getIssuePOJOWithOnlyIncompleteChildPages())
+    })
+
+    it('does not intercept errors thrown by the github API client', async () => {
+      const error = new Error('mock failure')
+
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockRejectedValue(error)
+
+      await expect(pageAssembler.fetchAdditionalSearchSpace(issue)).rejects.toMatchObject(error)
+    })
+
+    it('does not restore locally deleted project items', async () => {
 
     })
 
-    it('does not restore locally deleted project items', () => {
+    it('adds new values from the retrieved pages to the local project item page', async () => {
 
     })
 
-    it('adds new values from the retrieved pages to the local project item page', () => {
+    it('converts the nodes of the fetched project item page to ProjectItem objects', async () => {
 
     })
 
-    it('adds new values from the retrieved pages to the local field value pages', () => {
+    it('adds new values from the retrieved field value pages to the local field value pages', async () => {
 
     })
 
-    it('updates the end cursor of the local project item page to the value of the retrieved page', () => {
+    it('converts the nodes of the fetched field value pages to FieldValue objects', async () => {
+
+    })
+
+    it('updates the end cursor of the local project item page to the value of the retrieved page', async () => {
       
     })
 
-    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', () => {
+    it('updates the hasNextPage value of the local project item page to the value of the retrieved page', async () => {
       
     })
 
-    it('updates the end cursors of the local field value pages to the values of the retrieved pages', () => {
+    it('updates the end cursors of the local field value pages to the values of the retrieved pages', async () => {
       
     })
 
-    it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', () => {
+    it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', async () => {
       
     })
   })

@@ -6,7 +6,7 @@ interface Constructable<T> {
 
 export interface RemoteRecordPageQueryParameters {
   parentId: string
-  localPage: GraphQLPage<FieldValue | Label> | GraphQLPageMergeable<ProjectItem>
+  localPage: GraphQLPage<FieldValue> | GraphQLPage<Label> | GraphQLPageMergeable<ProjectItem>
 }
 
 export class FieldValue {

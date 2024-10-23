@@ -5,6 +5,7 @@ const defaultIssueNumber = 1009
 const defaultLabelNameValue = '5~hg?<[kjHwGhUII-p:'
 const defaultLabelPageEndCursor = 'UjLu&s>NWO+eo_Z|Cg('
 const defaultProjectItemId = '8dU\\=8EB6bdGGTu.CL'
+const defaultProjectItemPageEndCursor = 'j<|CDe;V2Xp;H\'@D^"'
 const defaultProjectOwnerLogin = '29;UhhP@%nooLB#ms'
 const idOfProjectItemToBeMerged = 'B)\')eMiV\'I~$jVoNlw'
 
@@ -175,7 +176,7 @@ export default { // all test data returns a unique copy to avoid complications f
                 }
               ],
               pageInfo: {
-                endCursor: defaultFieldValuePageEndCursor,
+                endCursor: defaultProjectItemPageEndCursor,
                 hasNextPage: false
               }
             }
@@ -233,7 +234,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -274,7 +275,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -313,7 +314,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -396,7 +397,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -489,7 +490,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -582,7 +583,92 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
+          hasNextPage: true
+        }
+      }
+    }
+  },
+  getIssuePOJOWithOnlyIncompleteChildPages () {
+    return {
+      id: defaultIssueId,
+      number: defaultIssueNumber,
+      labels: {
+        edges: [
+          {
+            node: {
+              name: defaultLabelNameValue
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultLabelPageEndCursor,
+          hasNextPage: true
+        }
+      },
+      projectItems: {
+        edges: [
+          {
+            node: {
+              id: 'uS!_?-^pZzG{rQYj^F',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'SQvzPD5kf;81rdqL@5',
+                  hasNextPage: true
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'Q/*>-L:<G=j\'Fk9"XI',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {
+                      name: 'H40wr"OhIhZ[gi1&d3'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'g&L}%s-{A"0Oh"on#@',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: true
         }
       }
@@ -627,7 +713,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
@@ -672,7 +758,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: true
         }
       }
@@ -710,7 +796,7 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         ],
         pageInfo: {
-          endCursor: defaultFieldValuePageEndCursor,
+          endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: false
         }
       }
