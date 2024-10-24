@@ -459,11 +459,35 @@ describe('fetchAdditionalSearchSpace()', () => {
       })
 
       it('updates the end cursors of the local field value pages to the values of the retrieved pages', async () => {
-        
+        const projectItemPage = issue.getProjectItemPage()
+        const firstUpdatedEndCursor = fetchedPagePOJO.node.projectItems.edges[0].node.fieldValues.pageInfo.endCursor
+        const secondsUpdatedEndCursor = fetchedPagePOJO.node.projectItems.edges[1].node.fieldValues.pageInfo.endCursor
+
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().getEndCursor()).not.toBe(firstUpdatedEndCursor)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().getEndCursor()).not.toBe(secondsUpdatedEndCursor)
+
+        jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+        await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().getEndCursor()).toBe(firstUpdatedEndCursor)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().getEndCursor()).toBe(secondsUpdatedEndCursor)
       })
 
       it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', async () => {
-        
+        const projectItemPage = issue.getProjectItemPage()
+        const firstUpdatedHasNextPage = fetchedPagePOJO.node.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage
+        const secondsUpdatedHasNextPage = fetchedPagePOJO.node.projectItems.edges[1].node.fieldValues.pageInfo.hasNextPage
+
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().isLastPage()).not.toBe(!firstUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().isLastPage()).not.toBe(!secondsUpdatedHasNextPage)
+
+        jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+        await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().isLastPage()).toBe(!firstUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().isLastPage()).toBe(!secondsUpdatedHasNextPage)
       })
     })
   })
