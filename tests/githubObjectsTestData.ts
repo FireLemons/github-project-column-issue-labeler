@@ -655,7 +655,7 @@ export default { // all test data returns a unique copy to avoid complications f
                 ],
                 pageInfo: {
                   endCursor: 'g&L}%s-{A"0Oh"on#@',
-                  hasNextPage: false
+                  hasNextPage: true
                 }
               },
               project: {
@@ -670,6 +670,112 @@ export default { // all test data returns a unique copy to avoid complications f
         pageInfo: {
           endCursor: defaultProjectItemPageEndCursor,
           hasNextPage: true
+        }
+      }
+    }
+  },
+  getExtendedColumnNameSearchSpace () {
+    return {
+      number: defaultIssueNumber,
+      projectItems: {
+        edges: [
+          {
+            node: {
+              id: 'uS!_?-^pZzG{rQYj^F',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {
+                      name: '+B_\'k?W[J%AGD|)t?a'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: '9.PN#k"5pKHe#|v0*l',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'Q/*>-L:<G=j\'Fk9"XI',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {
+                      name: 'H40wr"OhIhZ[gi1&d3'
+                    }
+                  },
+                  {
+                    node: {}
+                  },
+                  {
+                    node: {}
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'N#~"/[\'`g{Y|:[<DQI',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'LSsN/])u{=ADut8U8z',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'J#KldL+k";\'tNh1hx^'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: '7(csItTHUt3R{bIPWm',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: defaultProjectOwnerLogin
+                }
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: 'e]gVnxb]QdFxoVA6!F',
+          hasNextPage: false
         }
       }
     }
@@ -1129,6 +1235,40 @@ export default { // all test data returns a unique copy to avoid complications f
       ],
       pageInfo: {
         endCursor: '!tHp1v],T\\C/*:,eI',
+        hasNextPage: false
+      }
+    }
+  },
+  getLastProjectItemPagePOJO () {
+    return {
+      edges: [
+        {
+          node: {
+            id: 'g)O0J~\'q~.A\'{5r}ec',
+            fieldValues: {
+              edges: [
+                {
+                  node: {
+                    name: defaultFieldValueName
+                  }
+                }
+              ],
+              pageInfo: {
+                endCursor: defaultFieldValuePageEndCursor,
+                hasNextPage: true
+              }
+            },
+            project: {
+              number: 1,
+              owner: {
+                login: defaultProjectOwnerLogin
+              }
+            }
+          }
+        }
+      ],
+      pageInfo: {
+        endCursor: '_=W<8>)aJ2dVMG_IC:',
         hasNextPage: false
       }
     }

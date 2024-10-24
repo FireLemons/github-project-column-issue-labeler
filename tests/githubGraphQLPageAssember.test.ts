@@ -1,4 +1,4 @@
-import { FieldValuePageNodePOJO, FieldValuePageResponse, GithubAPIClient, GraphQLPagePOJO, LabelPageResponse, LabelPOJO } from '../src/githubAPIClient'
+import { ExtendedColumnNameSearchSpaceResponse, FieldValuePageNodePOJO, FieldValuePageResponse, GithubAPIClient, GraphQLPagePOJO, LabelPageResponse, LabelPOJO, ProjectItemPageResponse, ProjectItemPOJO } from '../src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from '../src/githubGraphQLPageAssembler'
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
@@ -13,6 +13,7 @@ describe('fetchAdditionalSearchSpace()', () => {
     githubClient = new GithubAPIClient('api key', 'repo name', 'repo owner name')
     pageAssembler = new GithubGraphQLPageAssembler(githubClient)
   })
+
   describe('when the query parameters are passed as a field value GraphQLPage', () => {
     let localPage: GraphQLPage<FieldValue>
     let fetchedPagePOJO: GraphQLPagePOJO<FieldValuePageNodePOJO>
@@ -117,6 +118,7 @@ describe('fetchAdditionalSearchSpace()', () => {
       expect(localPage.isLastPage()).toBe(!updatedFieldValuePageHasNextPage)
     })
   })
+
   describe('when the query parameters are passed as a label GraphQLPage', () => {
     let localPage: GraphQLPage<Label>
     let fetchedPagePOJO: GraphQLPagePOJO<LabelPOJO>
@@ -125,6 +127,7 @@ describe('fetchAdditionalSearchSpace()', () => {
       localPage = new GraphQLPage<Label>(GithubObjectsTestData.getLabelPagePOJO(), Label)
       fetchedPagePOJO = GithubObjectsTestData.getLastLabelPagePOJO()
     })
+
     it('does not intercept errors thrown by the github API client', async () => {
       const error = new Error('mock failure')
 
@@ -220,12 +223,16 @@ describe('fetchAdditionalSearchSpace()', () => {
       expect(localPage.isLastPage()).toBe(!updatedLabelPageHasNextPage)
     })
   })
+
   describe('when the query parameters are passed as a project item GraphQLPage', () => {
     let localPage: GraphQLPageMergeable<ProjectItem>
+    let fetchedPagePOJO: GraphQLPagePOJO<ProjectItemPOJO>
 
     beforeEach(() => {
       localPage = new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getMergeableProjectItemPagePOJO(), ProjectItem)
+      fetchedPagePOJO = GithubObjectsTestData.getLastProjectItemPagePOJO()
     })
+
     it('does not intercept errors thrown by the github API client', async () => {
       const error = new Error('mock failure')
 
@@ -238,26 +245,99 @@ describe('fetchAdditionalSearchSpace()', () => {
     })
 
     it('appends the values from the retrieved page to the local project item page', async () => {
+      const appendedProjectItemId = fetchedPagePOJO.edges[0].node.id
+      const fetchedPageResponse: ProjectItemPageResponse = {
+        node: {
+          projectItems: fetchedPagePOJO
+        }
+      }
 
+      expect(localPage.getNodeArray().length).toBe(2)
+
+      jest.spyOn(githubClient, 'fetchProjectItemPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      const updatedPageNodes = localPage.getNodeArray()
+
+      expect(updatedPageNodes.length).toBe(3)
+      expect(updatedPageNodes.find((projectItem) => {
+        return projectItem.getId() === appendedProjectItemId
+      })).not.toBe(undefined)
     })
 
     it('converts the nodes of the fetched page to ProjectItem objects', async () => {
+      const fetchedPageResponse: ProjectItemPageResponse = {
+        node: {
+          projectItems: fetchedPagePOJO
+        }
+      }
 
+      jest.spyOn(githubClient, 'fetchProjectItemPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      for (const node of localPage.getNodeArray()) {
+        expect(node instanceof ProjectItem).toBe(true)
+      }
     })
 
     it('updates the end cursor of the local project item page to the value of the retrieved page', async () => {
-      
+      const updatedProjectItemPageEndCursor = fetchedPagePOJO.pageInfo.endCursor
+      const fetchedPageResponse: ProjectItemPageResponse = {
+        node: {
+          projectItems: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.getEndCursor()).not.toBe(updatedProjectItemPageEndCursor)
+
+      jest.spyOn(githubClient, 'fetchProjectItemPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.getEndCursor()).toBe(updatedProjectItemPageEndCursor)
     })
 
     it('updates the hasNextPage value of the local project item page to the value of the retrieved page', async () => {
-      
+      const updatedProjectItemPageHasNextPage = fetchedPagePOJO.pageInfo.hasNextPage
+      const fetchedPageResponse: ProjectItemPageResponse = {
+        node: {
+          projectItems: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.isLastPage()).not.toBe(!updatedProjectItemPageHasNextPage)
+
+      jest.spyOn(githubClient, 'fetchProjectItemPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.isLastPage()).toBe(!updatedProjectItemPageHasNextPage)
     })
   })
+
   describe('when the query parameters are passed as an Issue', () => {
     let issue: Issue
+    let fetchedPagePOJO: ExtendedColumnNameSearchSpaceResponse
 
     beforeEach(() => {
       issue = new Issue(GithubObjectsTestData.getIssuePOJOWithOnlyIncompleteChildPages())
+      fetchedPagePOJO = {
+        node: GithubObjectsTestData.getExtendedColumnNameSearchSpace()
+      }
     })
 
     it('does not intercept errors thrown by the github API client', async () => {
@@ -268,40 +348,123 @@ describe('fetchAdditionalSearchSpace()', () => {
       await expect(pageAssembler.fetchAdditionalSearchSpace(issue)).rejects.toMatchObject(error)
     })
 
-    it('does not restore locally deleted project items', async () => {
-
-    })
-
     it('adds new values from the retrieved pages to the local project item page', async () => {
+      const issueProjectItems = issue.getProjectItemPage()
+      const newProjectItemId = fetchedPagePOJO.node.projectItems.edges[2].node.id
 
+      expect(issueProjectItems.getNodeArray().length).toBe(2)
+
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+      await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+      const updatedPageNodes = issueProjectItems.getNodeArray()
+
+      expect(updatedPageNodes.length).toBe(3)
+      expect(updatedPageNodes.find((projectItem) => {
+        return projectItem.getId() === newProjectItemId
+      })).not.toBe(undefined)
     })
 
     it('converts the nodes of the fetched project item page to ProjectItem objects', async () => {
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
 
+      await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+      const updatedPageNodes = issue.getProjectItemPage().getNodeArray()
+
+      for (const node of updatedPageNodes) {
+        expect(node instanceof ProjectItem).toBe(true)
+      }
     })
 
-    it('adds new values from the retrieved field value pages to the local field value pages', async () => {
+    it('does not restore locally deleted project items', async () => {
+      const issueProjectItems = issue.getProjectItemPage()
+      const newProjectItemId = fetchedPagePOJO.node.projectItems.edges[1].node.id
 
-    })
+      issueProjectItems.delete(1)
 
-    it('converts the nodes of the fetched field value pages to FieldValue objects', async () => {
+      expect(issueProjectItems.getNodeArray().length).toBe(1)
 
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+      await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+      const updatedPageNodes = issueProjectItems.getNodeArray()
+
+      expect(updatedPageNodes.length).toBe(2)
+      expect(updatedPageNodes.find((projectItem) => {
+        return projectItem.getId() === newProjectItemId
+      })).toBe(undefined)
     })
 
     it('updates the end cursor of the local project item page to the value of the retrieved page', async () => {
-      
+      const projectItemPage = issue.getProjectItemPage()
+      const updatedProjectItemPageEndCursor = fetchedPagePOJO.node.projectItems.pageInfo.endCursor
+
+      expect(projectItemPage.getEndCursor()).not.toBe(updatedProjectItemPageEndCursor)
+
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+      await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+      expect(projectItemPage.getEndCursor()).toBe(updatedProjectItemPageEndCursor)
     })
 
     it('updates the hasNextPage value of the local project item page to the value of the retrieved page', async () => {
-      
+      const projectItemPage = issue.getProjectItemPage()
+      const updatedProjectItemPageHasNextPage  = fetchedPagePOJO.node.projectItems.pageInfo.hasNextPage
+
+      expect(projectItemPage.isLastPage()).not.toBe(!updatedProjectItemPageHasNextPage)
+
+      jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
+
+      await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+      expect(projectItemPage.isLastPage()).toBe(!updatedProjectItemPageHasNextPage)
     })
 
-    it('updates the end cursors of the local field value pages to the values of the retrieved pages', async () => {
-      
-    })
+    describe('the child field value pages of the project items', () => {
+      it('adds new values from the retrieved field value pages to the local field value pages', async () => {
+        const issueProjectItems = issue.getProjectItemPage()
+        const newFieldValueName = fetchedPagePOJO.node.projectItems.edges[0].node.fieldValues.edges[3].node.name
+        const fetchedPageResponse: ExtendedColumnNameSearchSpaceResponse = fetchedPagePOJO
 
-    it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', async () => {
-      
+        expect(issueProjectItems.getNodeArray()[0].getFieldValuePage().getNodeArray().length).toBe(0)
+
+        jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPageResponse)
+
+        await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+        expect(issueProjectItems.getNodeArray()[0].getFieldValuePage().getNodeArray().length).toBe(1)
+        expect(issueProjectItems.getNodeArray()[0].getFieldValuePage().getNodeArray().find((fieldValue) => {
+          return fieldValue.getName() === newFieldValueName
+        })).not.toBe(undefined)
+      })
+
+      it('converts the nodes of the fetched field value pages to FieldValue objects', async () => {
+        const fetchedPageResponse: ExtendedColumnNameSearchSpaceResponse = fetchedPagePOJO
+
+        jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPageResponse)
+
+        await pageAssembler.fetchAdditionalSearchSpace(issue)
+
+        const updatedProjectItemPageNodes = issue.getProjectItemPage().getNodeArray()
+
+        for (const projectItemNode of updatedProjectItemPageNodes) {
+          for (const fieldValueNode of projectItemNode.getFieldValuePage().getNodeArray()) {
+            expect(fieldValueNode instanceof FieldValue).toBe(true)
+          }
+        }
+      })
+
+      it('updates the end cursors of the local field value pages to the values of the retrieved pages', async () => {
+        
+      })
+
+      it('updates the hasNextPage values of the local field value pages to the values of the retrieved pages', async () => {
+        
+      })
     })
   })
 })
