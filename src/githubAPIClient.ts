@@ -1,7 +1,7 @@
 // Javascript destructuring assignment
 import { Octokit, App } from 'octokit'
 
-interface ExtendedColumnNameSearchSpaceResponse {
+export interface ExtendedColumnNameSearchSpaceResponse {
   node: {
     number: number,
     projectItems: GraphQLPagePOJO<ProjectItemPOJO>
@@ -45,19 +45,19 @@ export interface LabelPOJO {
   name: string
 }
 
-interface LabelPageResponse {
+export interface LabelPageResponse {
   node: {
     labels: GraphQLPagePOJO<LabelPOJO>
   }
 }
 
-interface ProjectItemPageResponse {
+export interface ProjectItemPageResponse {
   node: {
     projectItems: GraphQLPagePOJO<ProjectItemPOJO>
   }
 }
 
-interface ProjectItemPOJO {
+export interface ProjectItemPOJO {
   id: string
   fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>,
   project: {

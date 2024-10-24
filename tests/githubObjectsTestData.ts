@@ -842,6 +842,21 @@ export default { // all test data returns a unique copy to avoid complications f
       }
     }
   },
+  getLastLabelPagePOJO () {
+    return {
+      edges: [
+        {
+          node: {
+            name: '73t=Dq/a(jl8{Jh@V_'
+          }
+        }
+      ],
+      pageInfo: {
+        endCursor: 'rT$6J2peNQd\\g0IjXu',
+        hasNextPage: false
+      }
+    }
+  },
 
   getLabelPOJO () {
     return {

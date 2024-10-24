@@ -1,4 +1,4 @@
-import { FieldValuePageNodePOJO, FieldValuePageResponse, GithubAPIClient, GraphQLPagePOJO } from '../src/githubAPIClient'
+import { FieldValuePageNodePOJO, FieldValuePageResponse, GithubAPIClient, GraphQLPagePOJO, LabelPageResponse, LabelPOJO } from '../src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from '../src/githubGraphQLPageAssembler'
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
@@ -119,9 +119,11 @@ describe('fetchAdditionalSearchSpace()', () => {
   })
   describe('when the query parameters are passed as a label GraphQLPage', () => {
     let localPage: GraphQLPage<Label>
+    let fetchedPagePOJO: GraphQLPagePOJO<LabelPOJO>
 
     beforeEach(() => {
       localPage = new GraphQLPage<Label>(GithubObjectsTestData.getLabelPagePOJO(), Label)
+      fetchedPagePOJO = GithubObjectsTestData.getLastLabelPagePOJO()
     })
     it('does not intercept errors thrown by the github API client', async () => {
       const error = new Error('mock failure')
@@ -135,19 +137,87 @@ describe('fetchAdditionalSearchSpace()', () => {
     })
 
     it('appends the values from the retrieved page to the local label page', async () => {
+      const appendedLabelName = fetchedPagePOJO.edges[0].node.name
+      const fetchedPageResponse: LabelPageResponse = {
+        node: {
+          labels: fetchedPagePOJO
+        }
+      }
 
+      expect(localPage.getNodeArray().length).toBe(1)
+
+      jest.spyOn(githubClient, 'fetchLabelPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      const updatedPageNodes = localPage.getNodeArray()
+
+      expect(updatedPageNodes.length).toBe(2)
+      expect(updatedPageNodes.find((label) => {
+        return label.name === appendedLabelName
+      })).not.toBe(undefined)
     })
 
     it('converts the nodes of the fetched page to Label objects', async () => {
+      const fetchedPageResponse: LabelPageResponse = {
+        node: {
+          labels: fetchedPagePOJO
+        }
+      }
 
+      jest.spyOn(githubClient, 'fetchLabelPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      for (const node of localPage.getNodeArray()) {
+        expect(node instanceof Label).toBe(true)
+      }
     })
 
     it('updates the end cursor of the local label page to the value of the retrieved page', async () => {
-      
+      const updatedLabelPageEndCursor = fetchedPagePOJO.pageInfo.endCursor
+      const fetchedPageResponse: LabelPageResponse = {
+        node: {
+          labels: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.getEndCursor()).not.toBe(updatedLabelPageEndCursor)
+
+      jest.spyOn(githubClient, 'fetchLabelPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.getEndCursor()).toBe(updatedLabelPageEndCursor)
     })
 
     it('updates the hasNextPage value of the local label page to the value of the retrieved page', async () => {
-      
+      const updatedLabelPageHasNextPage = fetchedPagePOJO.pageInfo.hasNextPage
+      const fetchedPageResponse: LabelPageResponse = {
+        node: {
+          labels: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.isLastPage()).not.toBe(!updatedLabelPageHasNextPage)
+
+      jest.spyOn(githubClient, 'fetchLabelPage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.isLastPage()).toBe(!updatedLabelPageHasNextPage)
     })
   })
   describe('when the query parameters are passed as a project item GraphQLPage', () => {
