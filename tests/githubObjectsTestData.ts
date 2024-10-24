@@ -31,7 +31,7 @@ export default { // all test data returns a unique copy to avoid complications f
       }
     }
   },
-  getDifferentValuePagePOJO () {
+  getLastFieldValuePagePOJO () {
     return {
       edges: [
         {

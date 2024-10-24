@@ -12,7 +12,7 @@ export interface FieldValuePageNodePOJO {
   name?: string
 }
 
-interface FieldValuePageResponse {
+export interface FieldValuePageResponse {
   node: {
     fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>
   }

@@ -75,7 +75,7 @@ describe('The GraphQLPage class', () => {
 
     beforeAll(() => {
       const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
-      const fieldValuePagePOJOAppended = GithubObjectsTestData.getDifferentValuePagePOJO()
+      const fieldValuePagePOJOAppended = GithubObjectsTestData.getLastFieldValuePagePOJO()
 
       originalPageFieldValueName = fieldValuePagePOJO.edges[0].node.name
       appendedPageFieldValueName = fieldValuePagePOJOAppended.edges[0].node.name
@@ -83,7 +83,7 @@ describe('The GraphQLPage class', () => {
       appendedPageHasNextPage = fieldValuePagePOJOAppended.pageInfo.hasNextPage
 
       combinedPage = new GraphQLPage<FieldValue>(fieldValuePagePOJO)
-      const pageToBeAppended = new GraphQLPage<FieldValue>(GithubObjectsTestData.getDifferentValuePagePOJO())
+      const pageToBeAppended = new GraphQLPage<FieldValue>(fieldValuePagePOJOAppended)
 
       combinedPage.appendPage(pageToBeAppended)
     })

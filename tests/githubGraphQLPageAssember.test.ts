@@ -1,4 +1,4 @@
-import { GithubAPIClient } from '../src/githubAPIClient'
+import { FieldValuePageNodePOJO, FieldValuePageResponse, GithubAPIClient, GraphQLPagePOJO } from '../src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from '../src/githubGraphQLPageAssembler'
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
@@ -15,9 +15,11 @@ describe('fetchAdditionalSearchSpace()', () => {
   })
   describe('when the query parameters are passed as a field value GraphQLPage', () => {
     let localPage: GraphQLPage<FieldValue>
+    let fetchedPagePOJO: GraphQLPagePOJO<FieldValuePageNodePOJO>
 
     beforeEach(() => {
       localPage = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
+      fetchedPagePOJO = GithubObjectsTestData.getLastFieldValuePagePOJO()
     })
 
     it('does not intercept errors thrown by the github API client', async () => {
@@ -32,19 +34,87 @@ describe('fetchAdditionalSearchSpace()', () => {
     })
 
     it('appends the values from the retrieved page to the local field value page', async () => {
+      const appendedFieldValueName = fetchedPagePOJO.edges[0].node.name
+      const fetchedPageResponse: FieldValuePageResponse = {
+        node: {
+          fieldValues: fetchedPagePOJO
+        }
+      }
 
+      expect(localPage.getNodeArray().length).toBe(1)
+
+      jest.spyOn(githubClient, 'fetchFieldValuePage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      const updatedPageNodes = localPage.getNodeArray()
+
+      expect(updatedPageNodes.length).toBe(2)
+      expect(updatedPageNodes.find((fieldValue) => {
+        return fieldValue.name === appendedFieldValueName
+      })).not.toBe(undefined)
     })
 
     it('converts the nodes of the fetched page to FieldValue objects', async () => {
+      const fetchedPageResponse: FieldValuePageResponse = {
+        node: {
+          fieldValues: fetchedPagePOJO
+        }
+      }
 
+      jest.spyOn(githubClient, 'fetchFieldValuePage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      for (const node of localPage.getNodeArray()) {
+        expect(node instanceof FieldValue).toBe(true)
+      }
     })
 
     it('updates the end cursor of the local field value page to the value of the retrieved page', async () => {
-      
+      const updatedFieldValuePageEndCursor = fetchedPagePOJO.pageInfo.endCursor
+      const fetchedPageResponse: FieldValuePageResponse = {
+        node: {
+          fieldValues: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.getEndCursor()).not.toBe(updatedFieldValuePageEndCursor)
+
+      jest.spyOn(githubClient, 'fetchFieldValuePage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.getEndCursor()).toBe(updatedFieldValuePageEndCursor)
     })
 
     it('updates the hasNextPage value of the local field value page to the value of the retrieved page', async () => {
-      
+      const updatedFieldValuePageHasNextPage = fetchedPagePOJO.pageInfo.hasNextPage
+      const fetchedPageResponse: FieldValuePageResponse = {
+        node: {
+          fieldValues: fetchedPagePOJO
+        }
+      }
+
+      expect(localPage.isLastPage()).not.toBe(!updatedFieldValuePageHasNextPage)
+
+      jest.spyOn(githubClient, 'fetchFieldValuePage').mockResolvedValueOnce(fetchedPageResponse)
+
+      await pageAssembler.fetchAdditionalSearchSpace({
+        parentId: '',
+        localPage
+      })
+
+      expect(localPage.isLastPage()).toBe(!updatedFieldValuePageHasNextPage)
     })
   })
   describe('when the query parameters are passed as a label GraphQLPage', () => {
