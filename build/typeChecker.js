@@ -6,6 +6,7 @@ var Type;
     Type["array"] = "array";
     Type["boolean"] = "boolean";
     Type["number"] = "number";
+    Type["nullableString"] = "string?";
     Type["object"] = "object";
     Type["string"] = "string";
 })(Type || (exports.Type = Type = {}));
@@ -36,6 +37,11 @@ function validateObjectMember(obj, key, type) {
         case Type.number:
             if (isNaN(member)) {
                 throw new TypeError(`Member "${key}" was found not to be a number`);
+            }
+            break;
+        case Type.nullableString:
+            if (!isString(member) && member !== null) {
+                throw new TypeError(`Member "${key}" was found not to be a string or null`);
             }
             break;
         case Type.object:

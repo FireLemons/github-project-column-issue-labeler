@@ -6,6 +6,7 @@ export enum Type {
   array = 'array',
   boolean = 'boolean',
   number = 'number',
+  nullableString = 'string?',
   object = 'object',
   string = 'string'
 }
@@ -41,6 +42,12 @@ export function validateObjectMember (obj: objectWithKeys, key: string, type: Ty
     case Type.number:
       if (isNaN(member)) {
         throw new TypeError(`Member "${key}" was found not to be a number`)
+      }
+
+      break
+    case Type.nullableString:
+      if (!isString(member) && member !== null) {
+        throw new TypeError(`Member "${key}" was found not to be a string or null`)
       }
 
       break
