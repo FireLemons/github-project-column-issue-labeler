@@ -19,7 +19,6 @@ class GithubGraphQLPageAssembler {
     }
     async fetchAllIssues() {
         logger.addBaseIndentation(2);
-        logger.info('Fetching Issues');
         let cursor;
         let issues;
         let issuePageResponse;
@@ -57,15 +56,15 @@ class GithubGraphQLPageAssembler {
         const endCursor = page.getEndCursor();
         switch (PageNodeClass) {
             case githubObjects_1.FieldValue:
-                const fieldValuePagePOJO = (await this.githubAPIClient.fetchFieldValuePage(parentId)).node.fieldValues;
+                const fieldValuePagePOJO = (await this.githubAPIClient.fetchFieldValuePage(parentId, page.getEndCursor())).node.fieldValues;
                 page.appendPage(new githubObjects_1.GraphQLPage(fieldValuePagePOJO, githubObjects_1.FieldValue));
                 break;
             case githubObjects_1.Label:
-                const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId)).node.labels;
+                const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId, page.getEndCursor())).node.labels;
                 page.appendPage(new githubObjects_1.GraphQLPage(labelPagePOJO, githubObjects_1.Label));
                 break;
             case githubObjects_1.ProjectItem:
-                const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId)).node.projectItems;
+                const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId, page.getEndCursor())).node.projectItems;
                 page.appendPage(new githubObjects_1.GraphQLPageMergeable(projectItemPagePOJO, githubObjects_1.ProjectItem));
                 break;
         }
@@ -73,7 +72,7 @@ class GithubGraphQLPageAssembler {
     async #expandIssueSearchSpace(issue) {
         const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems;
         const expandedColumnNameSearchSpace = new githubObjects_1.GraphQLPageMergeable(expandedColumnNameSearchSpacePOJO, githubObjects_1.ProjectItem);
-        issue.getProjectItemPage().merge(expandedColumnNameSearchSpace);
+        issue.applyExpandedSearchSpace(expandedColumnNameSearchSpace);
     }
 }
 exports.GithubGraphQLPageAssembler = GithubGraphQLPageAssembler;

@@ -7,13 +7,20 @@ import { readFile } from 'node:fs/promises'
 import * as TypeChecker from './typeChecker'
 import { validateConfig } from './validateConfig'
 
-const logger = new Logger()
+interface unsuccessfulSearchReason {
+  issueNumber: number,
+  error?: Error,
+  failureMessage: string
+}
 
 interface columnNameSearchResults {
   issuesWithColumnNames: Issue[]
   issuesWithoutColumnNames: number[]
-  issuesWithUnsucessfulSearches: number[]
+  issuesWithUnsucessfulSearches: unsuccessfulSearchReason[]
 }
+
+const logger = new Logger()
+let githubGraphQLPageAssembler: GithubGraphQLPageAssembler
 
 async function loadConfig (): Promise<string> {
   const configContents = await readFile('./config.json')
@@ -21,48 +28,101 @@ async function loadConfig (): Promise<string> {
   return '' + configContents
 }
 
-async function searchRemoteSpaceForColumnNames (remoteQueryParameters: { issue: Issue, remoteSearchSpaceQueryParameters: Issue | RemoteRecordPageQueryParameters[] }[], searchResults: columnNameSearchResults) {
-  while (remoteQueryParameters.length > 0) {
-    const issueWithMissingSearchSpace = remoteQueryParameters.pop()
-  }
-}
-
 async function searchIssuesForColumnNames (issues: Issue[]): Promise<columnNameSearchResults> {
-  const remoteSearchSpaceAccessParameters: {
+  logger.info('Searching for column names of issues')
+
+  const issueFetchRequestFailureRecords = new Map<number, null>()
+  const remoteSearchSpaceQueryParametersWithIssue: {
     issue: Issue
     remoteSearchSpaceQueryParameters: Issue | RemoteRecordPageQueryParameters[]
   }[] = []
+
   const results: columnNameSearchResults = {
     issuesWithColumnNames: [],
     issuesWithoutColumnNames: [],
     issuesWithUnsucessfulSearches: []
   }
 
-  for (let i = issues.length - 1; i >= 0; i--) {
-    const issue = issues[i]
+  do {
+    while(issues.length > 0) {
+      const issue = issues.pop()!
 
-    try {
-      const columnNameSearchResult = issue.findColumnName()
+      try {
+        const columnNameSearchResult = issue.findColumnName()
+        if (columnNameSearchResult === null) {
+          results.issuesWithoutColumnNames.push(issue.getNumber())
+        } else if (TypeChecker.isString(columnNameSearchResult)) {
+          results.issuesWithColumnNames.push(issue)
+        } else {
+          remoteSearchSpaceQueryParametersWithIssue.push({
+            issue: issue,
+            remoteSearchSpaceQueryParameters: columnNameSearchResult
+          })
+        }
+      } catch (error) {
+        console.error('FAIL ALPHA')
+        console.error(error)
+        const unsuccessfulSearchReason: unsuccessfulSearchReason = {
+          issueNumber: issue.getNumber(),
+          failureMessage: `Failed to search local search space`
+        }
 
-      if (columnNameSearchResult === null) {
-        results.issuesWithoutColumnNames.push(issue.getNumber())
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        results.issuesWithColumnNames.push(issue)
-      } else {
-        remoteSearchSpaceAccessParameters.push({
-          issue: issue,
-          remoteSearchSpaceQueryParameters: columnNameSearchResult
-        })
+        if (error instanceof Error) {
+          unsuccessfulSearchReason['error'] = error
+        }
+
+        results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason)
       }
-    } catch (error) {
-      results.issuesWithUnsucessfulSearches.push(issue.getNumber())
     }
-  }
 
-  searchRemoteSpaceForColumnNames(remoteSearchSpaceAccessParameters, results)
+    while(remoteSearchSpaceQueryParametersWithIssue.length > 0) {
+      const { issue, remoteSearchSpaceQueryParameters } = remoteSearchSpaceQueryParametersWithIssue.pop()!
+      if (remoteSearchSpaceQueryParameters instanceof Issue) {
+        try {
+          await githubGraphQLPageAssembler.fetchAdditionalSearchSpace(remoteSearchSpaceQueryParameters)
+          issues.push(issue)
+        } catch (error) {
+          issue.disableColumnNameRemoteSearchSpace()
 
-  console.log(JSON.stringify(remoteSearchSpaceAccessParameters, null, 2))
-  console.log(JSON.stringify(results, null, 2))
+          const unsuccessfulSearchReason: unsuccessfulSearchReason = {
+            issueNumber: issue.getNumber(),
+            failureMessage: `Incomplete search. Failed to fetch some search space`
+          }
+
+          if (error instanceof Error) {
+            unsuccessfulSearchReason['error'] = error
+          }
+
+          results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason)
+        }
+      } else {
+        let failedSearchCount = 0
+
+        for (const singleQueryParameters of remoteSearchSpaceQueryParameters) {
+          try {
+            await githubGraphQLPageAssembler.fetchAdditionalSearchSpace(singleQueryParameters)
+          } catch (error) {
+            failedSearchCount++
+          }
+        }
+
+        if (failedSearchCount > 0) {
+          issueFetchRequestFailureRecords.set(issue.getNumber(), null)
+        }
+
+        if (failedSearchCount !== remoteSearchSpaceQueryParameters.length) {
+          issues.push(issue)
+        } else {
+          const unsuccessfulSearchReason: unsuccessfulSearchReason = {
+            issueNumber: issue.getNumber(),
+            failureMessage: `Incomplete search. Failed to fetch some search space`
+          }
+
+          results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason)
+        }
+      }
+    }
+  } while (issues.length > 0 || remoteSearchSpaceQueryParametersWithIssue.length > 0)
 
   return results
 }
@@ -91,7 +151,6 @@ async function main () {
   }
 
   let githubAPIClient
-  let githubGraphQLPageAssembler
 
   try {
     logger.info('Initializing github API objects')
@@ -114,7 +173,7 @@ async function main () {
     logger.info('Fetching issues with labels and column data...')
     issuePage = await githubGraphQLPageAssembler.fetchAllIssues()
 
-    logger.info('Fetched issues with labels and column data', 2)
+    logger.info(`Fetched ${issuePage.getEdges().length} issues`, 2)
   } catch (error) {
     if (error instanceof Error) {
       logger.error('Failed to fetch issues with labels and column data', 2)
@@ -126,7 +185,6 @@ async function main () {
   }
 
   const issues = issuePage.getNodeArray()
-  console.log(JSON.stringify(issues, null, 2))
   const columnNameSearchResults = await searchIssuesForColumnNames(issues)
 
   console.log(JSON.stringify(columnNameSearchResults, null, 2))

@@ -86,11 +86,11 @@ class GithubAPIClient {
       ${fragmentProjectItemPage}
     `, {
             issueId,
-            pageSizeFieldValue: MAX_PAGE_SIZE,
-            pageSizeProjectItem: MAX_PAGE_SIZE
+            pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+            pageSizeProjectItem: MIN_PAGE_SIZE //MAX_PAGE_SIZE
         });
     }
-    fetchFieldValuePage(projectItemId) {
+    fetchFieldValuePage(projectItemId, cursor) {
         return this.octokit.graphql(`
       query fieldValuePage ($cursor: String, $pageSizeFieldValue: Int!, $projectItemId: ID!) {
         node (id: $projectItemId) {
@@ -104,7 +104,8 @@ class GithubAPIClient {
 
       ${fragmentFieldValuePage}
       `, {
-            pageSizeFieldValue: MAX_PAGE_SIZE,
+            cursor,
+            pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             projectItemId
         });
     }
@@ -142,7 +143,7 @@ class GithubAPIClient {
       ${fragmentProjectItemPage}
       `, {
             cursor,
-            pageSizeIssue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+            pageSizeIssue: MAX_PAGE_SIZE,
             pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
             pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
             pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
@@ -166,7 +167,7 @@ class GithubAPIClient {
       `, {
             cursor,
             issueId,
-            pageSize: MAX_PAGE_SIZE
+            pageSize: MIN_PAGE_SIZE //MAX_PAGE_SIZE
         });
     }
     fetchProjectItemPage(issueId, cursor) {
@@ -186,8 +187,8 @@ class GithubAPIClient {
       `, {
             cursor,
             issueId,
-            pageSizeFieldValue: MAX_PAGE_SIZE,
-            pageSizeProjectItem: MAX_PAGE_SIZE
+            pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+            pageSizeProjectItem: MIN_PAGE_SIZE //MAX_PAGE_SIZE
         });
     }
 }

@@ -176,6 +176,10 @@ class Issue {
         this.#modeAction = this.#setMode;
         this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault;
     }
+    applyExpandedSearchSpace(expandedColumnNameSearchSpace) {
+        this.projectItems.merge(expandedColumnNameSearchSpace);
+        this.hasExpandedSearchSpace = true;
+    }
     getId() {
         return this.#id;
     }
@@ -209,7 +213,7 @@ class Issue {
         const remoteRecordQueryParams = [];
         const projectItemEdges = this.projectItems.getEdges();
         let i = projectItemEdges.length - 1;
-        do {
+        while (i >= 0) {
             const projectItem = projectItemEdges[i].node;
             const columnNameSearchResult = projectItem.findColumnName();
             if (columnNameSearchResult === null) {
@@ -227,7 +231,7 @@ class Issue {
                 remoteRecordQueryParams.push(columnNameSearchResult);
                 i--;
             }
-        } while (i > 0);
+        }
         if (!(this.projectItems.isLastPage())) {
             remoteRecordQueryParams.push({
                 parentId: this.#id,
@@ -376,7 +380,7 @@ function isGraphQLPage(object) {
     try {
         TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array);
         TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object);
-        TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.string);
+        TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.nullableString);
         TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean);
     }
     catch (error) {

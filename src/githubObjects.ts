@@ -45,7 +45,7 @@ export class GraphQLPage<T> {
     }>
 
     pageInfo: {
-      endCursor: string
+      endCursor: string | null
       hasNextPage: boolean
     }
   }
@@ -206,6 +206,11 @@ export class Issue {
     this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault
   }
 
+  applyExpandedSearchSpace (expandedColumnNameSearchSpace: GraphQLPageMergeable<ProjectItem>) {
+    this.projectItems.merge(expandedColumnNameSearchSpace)
+    this.hasExpandedSearchSpace = true
+  }
+
   getId ():string {
     return this.#id
   }
@@ -252,7 +257,7 @@ export class Issue {
 
     let i = projectItemEdges.length - 1
 
-    do {
+    while (i >= 0) {
       const projectItem = projectItemEdges[i].node
       const columnNameSearchResult = projectItem.findColumnName()
 
@@ -270,7 +275,7 @@ export class Issue {
         remoteRecordQueryParams.push(columnNameSearchResult)
         i--
       }
-    } while (i > 0)
+    }
 
     if (!(this.projectItems.isLastPage())) {
       remoteRecordQueryParams.push({
@@ -447,7 +452,7 @@ function isGraphQLPage (object: any): boolean {
   try {
     TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array)
     TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object)
-    TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.string)
+    TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.nullableString)
     TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean)
   } catch (error) {
     return false

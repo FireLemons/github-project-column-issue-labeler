@@ -21,7 +21,6 @@ export class GithubGraphQLPageAssembler {
 
   async fetchAllIssues (): Promise<GraphQLPage<Issue>> {
     logger.addBaseIndentation(2)
-    logger.info('Fetching Issues')
     let cursor
     let issues: GraphQLPage<Issue> | undefined
     let issuePageResponse!: IssuePageResponse
@@ -66,15 +65,15 @@ export class GithubGraphQLPageAssembler {
 
     switch (PageNodeClass) {
       case FieldValue:
-        const fieldValuePagePOJO: GraphQLPagePOJO<FieldValuePageNodePOJO> = (await this.githubAPIClient.fetchFieldValuePage(parentId)).node.fieldValues;
+        const fieldValuePagePOJO: GraphQLPagePOJO<FieldValuePageNodePOJO> = (await this.githubAPIClient.fetchFieldValuePage(parentId, page.getEndCursor())).node.fieldValues;
         (page as GraphQLPage<FieldValue>).appendPage(new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue))
         break
       case Label:
-        const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId)).node.labels;
+        const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId, page.getEndCursor())).node.labels;
         (page as GraphQLPage<Label>).appendPage(new GraphQLPage<Label>(labelPagePOJO, Label))
         break
       case ProjectItem:
-        const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId)).node.projectItems;
+        const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId, page.getEndCursor())).node.projectItems;
         (page as GraphQLPageMergeable<ProjectItem>).appendPage(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
         break
     }
@@ -84,6 +83,6 @@ export class GithubGraphQLPageAssembler {
     const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems
     const expandedColumnNameSearchSpace = new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO, ProjectItem)
 
-    issue.getProjectItemPage().merge(expandedColumnNameSearchSpace)
+    issue.applyExpandedSearchSpace(expandedColumnNameSearchSpace)
   }
 }

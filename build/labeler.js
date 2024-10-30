@@ -26,51 +26,102 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // Javascript destructuring assignment
 const githubAPIClient_1 = require("./githubAPIClient");
 const githubGraphQLPageAssembler_1 = require("./githubGraphQLPageAssembler");
+const githubObjects_1 = require("./githubObjects");
 const logger_1 = require("./logger");
 const promises_1 = require("node:fs/promises");
 const TypeChecker = __importStar(require("./typeChecker"));
 const validateConfig_1 = require("./validateConfig");
 const logger = new logger_1.Logger();
+let githubGraphQLPageAssembler;
 async function loadConfig() {
     const configContents = await (0, promises_1.readFile)('./config.json');
     return '' + configContents;
 }
-async function searchRemoteSpaceForColumnNames(remoteQueryParameters, searchResults) {
-    while (remoteQueryParameters.length > 0) {
-        const issueWithMissingSearchSpace = remoteQueryParameters.pop();
-    }
-}
 async function searchIssuesForColumnNames(issues) {
-    const remoteSearchSpaceAccessParameters = [];
+    logger.info('Searching for column names of issues');
+    const issueFetchRequestFailureRecords = new Map();
+    const remoteSearchSpaceQueryParametersWithIssue = [];
     const results = {
         issuesWithColumnNames: [],
         issuesWithoutColumnNames: [],
         issuesWithUnsucessfulSearches: []
     };
-    for (let i = issues.length - 1; i >= 0; i--) {
-        const issue = issues[i];
-        try {
-            const columnNameSearchResult = issue.findColumnName();
-            if (columnNameSearchResult === null) {
-                results.issuesWithoutColumnNames.push(issue.getNumber());
+    do {
+        while (issues.length > 0) {
+            const issue = issues.pop();
+            try {
+                const columnNameSearchResult = issue.findColumnName();
+                if (columnNameSearchResult === null) {
+                    results.issuesWithoutColumnNames.push(issue.getNumber());
+                }
+                else if (TypeChecker.isString(columnNameSearchResult)) {
+                    results.issuesWithColumnNames.push(issue);
+                }
+                else {
+                    remoteSearchSpaceQueryParametersWithIssue.push({
+                        issue: issue,
+                        remoteSearchSpaceQueryParameters: columnNameSearchResult
+                    });
+                }
             }
-            else if (TypeChecker.isString(columnNameSearchResult)) {
-                results.issuesWithColumnNames.push(issue);
+            catch (error) {
+                console.error('FAIL ALPHA');
+                console.error(error);
+                const unsuccessfulSearchReason = {
+                    issueNumber: issue.getNumber(),
+                    failureMessage: `Failed to search local search space`
+                };
+                if (error instanceof Error) {
+                    unsuccessfulSearchReason['error'] = error;
+                }
+                results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason);
+            }
+        }
+        while (remoteSearchSpaceQueryParametersWithIssue.length > 0) {
+            const { issue, remoteSearchSpaceQueryParameters } = remoteSearchSpaceQueryParametersWithIssue.pop();
+            if (remoteSearchSpaceQueryParameters instanceof githubObjects_1.Issue) {
+                try {
+                    await githubGraphQLPageAssembler.fetchAdditionalSearchSpace(remoteSearchSpaceQueryParameters);
+                    issues.push(issue);
+                }
+                catch (error) {
+                    issue.disableColumnNameRemoteSearchSpace();
+                    const unsuccessfulSearchReason = {
+                        issueNumber: issue.getNumber(),
+                        failureMessage: `Incomplete search. Failed to fetch some search space`
+                    };
+                    if (error instanceof Error) {
+                        unsuccessfulSearchReason['error'] = error;
+                    }
+                    results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason);
+                }
             }
             else {
-                remoteSearchSpaceAccessParameters.push({
-                    issue: issue,
-                    remoteSearchSpaceQueryParameters: columnNameSearchResult
-                });
+                let failedSearchCount = 0;
+                for (const singleQueryParameters of remoteSearchSpaceQueryParameters) {
+                    try {
+                        await githubGraphQLPageAssembler.fetchAdditionalSearchSpace(singleQueryParameters);
+                    }
+                    catch (error) {
+                        failedSearchCount++;
+                    }
+                }
+                if (failedSearchCount > 0) {
+                    issueFetchRequestFailureRecords.set(issue.getNumber(), null);
+                }
+                if (failedSearchCount !== remoteSearchSpaceQueryParameters.length) {
+                    issues.push(issue);
+                }
+                else {
+                    const unsuccessfulSearchReason = {
+                        issueNumber: issue.getNumber(),
+                        failureMessage: `Incomplete search. Failed to fetch some search space`
+                    };
+                    results.issuesWithUnsucessfulSearches.push(unsuccessfulSearchReason);
+                }
             }
         }
-        catch (error) {
-            results.issuesWithUnsucessfulSearches.push(issue.getNumber());
-        }
-    }
-    searchRemoteSpaceForColumnNames(remoteSearchSpaceAccessParameters, results);
-    console.log(JSON.stringify(remoteSearchSpaceAccessParameters, null, 2));
-    console.log(JSON.stringify(results, null, 2));
+    } while (issues.length > 0 || remoteSearchSpaceQueryParametersWithIssue.length > 0);
     return results;
 }
 async function main() {
@@ -93,7 +144,6 @@ async function main() {
         return;
     }
     let githubAPIClient;
-    let githubGraphQLPageAssembler;
     try {
         logger.info('Initializing github API objects');
         githubAPIClient = new githubAPIClient_1.GithubAPIClient(config.accessToken, config.repo.name, config.repo.ownerName);
@@ -112,7 +162,7 @@ async function main() {
     try {
         logger.info('Fetching issues with labels and column data...');
         issuePage = await githubGraphQLPageAssembler.fetchAllIssues();
-        logger.info('Fetched issues with labels and column data', 2);
+        logger.info(`Fetched ${issuePage.getEdges().length} issues`, 2);
     }
     catch (error) {
         if (error instanceof Error) {
@@ -123,7 +173,6 @@ async function main() {
         return;
     }
     const issues = issuePage.getNodeArray();
-    console.log(JSON.stringify(issues, null, 2));
     const columnNameSearchResults = await searchIssuesForColumnNames(issues);
     console.log(JSON.stringify(columnNameSearchResults, null, 2));
 }
