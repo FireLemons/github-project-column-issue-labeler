@@ -697,13 +697,13 @@ describe('The ProjectItem class', () => {
 
 describe('The ProjectPrimaryKeyHumanReadable class', () => {
   describe('asStringKey()', () => {
-    it('returns the project owner name concatenated with the project number', () => {
+    it('returns the project owner name concatenated with the project number separated by a space', () => {
       const projectOwnerName = 'U]WA60G8Go[E@#\'flR'
       const projectNumber = 50943
 
       const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
 
-      expect(projectKey.asStringKey()).toBe(projectOwnerName + projectNumber)
+      expect(projectKey.asStringKey()).toBe(`${projectOwnerName} ${projectNumber}`)
     })
   })
 

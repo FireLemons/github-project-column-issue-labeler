@@ -350,7 +350,7 @@ class ProjectPrimaryKeyHumanReadable {
     constructor(name, number = 0) {
         this.#name = name;
         this.#number = number;
-        this.#stringKey = name + number;
+        this.#stringKey = `${name} ${number}`;
     }
     asStringKey() {
         return this.#stringKey;

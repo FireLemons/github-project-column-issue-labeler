@@ -415,7 +415,7 @@ export class ProjectPrimaryKeyHumanReadable {
   constructor (name: string, number: number = 0) {
     this.#name = name
     this.#number = number
-    this.#stringKey = name + number
+    this.#stringKey = `${name} ${number}`
   }
 
   asStringKey () {
