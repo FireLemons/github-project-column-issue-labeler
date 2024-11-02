@@ -176,9 +176,9 @@ export class Issue {
   labels?: GraphQLPage<Label>
   #number: number
   projectItems: GraphQLPageMergeable<ProjectItem>
-  #cacheSearchResult: (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber?: number) => boolean
-  #lookupCachedColumnName: (projectOwnerLogin?: string, projectNumber?: number) => string | undefined
-  #modeAction: (projectOwnerLogin?: string, projectNumber?: number) => void
+  #cacheSearchResult: (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) => boolean
+  #lookupCachedColumnName: (projectKey?: ProjectPrimaryKeyHumanReadable) => string | undefined
+  #modeAction: (projectKey?: ProjectPrimaryKeyHumanReadable) => void
 
   constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
@@ -243,10 +243,10 @@ export class Issue {
     projectItems.disableRemoteDataFetching()
   }
 
-  findColumnName (projectOwnerLogin?: string, projectNumber?: number) {
-    this.#modeAction(projectOwnerLogin, projectNumber)
+  findColumnName (projectKey?: ProjectPrimaryKeyHumanReadable) {
+    this.#modeAction(projectKey)
 
-    const cachedSearch = this.#lookupCachedColumnName(projectOwnerLogin, projectNumber)
+    const cachedSearch = this.#lookupCachedColumnName(projectKey)
 
     if (cachedSearch) {
       return cachedSearch
@@ -268,7 +268,7 @@ export class Issue {
         this.projectItems.delete(i)
         i--
 
-        if(this.#cacheSearchResult(projectItem, projectOwnerLogin, projectNumber)) {
+        if(this.#cacheSearchResult(projectItem, projectKey)) {
           return columnNameSearchResult
         }
       } else {
@@ -287,19 +287,15 @@ export class Issue {
     return this.#determineRemoteQueryParams(remoteRecordQueryParams)
   }
 
-  #cacheSearchResultDefault (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber?: number) {
+  #cacheSearchResultDefault (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) {
     this.columnName = projectItem.findColumnName() as string
     return true
   }
 
-  #cacheSearchResultProjectMode (projectItem: ProjectItem, projectOwnerLogin?: string, projectNumber: number = 0) {
-    const projectKey = projectOwnerLogin! + projectNumber
+  #cacheSearchResultProjectMode (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) {
+    this.columnNameMap!.set(projectKey!.asStringKey(), projectItem.findColumnName() as string)
 
-    this.columnNameMap!.set(projectKey, projectItem.findColumnName() as string)
-
-    const projectItemProjectUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers()
-
-    return projectItemProjectUniqueIdentifiers.ownerLoginName === projectOwnerLogin && projectItemProjectUniqueIdentifiers.number === projectNumber
+    return projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey!)
   }
 
   #determineRemoteQueryParams (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
@@ -312,16 +308,16 @@ export class Issue {
     }
   }
 
-  #lookupCachedColumnNameProjectMode (projectOwnerLogin?: string, projectNumber: number = 0) {
-    return this.columnNameMap?.get(projectOwnerLogin! + projectNumber)
+  #lookupCachedColumnNameProjectMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
+    return this.columnNameMap?.get(projectKey!.asStringKey())
   }
 
-  #lookupCachedColumnNameDefault (projectOwnerLogin?: string, projectNumber?: number) {
+  #lookupCachedColumnNameDefault (projectKey?: ProjectPrimaryKeyHumanReadable) {
     return this.columnName
   }
 
-  #setMode (projectOwnerLogin?: string, projectNumber?: number) {
-    if (TypeChecker.isString(projectOwnerLogin)) {
+  #setMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
+    if (projectKey !== undefined) {
       this.columnNameMap = new Map()
       this.#cacheSearchResult = this.#cacheSearchResultProjectMode
       this.#modeAction = this.#validateProjectMode
@@ -331,15 +327,15 @@ export class Issue {
     }
   }
 
-  #validateProjectMode (projectOwnerLogin?: string, projectNumber?: number) {
-    if (!(TypeChecker.isString(projectOwnerLogin))) {
-      throw new Error('The issue is configured for project mode. findColumnName requires projectOwnerLogin')
+  #validateProjectMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
+    if (projectKey === undefined) {
+      throw new Error('The issue is configured for project mode. findColumnName requires parameter projectKey')
     }
   }
 
-  #validateProjectModeDisabled (projectOwnerLogin?: string, projectNumber?: number) {
-    if (TypeChecker.isString(projectOwnerLogin)) {
-      throw new Error('The issue is not configured for project mode. projectOwnerLogin is not an accepted parameter')
+  #validateProjectModeDisabled (projectKey?: ProjectPrimaryKeyHumanReadable) {
+    if (projectKey !== undefined) {
+      throw new Error('The issue is not configured for project mode. projectKey is not an accepted parameter')
     }
   }
 }
@@ -363,10 +359,7 @@ export class Label {
 export class ProjectItem extends RecordWithGraphQLID {
   columnName?: string
   #fieldValues: GraphQLPage<FieldValue>
-  projectHumanReadableUniqueIdentifiers: {
-    number: number
-    ownerLoginName: string
-  }
+  projectPrimaryKeyHumanReadable: ProjectPrimaryKeyHumanReadable
 
   constructor (projectItemPOJO: any) {
     if (!isProjectItem(projectItemPOJO)) {
@@ -381,10 +374,7 @@ export class ProjectItem extends RecordWithGraphQLID {
       throw new ReferenceError('The field value page could not be initialized')
     }
 
-    this.projectHumanReadableUniqueIdentifiers = {
-      number: projectItemPOJO.project.number,
-      ownerLoginName: projectItemPOJO.project.owner.login
-    }
+    this.projectPrimaryKeyHumanReadable = new ProjectPrimaryKeyHumanReadable(projectItemPOJO.project.owner.login, projectItemPOJO.project.number)
   }
 
   findColumnName () {
@@ -412,8 +402,36 @@ export class ProjectItem extends RecordWithGraphQLID {
     return this.#fieldValues
   }
 
-  getProjectHumanAccessibleUniqueIdentifiers () {
-    return this.projectHumanReadableUniqueIdentifiers
+  getProjectHumanReadablePrimaryKey () {
+    return this.projectPrimaryKeyHumanReadable
+  }
+}
+
+export class ProjectPrimaryKeyHumanReadable {
+  #name: string
+  #number: number
+  #stringKey: string
+
+  constructor (name: string, number: number = 0) {
+    this.#name = name
+    this.#number = number
+    this.#stringKey = name + number
+  }
+
+  asStringKey () {
+    return this.#stringKey
+  }
+
+  equals (projectKey: ProjectPrimaryKeyHumanReadable) {
+    return this.#stringKey === projectKey.asStringKey()
+  }
+
+  getName () {
+    return this.#name
+  }
+
+  getNumber () {
+    return this.#number
   }
 }
 

@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeNodes = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithGraphQLID = exports.FieldValue = void 0;
+exports.initializeNodes = exports.ProjectPrimaryKeyHumanReadable = exports.ProjectItem = exports.Label = exports.Issue = exports.GraphQLPageMergeable = exports.GraphQLPage = exports.RecordWithGraphQLID = exports.FieldValue = void 0;
 const TypeChecker = __importStar(require("./typeChecker"));
 class FieldValue {
     name; // Column Name
@@ -204,9 +204,9 @@ class Issue {
         }
         projectItems.disableRemoteDataFetching();
     }
-    findColumnName(projectOwnerLogin, projectNumber) {
-        this.#modeAction(projectOwnerLogin, projectNumber);
-        const cachedSearch = this.#lookupCachedColumnName(projectOwnerLogin, projectNumber);
+    findColumnName(projectKey) {
+        this.#modeAction(projectKey);
+        const cachedSearch = this.#lookupCachedColumnName(projectKey);
         if (cachedSearch) {
             return cachedSearch;
         }
@@ -223,7 +223,7 @@ class Issue {
             else if (TypeChecker.isString(columnNameSearchResult)) {
                 this.projectItems.delete(i);
                 i--;
-                if (this.#cacheSearchResult(projectItem, projectOwnerLogin, projectNumber)) {
+                if (this.#cacheSearchResult(projectItem, projectKey)) {
                     return columnNameSearchResult;
                 }
             }
@@ -240,15 +240,13 @@ class Issue {
         }
         return this.#determineRemoteQueryParams(remoteRecordQueryParams);
     }
-    #cacheSearchResultDefault(projectItem, projectOwnerLogin, projectNumber) {
+    #cacheSearchResultDefault(projectItem, projectKey) {
         this.columnName = projectItem.findColumnName();
         return true;
     }
-    #cacheSearchResultProjectMode(projectItem, projectOwnerLogin, projectNumber = 0) {
-        const projectKey = projectOwnerLogin + projectNumber;
-        this.columnNameMap.set(projectKey, projectItem.findColumnName());
-        const projectItemProjectUniqueIdentifiers = projectItem.getProjectHumanAccessibleUniqueIdentifiers();
-        return projectItemProjectUniqueIdentifiers.ownerLoginName === projectOwnerLogin && projectItemProjectUniqueIdentifiers.number === projectNumber;
+    #cacheSearchResultProjectMode(projectItem, projectKey) {
+        this.columnNameMap.set(projectKey.asStringKey(), projectItem.findColumnName());
+        return projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey);
     }
     #determineRemoteQueryParams(remoteRecordQueryParams) {
         if (remoteRecordQueryParams.length === 0) {
@@ -261,14 +259,14 @@ class Issue {
             return remoteRecordQueryParams;
         }
     }
-    #lookupCachedColumnNameProjectMode(projectOwnerLogin, projectNumber = 0) {
-        return this.columnNameMap?.get(projectOwnerLogin + projectNumber);
+    #lookupCachedColumnNameProjectMode(projectKey) {
+        return this.columnNameMap?.get(projectKey.asStringKey());
     }
-    #lookupCachedColumnNameDefault(projectOwnerLogin, projectNumber) {
+    #lookupCachedColumnNameDefault(projectKey) {
         return this.columnName;
     }
-    #setMode(projectOwnerLogin, projectNumber) {
-        if (TypeChecker.isString(projectOwnerLogin)) {
+    #setMode(projectKey) {
+        if (projectKey !== undefined) {
             this.columnNameMap = new Map();
             this.#cacheSearchResult = this.#cacheSearchResultProjectMode;
             this.#modeAction = this.#validateProjectMode;
@@ -278,14 +276,14 @@ class Issue {
             this.#modeAction = this.#validateProjectModeDisabled;
         }
     }
-    #validateProjectMode(projectOwnerLogin, projectNumber) {
-        if (!(TypeChecker.isString(projectOwnerLogin))) {
-            throw new Error('The issue is configured for project mode. findColumnName requires projectOwnerLogin');
+    #validateProjectMode(projectKey) {
+        if (projectKey === undefined) {
+            throw new Error('The issue is configured for project mode. findColumnName requires parameter projectKey');
         }
     }
-    #validateProjectModeDisabled(projectOwnerLogin, projectNumber) {
-        if (TypeChecker.isString(projectOwnerLogin)) {
-            throw new Error('The issue is not configured for project mode. projectOwnerLogin is not an accepted parameter');
+    #validateProjectModeDisabled(projectKey) {
+        if (projectKey !== undefined) {
+            throw new Error('The issue is not configured for project mode. projectKey is not an accepted parameter');
         }
     }
 }
@@ -306,7 +304,7 @@ exports.Label = Label;
 class ProjectItem extends RecordWithGraphQLID {
     columnName;
     #fieldValues;
-    projectHumanReadableUniqueIdentifiers;
+    projectPrimaryKeyHumanReadable;
     constructor(projectItemPOJO) {
         if (!isProjectItem(projectItemPOJO)) {
             throw new TypeError('Param projectItemPOJO does not match a project item object');
@@ -318,10 +316,7 @@ class ProjectItem extends RecordWithGraphQLID {
         catch (error) {
             throw new ReferenceError('The field value page could not be initialized');
         }
-        this.projectHumanReadableUniqueIdentifiers = {
-            number: projectItemPOJO.project.number,
-            ownerLoginName: projectItemPOJO.project.owner.login
-        };
+        this.projectPrimaryKeyHumanReadable = new ProjectPrimaryKeyHumanReadable(projectItemPOJO.project.owner.login, projectItemPOJO.project.number);
     }
     findColumnName() {
         if (this.columnName !== undefined) {
@@ -343,11 +338,34 @@ class ProjectItem extends RecordWithGraphQLID {
     getFieldValuePage() {
         return this.#fieldValues;
     }
-    getProjectHumanAccessibleUniqueIdentifiers() {
-        return this.projectHumanReadableUniqueIdentifiers;
+    getProjectHumanReadablePrimaryKey() {
+        return this.projectPrimaryKeyHumanReadable;
     }
 }
 exports.ProjectItem = ProjectItem;
+class ProjectPrimaryKeyHumanReadable {
+    #name;
+    #number;
+    #stringKey;
+    constructor(name, number = 0) {
+        this.#name = name;
+        this.#number = number;
+        this.#stringKey = name + number;
+    }
+    asStringKey() {
+        return this.#stringKey;
+    }
+    equals(projectKey) {
+        return this.#stringKey === projectKey.asStringKey();
+    }
+    getName() {
+        return this.#name;
+    }
+    getNumber() {
+        return this.#number;
+    }
+}
+exports.ProjectPrimaryKeyHumanReadable = ProjectPrimaryKeyHumanReadable;
 function initializeNodes(GithubObjectClass, graphQLPage) {
     let i = 0;
     const edges = graphQLPage.getEdges();

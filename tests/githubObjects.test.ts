@@ -1,4 +1,4 @@
-import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, RecordWithGraphQLID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, ProjectPrimaryKeyHumanReadable, RecordWithGraphQLID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
 import * as TypeChecker from '../src/typeChecker'
 
@@ -88,7 +88,7 @@ describe('The GraphQLPage class', () => {
       combinedPage.appendPage(pageToBeAppended)
     })
 
-    it('appends the edges from the page passed as an argument to the page', () => {
+    it('appends the edges from the page passed in', () => {
       expect(combinedPage.getEdges().find((edge) => {
         return edge.node.name === originalPageFieldValueName
       })).not.toBe(undefined)
@@ -439,9 +439,9 @@ describe('The Issue class', () => {
           it('returns an issue when the expanded column name search space has not yet been applied to the issue', () => {
             const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
             const issue = new Issue(issuePOJO)
-            const projectIdenifiers = issue.projectItems.getNodeArray()[0].getProjectHumanAccessibleUniqueIdentifiers()
+            const projectKey = issue.projectItems.getNodeArray()[0].getProjectHumanReadablePrimaryKey()
 
-            expect(issue.findColumnName(projectIdenifiers.ownerLoginName, projectIdenifiers.number)).toBeInstanceOf(Issue)
+            expect(issue.findColumnName(projectKey)).toBeInstanceOf(Issue)
           })
 
           it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
@@ -452,7 +452,7 @@ describe('The Issue class', () => {
 
             issue.hasExpandedSearchSpace = true
 
-            const columnNameSearchResult = issue.findColumnName(project.owner.login, project.number)
+            const columnNameSearchResult = issue.findColumnName(new ProjectPrimaryKeyHumanReadable(project.owner.login, project.number))
 
             expect(Array.isArray(columnNameSearchResult)).toBe(true)
 
@@ -473,18 +473,18 @@ describe('The Issue class', () => {
             issue.findColumnName()
 
             expect(() => {
-              issue.findColumnName('a project owner name', 1)
-            }).toThrow(/projectOwnerLogin is not an accepted parameter/)
+              issue.findColumnName(new ProjectPrimaryKeyHumanReadable('a project owner name', 1))
+            }).toThrow(/projectKey is not an accepted parameter/)
           })
 
           it('does not allow a call without parameters after findColumnName has been called with project parameters', () => {
             const issue = new Issue(GithubObjectsTestData.getIssuePOJO())
 
-            issue.findColumnName('a project owner name', 1)
+            issue.findColumnName(new ProjectPrimaryKeyHumanReadable('a project owner name', 1))
 
             expect(() => {
               issue.findColumnName()
-            }).toThrow(/findColumnName requires projectOwnerLogin/)
+            }).toThrow(/findColumnName requires parameter projectKey/)
           })
         })
       })
@@ -508,27 +508,29 @@ describe('The Issue class', () => {
       describe('when projects parameters are passed', () => {
         it('does not return a column name if the project item does not match the passed project number', () => {
           const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
+          const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, 100)
           const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
           const issue = new Issue(issuePOJO)
 
-          expect(issue.findColumnName(projectOwnerName, 100)).not.toBe(nonMatchingColumnName)
+          expect(issue.findColumnName(projectKey)).not.toBe(nonMatchingColumnName)
         })
 
         it('does not return a column name if the project item does not match the passed project owner name', () => {
           const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
+          const projectKey = new ProjectPrimaryKeyHumanReadable('Non matching name', projectNumber)
           const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
           const issue = new Issue(issuePOJO)
 
-          expect(issue.findColumnName('Non matching name', projectNumber)).not.toBe(nonMatchingColumnName)
+          expect(issue.findColumnName(projectKey)).not.toBe(nonMatchingColumnName)
         })
 
         it('returns a column name if the project owner and number match the project filtering parameters', () => {
-          const projectNumber = issuePOJO.projectItems.edges[1].node.project.number
-          const projectOwnerName = issuePOJO.projectItems.edges[1].node.project.owner.login
+          const projectPOJO = issuePOJO.projectItems.edges[1].node.project
+          const projectKey = new ProjectPrimaryKeyHumanReadable(projectPOJO.owner.login, projectPOJO.number)
           const columnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
           const issue = new Issue(issuePOJO)
 
-          expect(issue.findColumnName(projectOwnerName, projectNumber)).toBe(columnName)
+          expect(issue.findColumnName(projectKey)).toBe(columnName)
         })
       })
     })
@@ -674,14 +676,82 @@ describe('The ProjectItem class', () => {
   })
 
   describe('getProjectHumanAccessibleUniqueIdentifiers()', () => {
-    it('returns the name of the ProjectItem\'s parent project', () => {
+    it('returns a ProjectPrimaryKeyHumanReadable instance', () => {
       const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJO()
       const projectItem = new ProjectItem(projectItemPOJO)
 
-      expect(projectItem.getProjectHumanAccessibleUniqueIdentifiers()).toEqual({
-        number: projectItemPOJO.project.number,
-        ownerLoginName: projectItemPOJO.project.owner.login
-      })
+      expect(projectItem.getProjectHumanReadablePrimaryKey()).toBeInstanceOf(ProjectPrimaryKeyHumanReadable)
+    })
+
+    it('returns a ProjectPrimaryKeyHumanReadable instance with number and name matching the original project item POJO', () => {
+      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJO()
+      const projectPOJO = projectItemPOJO.project
+      const projectItem = new ProjectItem(projectItemPOJO)
+      const projectKey = projectItem.getProjectHumanReadablePrimaryKey()
+
+      expect(projectKey.getName()).toBe(projectPOJO.owner.login)
+      expect(projectKey.getNumber()).toBe(projectPOJO.number)
+    })
+  })
+})
+
+describe('The ProjectPrimaryKeyHumanReadable class', () => {
+  describe('asStringKey()', () => {
+    it('returns the project owner name concatenated with the project number', () => {
+      const projectOwnerName = 'U]WA60G8Go[E@#\'flR'
+      const projectNumber = 50943
+
+      const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
+
+      expect(projectKey.asStringKey()).toBe(projectOwnerName + projectNumber)
+    })
+  })
+
+  describe('equals()', () => {
+    it('returns true if the owner name and number of the passed ProjectPrimaryKeyHumanReadable instance are the same as the ProjectPrimaryKeyHumanReadable instance the method was called from', () => {
+      const projectOwnerName = 'pL7d<~c[H=w0ZY|`N3'
+      const projectNumber = 10934
+
+      const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
+      const projectKey1 = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
+
+      expect(projectKey.equals(projectKey1)).toBe(true)
+    })
+
+    it('returns true if the owner name and number of the passed ProjectPrimaryKeyHumanReadable instance are not the same as the ProjectPrimaryKeyHumanReadable instance the method was called from', () => {
+      const projectOwnerName = 'W{%rdE&WTS3*U^Yi[K'
+      const projectOwnerName1 = 'tg4<BJi=*DxfSf7|1-'
+      const projectNumber = 10934
+      const projectNumber1 = 48930
+
+      const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
+      const projectKey1 = new ProjectPrimaryKeyHumanReadable(projectOwnerName1, projectNumber)
+      const projectKey2 = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber1)
+      const projectKey3 = new ProjectPrimaryKeyHumanReadable(projectOwnerName1, projectNumber1)
+
+      expect(projectKey.equals(projectKey1)).toBe(false)
+      expect(projectKey.equals(projectKey2)).toBe(false)
+      expect(projectKey.equals(projectKey3)).toBe(false)
+    })
+  })
+
+  describe('getName()', () => {
+    it('returns the name passed into the constructor', () => {
+      const projectOwnerName = 'DHNxjDU5U5`[C8@^4~'
+
+      const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, 98982)
+
+      expect(projectKey.getName()).toBe(projectOwnerName)
+    })
+  })
+
+  describe('getNumber()', () => {
+    it('returns the number passed into the constructor', () => {
+      const projectNumber = 34921
+
+      const projectKey = new ProjectPrimaryKeyHumanReadable('', projectNumber)
+
+      expect(projectKey.getNumber()).toBe(projectNumber)
     })
   })
 })
