@@ -140,16 +140,12 @@ class GraphQLPageMergeable extends GraphQLPage {
 }
 exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
-    columnName;
-    columnNameMap;
-    hasExpandedSearchSpace;
+    #columnNameMap;
+    #hasExpandedSearchSpace;
     #id;
     labels;
     #number;
     projectItems;
-    #cacheSearchResult;
-    #lookupCachedColumnName;
-    #modeAction;
     constructor(issuePOJO) {
         if (!(isIssue(issuePOJO))) {
             throw new TypeError('Param issuePOJO does not match a github issue object');
@@ -166,16 +162,14 @@ class Issue {
         catch (error) {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
-        this.hasExpandedSearchSpace = false;
+        this.#hasExpandedSearchSpace = false;
         this.#number = issuePOJO.number;
         this.#id = issuePOJO.id;
-        this.#cacheSearchResult = this.#cacheSearchResultDefault;
-        this.#modeAction = this.#setMode;
-        this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault;
+        this.#columnNameMap = new Map();
     }
     applyExpandedSearchSpace(expandedColumnNameSearchSpace) {
         this.projectItems.merge(expandedColumnNameSearchSpace);
-        this.hasExpandedSearchSpace = true;
+        this.#hasExpandedSearchSpace = true;
     }
     getId() {
         return this.#id;
@@ -202,7 +196,6 @@ class Issue {
         projectItems.disableRemoteDataFetching();
     }
     findColumnName(projectKey) {
-        this.#modeAction(projectKey);
         const cachedSearch = this.#lookupCachedColumnName(projectKey);
         if (cachedSearch) {
             return cachedSearch;
@@ -220,7 +213,8 @@ class Issue {
             else if (TypeChecker.isString(columnNameSearchResult)) {
                 this.projectItems.delete(i);
                 i--;
-                if (this.#cacheSearchResult(projectItem, projectKey)) {
+                this.#cacheSearchResult(projectItem);
+                if (projectKey === undefined || projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
                     return columnNameSearchResult;
                 }
             }
@@ -237,50 +231,26 @@ class Issue {
         }
         return this.#determineRemoteQueryParams(remoteRecordQueryParams);
     }
-    #cacheSearchResultDefault(projectItem, projectKey) {
-        this.columnName = projectItem.findColumnName();
-        return true;
-    }
-    #cacheSearchResultProjectMode(projectItem, projectKey) {
-        this.columnNameMap.set(projectKey.asStringKey(), projectItem.findColumnName());
-        return projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey);
+    #cacheSearchResult(projectItem) {
+        this.#columnNameMap.set(projectItem.getProjectHumanReadablePrimaryKey().asStringKey(), projectItem.findColumnName());
     }
     #determineRemoteQueryParams(remoteRecordQueryParams) {
         if (remoteRecordQueryParams.length === 0) {
             return null;
         }
-        else if (!(this.hasExpandedSearchSpace)) {
+        else if (!(this.#hasExpandedSearchSpace)) {
             return this;
         }
         else {
             return remoteRecordQueryParams;
         }
     }
-    #lookupCachedColumnNameProjectMode(projectKey) {
-        return this.columnNameMap?.get(projectKey.asStringKey());
-    }
-    #lookupCachedColumnNameDefault(projectKey) {
-        return this.columnName;
-    }
-    #setMode(projectKey) {
-        if (projectKey !== undefined) {
-            this.columnNameMap = new Map();
-            this.#cacheSearchResult = this.#cacheSearchResultProjectMode;
-            this.#modeAction = this.#validateProjectMode;
-            this.#lookupCachedColumnName = this.#lookupCachedColumnNameProjectMode;
+    #lookupCachedColumnName(projectKey) {
+        if (projectKey === undefined) {
+            return this.#columnNameMap.keys().next()?.value;
         }
         else {
-            this.#modeAction = this.#validateProjectModeDisabled;
-        }
-    }
-    #validateProjectMode(projectKey) {
-        if (projectKey === undefined) {
-            throw new Error('The issue is configured for project mode. findColumnName requires parameter projectKey');
-        }
-    }
-    #validateProjectModeDisabled(projectKey) {
-        if (projectKey !== undefined) {
-            throw new Error('The issue is not configured for project mode. projectKey is not an accepted parameter');
+            return this.#columnNameMap.get(projectKey.asStringKey());
         }
     }
 }

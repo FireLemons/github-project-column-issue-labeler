@@ -449,8 +449,8 @@ describe('The Issue class', () => {
             const project = issuePOJO.projectItems.edges[0].node.project
             const projectItemId = issuePOJO.projectItems.edges[0].node.id
             const issue = new Issue(issuePOJO)
-
-            issue.hasExpandedSearchSpace = true
+            
+            issue.applyExpandedSearchSpace(issue.getProjectItemPage())
 
             const columnNameSearchResult = issue.findColumnName(new ProjectPrimaryKeyHumanReadable(project.owner.login, project.number))
 
@@ -465,26 +465,6 @@ describe('The Issue class', () => {
               return queryParameters.parentId === issuePOJO.id &&
                 queryParameters.localPage.lookupNodeClass() === ProjectItem
             })).not.toBe(undefined)
-          })
-
-          it('does not allow a call with project parameters after findColumnName has been called without parameters', () => {
-            const issue = new Issue(GithubObjectsTestData.getIssuePOJO())
-
-            issue.findColumnName()
-
-            expect(() => {
-              issue.findColumnName(new ProjectPrimaryKeyHumanReadable('a project owner name', 1))
-            }).toThrow(/projectKey is not an accepted parameter/)
-          })
-
-          it('does not allow a call without parameters after findColumnName has been called with project parameters', () => {
-            const issue = new Issue(GithubObjectsTestData.getIssuePOJO())
-
-            issue.findColumnName(new ProjectPrimaryKeyHumanReadable('a project owner name', 1))
-
-            expect(() => {
-              issue.findColumnName()
-            }).toThrow(/findColumnName requires parameter projectKey/)
           })
         })
       })

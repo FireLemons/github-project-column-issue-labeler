@@ -165,16 +165,12 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
 }
 
 export class Issue {
-  columnName?: string
-  columnNameMap?: Map<string, string>
-  hasExpandedSearchSpace: boolean
+  #columnNameMap: Map<string, string>
+  #hasExpandedSearchSpace: boolean
   #id: string
   labels?: GraphQLPage<Label>
   #number: number
   projectItems: GraphQLPageMergeable<ProjectItem>
-  #cacheSearchResult: (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) => boolean
-  #lookupCachedColumnName: (projectKey?: ProjectPrimaryKeyHumanReadable) => string | undefined
-  #modeAction: (projectKey?: ProjectPrimaryKeyHumanReadable) => void
 
   constructor (issuePOJO: any) {
     if (!(isIssue(issuePOJO))) {
@@ -193,18 +189,16 @@ export class Issue {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.hasExpandedSearchSpace = false
+    this.#hasExpandedSearchSpace = false
     this.#number = issuePOJO.number
     this.#id = issuePOJO.id
 
-    this.#cacheSearchResult = this.#cacheSearchResultDefault
-    this.#modeAction = this.#setMode
-    this.#lookupCachedColumnName = this.#lookupCachedColumnNameDefault
+    this.#columnNameMap = new Map()
   }
 
   applyExpandedSearchSpace (expandedColumnNameSearchSpace: GraphQLPageMergeable<ProjectItem>) {
     this.projectItems.merge(expandedColumnNameSearchSpace)
-    this.hasExpandedSearchSpace = true
+    this.#hasExpandedSearchSpace = true
   }
 
   getId ():string {
@@ -240,8 +234,6 @@ export class Issue {
   }
 
   findColumnName (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    this.#modeAction(projectKey)
-
     const cachedSearch = this.#lookupCachedColumnName(projectKey)
 
     if (cachedSearch) {
@@ -264,7 +256,9 @@ export class Issue {
         this.projectItems.delete(i)
         i--
 
-        if(this.#cacheSearchResult(projectItem, projectKey)) {
+        this.#cacheSearchResult(projectItem)
+
+        if (projectKey === undefined || projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
           return columnNameSearchResult
         }
       } else {
@@ -283,55 +277,25 @@ export class Issue {
     return this.#determineRemoteQueryParams(remoteRecordQueryParams)
   }
 
-  #cacheSearchResultDefault (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) {
-    this.columnName = projectItem.findColumnName() as string
-    return true
-  }
-
-  #cacheSearchResultProjectMode (projectItem: ProjectItem, projectKey?: ProjectPrimaryKeyHumanReadable) {
-    this.columnNameMap!.set(projectKey!.asStringKey(), projectItem.findColumnName() as string)
-
-    return projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey!)
+  #cacheSearchResult (projectItem: ProjectItem) {
+    this.#columnNameMap.set(projectItem.getProjectHumanReadablePrimaryKey().asStringKey(), projectItem.findColumnName() as string)
   }
 
   #determineRemoteQueryParams (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
     if (remoteRecordQueryParams.length === 0) {
       return null
-    } else if (!(this.hasExpandedSearchSpace)) {
+    } else if (!(this.#hasExpandedSearchSpace)) {
       return this
     } else {
       return remoteRecordQueryParams
     }
   }
 
-  #lookupCachedColumnNameProjectMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    return this.columnNameMap?.get(projectKey!.asStringKey())
-  }
-
-  #lookupCachedColumnNameDefault (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    return this.columnName
-  }
-
-  #setMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    if (projectKey !== undefined) {
-      this.columnNameMap = new Map()
-      this.#cacheSearchResult = this.#cacheSearchResultProjectMode
-      this.#modeAction = this.#validateProjectMode
-      this.#lookupCachedColumnName = this.#lookupCachedColumnNameProjectMode
-    } else {
-      this.#modeAction = this.#validateProjectModeDisabled
-    }
-  }
-
-  #validateProjectMode (projectKey?: ProjectPrimaryKeyHumanReadable) {
+  #lookupCachedColumnName (projectKey?: ProjectPrimaryKeyHumanReadable) {
     if (projectKey === undefined) {
-      throw new Error('The issue is configured for project mode. findColumnName requires parameter projectKey')
-    }
-  }
-
-  #validateProjectModeDisabled (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    if (projectKey !== undefined) {
-      throw new Error('The issue is not configured for project mode. projectKey is not an accepted parameter')
+      return this.#columnNameMap.keys().next()?.value
+    } else {
+      return this.#columnNameMap.get(projectKey.asStringKey())
     }
   }
 }
