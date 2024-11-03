@@ -152,13 +152,9 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
       const { node } = edge
       const nodeId = node.getId()
 
-      if (this.deletedNodeIds.has(nodeId)) {
-        continue
-      }
-
       if (this.activeNodeFastAccessMap.has(nodeId)) {
         this.activeNodeFastAccessMap.get(nodeId)!.node = node
-      } else {
+      } else if (!(this.deletedNodeIds.has(nodeId))){
         this.activeNodeFastAccessMap.set(nodeId, edge)
         this.page.edges.push(edge)
       }
@@ -188,7 +184,7 @@ export class Issue {
     try {
       this.labels = new GraphQLPage(issuePOJO.labels, Label)
     } catch (error) {
-      issuePOJO.labels = undefined
+      // It's fine. Labels aren't required.
     }
 
     try {
@@ -435,20 +431,26 @@ export class ProjectPrimaryKeyHumanReadable {
   }
 }
 
+function tryInitializeNode (GithubObjectClass: Constructable<any>, graphQLEdge: { node: any }) {
+  try {
+    graphQLEdge.node = new GithubObjectClass(graphQLEdge.node)
+
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
-  let i = 0
   const edges = graphQLPage.getEdges()
+  let i = edges.length - 1
 
-  while (i < edges.length) {
-    try {
-      edges[i] = {
-        node: new GithubObjectClass(edges[i].node)
-      }
-
-      i++
-    } catch (error) {
+  while (i >= 0) {
+    if (!tryInitializeNode(GithubObjectClass, edges[i])) {
       edges.splice(i, 1)
     }
+
+    i--
   }
 }
 
@@ -470,8 +472,11 @@ function isGraphQLPage (object: any): boolean {
   try {
     TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array)
     TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object)
-    TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.nullableString)
-    TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean)
+
+    const { pageInfo } = object
+
+    TypeChecker.validateObjectMember(pageInfo, 'endCursor', TypeChecker.Type.nullableString)
+    TypeChecker.validateObjectMember(pageInfo, 'hasNextPage', TypeChecker.Type.boolean)
   } catch (error) {
     return false
   }

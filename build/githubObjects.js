@@ -127,13 +127,10 @@ class GraphQLPageMergeable extends GraphQLPage {
         for (const edge of page.getEdges()) {
             const { node } = edge;
             const nodeId = node.getId();
-            if (this.deletedNodeIds.has(nodeId)) {
-                continue;
-            }
             if (this.activeNodeFastAccessMap.has(nodeId)) {
                 this.activeNodeFastAccessMap.get(nodeId).node = node;
             }
-            else {
+            else if (!(this.deletedNodeIds.has(nodeId))) {
                 this.activeNodeFastAccessMap.set(nodeId, edge);
                 this.page.edges.push(edge);
             }
@@ -161,7 +158,7 @@ class Issue {
             this.labels = new GraphQLPage(issuePOJO.labels, Label);
         }
         catch (error) {
-            issuePOJO.labels = undefined;
+            // It's fine. Labels aren't required.
         }
         try {
             this.projectItems = new GraphQLPageMergeable(issuePOJO.projectItems, ProjectItem);
@@ -366,19 +363,23 @@ class ProjectPrimaryKeyHumanReadable {
     }
 }
 exports.ProjectPrimaryKeyHumanReadable = ProjectPrimaryKeyHumanReadable;
+function tryInitializeNode(GithubObjectClass, graphQLEdge) {
+    try {
+        graphQLEdge.node = new GithubObjectClass(graphQLEdge.node);
+        return true;
+    }
+    catch (error) {
+        return false;
+    }
+}
 function initializeNodes(GithubObjectClass, graphQLPage) {
-    let i = 0;
     const edges = graphQLPage.getEdges();
-    while (i < edges.length) {
-        try {
-            edges[i] = {
-                node: new GithubObjectClass(edges[i].node)
-            };
-            i++;
-        }
-        catch (error) {
+    let i = edges.length - 1;
+    while (i >= 0) {
+        if (!tryInitializeNode(GithubObjectClass, edges[i])) {
             edges.splice(i, 1);
         }
+        i--;
     }
 }
 exports.initializeNodes = initializeNodes;
@@ -398,8 +399,9 @@ function isGraphQLPage(object) {
     try {
         TypeChecker.validateObjectMember(object, 'edges', TypeChecker.Type.array);
         TypeChecker.validateObjectMember(object, 'pageInfo', TypeChecker.Type.object);
-        TypeChecker.validateObjectMember(object.pageInfo, 'endCursor', TypeChecker.Type.nullableString);
-        TypeChecker.validateObjectMember(object.pageInfo, 'hasNextPage', TypeChecker.Type.boolean);
+        const { pageInfo } = object;
+        TypeChecker.validateObjectMember(pageInfo, 'endCursor', TypeChecker.Type.nullableString);
+        TypeChecker.validateObjectMember(pageInfo, 'hasNextPage', TypeChecker.Type.boolean);
     }
     catch (error) {
         return false;
