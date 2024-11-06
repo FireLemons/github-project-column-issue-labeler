@@ -28,10 +28,17 @@ async function loadConfig (): Promise<string> {
   return '' + configContents
 }
 
+function searchLocalSearchSpace () {
+
+}
+
+async function fetchRemoteSearchSpace () {
+
+}
+
 async function searchIssuesForColumnNames (issues: Issue[]): Promise<columnNameSearchResults> {
   logger.info('Searching for column names of issues')
 
-  const issueFetchRequestFailureRecords = new Map<number, null>()
   const remoteSearchSpaceQueryParametersWithIssue: {
     issue: Issue
     remoteSearchSpaceQueryParameters: Issue | RemoteRecordPageQueryParameters[]
@@ -50,7 +57,14 @@ async function searchIssuesForColumnNames (issues: Issue[]): Promise<columnNameS
       try {
         const columnNameSearchResult = issue.findColumnName()
         if (columnNameSearchResult === null) {
-          results.issuesWithoutColumnNames.push(issue.getNumber())
+          if (issue.hasInaccessibleRemoteSearchSpace()) {
+            results.issuesWithUnsucessfulSearches.push({
+              issueNumber: issue.getNumber(),
+              failureMessage: 'Failed to fetch all search space and could not find column name when searching available search space'
+            })
+          } else {
+            results.issuesWithoutColumnNames.push(issue.getNumber())
+          }
         } else if (TypeChecker.isString(columnNameSearchResult)) {
           results.issuesWithColumnNames.push(issue)
         } else {
@@ -60,8 +74,6 @@ async function searchIssuesForColumnNames (issues: Issue[]): Promise<columnNameS
           })
         }
       } catch (error) {
-        console.error('FAIL ALPHA')
-        console.error(error)
         const unsuccessfulSearchReason: unsuccessfulSearchReason = {
           issueNumber: issue.getNumber(),
           failureMessage: `Failed to search local search space`
@@ -107,7 +119,7 @@ async function searchIssuesForColumnNames (issues: Issue[]): Promise<columnNameS
         }
 
         if (failedSearchCount > 0) {
-          issueFetchRequestFailureRecords.set(issue.getNumber(), null)
+          issue.markRemoteSearchSpaceAsNotCompletelyAcessible()
         }
 
         if (failedSearchCount !== remoteSearchSpaceQueryParameters.length) {

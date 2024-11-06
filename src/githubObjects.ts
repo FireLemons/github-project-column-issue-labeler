@@ -167,6 +167,7 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
 export class Issue {
   #columnNameMap: Map<string, string>
   #hasExpandedSearchSpace: boolean
+  #hasInaccessibleRemoteSearchSpace: boolean
   #id: string
   labels?: GraphQLPage<Label>
   #number: number
@@ -190,6 +191,7 @@ export class Issue {
     }
 
     this.#hasExpandedSearchSpace = false
+    this.#hasInaccessibleRemoteSearchSpace = false
     this.#number = issuePOJO.number
     this.#id = issuePOJO.id
 
@@ -201,29 +203,7 @@ export class Issue {
     this.#hasExpandedSearchSpace = true
   }
 
-  getId ():string {
-    return this.#id
-  }
-
-  getLabels ():string[] | null {
-    if (this.labels !== undefined) {
-      return this.labels.getNodeArray().map((label: Label) => {
-        return label.getName()
-      })
-    }
-
-    return null
-  }
-
-  getNumber ():number {
-    return this.#number
-  }
-
-  getProjectItemPage ():GraphQLPageMergeable<ProjectItem> {
-    return this.projectItems
-  }
-
-  disableColumnNameRemoteSearchSpace () {
+  disableColumnNameRemoteSearchSpace ():void {
     const { projectItems } = this
 
     for(const projectItem of projectItems.getNodeArray()) {
@@ -275,6 +255,36 @@ export class Issue {
     }
 
     return this.#determineRemoteQueryParams(remoteRecordQueryParams)
+  }
+
+  getId ():string {
+    return this.#id
+  }
+
+  getLabels ():string[] | null {
+    if (this.labels !== undefined) {
+      return this.labels.getNodeArray().map((label: Label) => {
+        return label.getName()
+      })
+    }
+
+    return null
+  }
+
+  getNumber ():number {
+    return this.#number
+  }
+
+  getProjectItemPage ():GraphQLPageMergeable<ProjectItem> {
+    return this.projectItems
+  }
+
+  hasInaccessibleRemoteSearchSpace ():boolean {
+    return this.#hasInaccessibleRemoteSearchSpace
+  }
+
+  markRemoteSearchSpaceAsNotCompletelyAcessible () {
+    this.#hasInaccessibleRemoteSearchSpace = true
   }
 
   #cacheSearchResult (projectItem: ProjectItem) {

@@ -142,6 +142,7 @@ exports.GraphQLPageMergeable = GraphQLPageMergeable;
 class Issue {
     #columnNameMap;
     #hasExpandedSearchSpace;
+    #hasInaccessibleRemoteSearchSpace;
     #id;
     labels;
     #number;
@@ -163,6 +164,7 @@ class Issue {
             throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`);
         }
         this.#hasExpandedSearchSpace = false;
+        this.#hasInaccessibleRemoteSearchSpace = false;
         this.#number = issuePOJO.number;
         this.#id = issuePOJO.id;
         this.#columnNameMap = new Map();
@@ -170,23 +172,6 @@ class Issue {
     applyExpandedSearchSpace(expandedColumnNameSearchSpace) {
         this.projectItems.merge(expandedColumnNameSearchSpace);
         this.#hasExpandedSearchSpace = true;
-    }
-    getId() {
-        return this.#id;
-    }
-    getLabels() {
-        if (this.labels !== undefined) {
-            return this.labels.getNodeArray().map((label) => {
-                return label.getName();
-            });
-        }
-        return null;
-    }
-    getNumber() {
-        return this.#number;
-    }
-    getProjectItemPage() {
-        return this.projectItems;
     }
     disableColumnNameRemoteSearchSpace() {
         const { projectItems } = this;
@@ -230,6 +215,29 @@ class Issue {
             });
         }
         return this.#determineRemoteQueryParams(remoteRecordQueryParams);
+    }
+    getId() {
+        return this.#id;
+    }
+    getLabels() {
+        if (this.labels !== undefined) {
+            return this.labels.getNodeArray().map((label) => {
+                return label.getName();
+            });
+        }
+        return null;
+    }
+    getNumber() {
+        return this.#number;
+    }
+    getProjectItemPage() {
+        return this.projectItems;
+    }
+    hasInaccessibleRemoteSearchSpace() {
+        return this.#hasInaccessibleRemoteSearchSpace;
+    }
+    markRemoteSearchSpaceAsNotCompletelyAcessible() {
+        this.#hasInaccessibleRemoteSearchSpace = true;
     }
     #cacheSearchResult(projectItem) {
         this.#columnNameMap.set(projectItem.getProjectHumanReadablePrimaryKey().asStringKey(), projectItem.findColumnName());
