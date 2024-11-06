@@ -86,11 +86,11 @@ class GraphQLPage {
     getPageInfo() {
         return this.page.pageInfo;
     }
+    hasNextPage() {
+        return this.page.pageInfo.hasNextPage;
+    }
     isEmpty() {
         return this.getEdges().length === 0;
-    }
-    isLastPage() {
-        return !(this.page.pageInfo.hasNextPage);
     }
     lookupNodeClass() {
         return this.nodeClass;
@@ -208,7 +208,7 @@ class Issue {
                 i--;
             }
         }
-        if (!(this.projectItems.isLastPage())) {
+        if (this.projectItems.hasNextPage()) {
             remoteRecordQueryParams.push({
                 parentId: this.#id,
                 localPage: this.projectItems
@@ -302,7 +302,7 @@ class ProjectItem extends RecordWithGraphQLID {
             this.columnName = columnNameList[0].getName();
             return this.columnName;
         }
-        else if (!(this.#fieldValues.isLastPage())) {
+        else if (this.#fieldValues.hasNextPage()) {
             return {
                 parentId: this.getId(),
                 localPage: this.#fieldValues

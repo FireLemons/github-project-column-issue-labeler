@@ -47,7 +47,7 @@ class GithubGraphQLPageAssembler {
                     return issues;
                 }
             }
-        } while (!(issues?.isLastPage()));
+        } while (issues?.hasNextPage());
         logger.addBaseIndentation(-2);
         return issues;
     }

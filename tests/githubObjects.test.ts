@@ -148,14 +148,14 @@ describe('The GraphQLPage class', () => {
   })
 
   describe('disableRemoteDataFetching()', () => {
-    it('simply marks this GraphQLPage as not having any more pages to fetch', () => {
+    it('marks the GraphQLPage as not having any more pages to fetch', () => {
       const page = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
 
-      expect(page.isLastPage()).toBe(false)
+      expect(page.hasNextPage()).toBe(true)
 
       page.disableRemoteDataFetching()
 
-      expect(page.isLastPage()).toBe(true)
+      expect(page.hasNextPage()).toBe(false)
     })
   })
 
@@ -212,17 +212,17 @@ describe('The GraphQLPage class', () => {
     })
   })
 
-  describe('isLastPage()', () => {
-    it('returns true if the pageInfo indicates the page is the last page', () => {
-      const labelPage = new GraphQLPage(GithubObjectsTestData.getCompleteLabelPagePOJO())
-
-      expect(labelPage.isLastPage()).toBeTruthy()
-    })
-
-    it('returns false if the pageInfo indicates the page is not the last page', () => {
+  describe('hasNextPage()', () => {
+    it('returns true if the pageInfo indicates the are more pages to fetch', () => {
       const labelPage = new GraphQLPage(GithubObjectsTestData.getLabelPagePOJO())
 
-      expect(labelPage.isLastPage()).toBeFalsy()
+      expect(labelPage.hasNextPage()).toBe(true)
+    })
+
+    it('returns false if the pageInfo indicates there are no more pages to fetch', () => {
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getCompleteLabelPagePOJO())
+
+      expect(labelPage.hasNextPage()).toBe(false)
     })
   })
 })
@@ -400,11 +400,11 @@ describe('The Issue class', () => {
     })
 
     it('marks the ProjectItem page as not having any additional remote records to fetch', () => {
-      expect(issue.getProjectItemPage().isLastPage()).toBe(false)
+      expect(issue.getProjectItemPage().hasNextPage()).toBe(true)
 
       issue.disableColumnNameRemoteSearchSpace()
 
-      expect(issue.getProjectItemPage().isLastPage()).toBe(true)
+      expect(issue.getProjectItemPage().hasNextPage()).toBe(false)
     })
 
     it('marks all child FieldValue graphql pages as not having any additional remote records to fetch', () => {
@@ -413,13 +413,13 @@ describe('The Issue class', () => {
       })
 
       for (const fieldValuePage of fieldValuePages) {
-        expect(fieldValuePage.isLastPage()).toBe(false)
+        expect(fieldValuePage.hasNextPage()).toBe(true)
       }
 
       issue.disableColumnNameRemoteSearchSpace()
 
       for (const fieldValuePage of fieldValuePages) {
-        expect(fieldValuePage.isLastPage()).toBe(true)
+        expect(fieldValuePage.hasNextPage()).toBe(false)
       }
     })
   })

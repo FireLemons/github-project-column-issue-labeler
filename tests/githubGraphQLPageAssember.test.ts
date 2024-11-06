@@ -106,7 +106,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         }
       }
 
-      expect(localPage.isLastPage()).not.toBe(!updatedFieldValuePageHasNextPage)
+      expect(localPage.hasNextPage()).not.toBe(updatedFieldValuePageHasNextPage)
 
       jest.spyOn(githubClient, 'fetchFieldValuePage').mockResolvedValueOnce(fetchedPageResponse)
 
@@ -115,7 +115,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         localPage
       })
 
-      expect(localPage.isLastPage()).toBe(!updatedFieldValuePageHasNextPage)
+      expect(localPage.hasNextPage()).toBe(updatedFieldValuePageHasNextPage)
     })
   })
 
@@ -211,7 +211,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         }
       }
 
-      expect(localPage.isLastPage()).not.toBe(!updatedLabelPageHasNextPage)
+      expect(localPage.hasNextPage()).not.toBe(updatedLabelPageHasNextPage)
 
       jest.spyOn(githubClient, 'fetchLabelPage').mockResolvedValueOnce(fetchedPageResponse)
 
@@ -220,7 +220,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         localPage
       })
 
-      expect(localPage.isLastPage()).toBe(!updatedLabelPageHasNextPage)
+      expect(localPage.hasNextPage()).toBe(updatedLabelPageHasNextPage)
     })
   })
 
@@ -316,7 +316,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         }
       }
 
-      expect(localPage.isLastPage()).not.toBe(!updatedProjectItemPageHasNextPage)
+      expect(localPage.hasNextPage()).not.toBe(updatedProjectItemPageHasNextPage)
 
       jest.spyOn(githubClient, 'fetchProjectItemPage').mockResolvedValueOnce(fetchedPageResponse)
 
@@ -325,7 +325,7 @@ describe('fetchAdditionalSearchSpace()', () => {
         localPage
       })
 
-      expect(localPage.isLastPage()).toBe(!updatedProjectItemPageHasNextPage)
+      expect(localPage.hasNextPage()).toBe(updatedProjectItemPageHasNextPage)
     })
   })
 
@@ -415,13 +415,13 @@ describe('fetchAdditionalSearchSpace()', () => {
       const projectItemPage = issue.getProjectItemPage()
       const updatedProjectItemPageHasNextPage  = fetchedPagePOJO.node.projectItems.pageInfo.hasNextPage
 
-      expect(projectItemPage.isLastPage()).not.toBe(!updatedProjectItemPageHasNextPage)
+      expect(projectItemPage.hasNextPage()).not.toBe(updatedProjectItemPageHasNextPage)
 
       jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
 
       await pageAssembler.fetchAdditionalSearchSpace(issue)
 
-      expect(projectItemPage.isLastPage()).toBe(!updatedProjectItemPageHasNextPage)
+      expect(projectItemPage.hasNextPage()).toBe(updatedProjectItemPageHasNextPage)
     })
 
     describe('the child field value pages of the project items', () => {
@@ -479,15 +479,15 @@ describe('fetchAdditionalSearchSpace()', () => {
         const firstUpdatedHasNextPage = fetchedPagePOJO.node.projectItems.edges[0].node.fieldValues.pageInfo.hasNextPage
         const secondsUpdatedHasNextPage = fetchedPagePOJO.node.projectItems.edges[1].node.fieldValues.pageInfo.hasNextPage
 
-        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().isLastPage()).not.toBe(!firstUpdatedHasNextPage)
-        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().isLastPage()).not.toBe(!secondsUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().hasNextPage()).not.toBe(firstUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().hasNextPage()).not.toBe(secondsUpdatedHasNextPage)
 
         jest.spyOn(githubClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(fetchedPagePOJO)
 
         await pageAssembler.fetchAdditionalSearchSpace(issue)
 
-        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().isLastPage()).toBe(!firstUpdatedHasNextPage)
-        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().isLastPage()).toBe(!secondsUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[0].getFieldValuePage().hasNextPage()).toBe(firstUpdatedHasNextPage)
+        expect(projectItemPage.getNodeArray()[1].getFieldValuePage().hasNextPage()).toBe(secondsUpdatedHasNextPage)
       })
     })
   })
@@ -523,7 +523,7 @@ describe('fetchAllIssues()', () => {
       const pageAssembler = new GithubGraphQLPageAssembler(githubClient)
       const issueFetchResult = await pageAssembler.fetchAllIssues()
 
-      expect(issueFetchResult.isLastPage()).toBe(true)
+      expect(issueFetchResult.hasNextPage()).toBe(false)
     })
 
     it('prints a warning stating that all of the issues were not successfully fetched and that the labeler will be continuing with the issues that were fetched successfully', async () => {

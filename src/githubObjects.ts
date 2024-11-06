@@ -96,12 +96,12 @@ export class GraphQLPage<T> {
     return this.page.pageInfo
   }
 
-  isEmpty () {
-    return this.getEdges().length === 0
+  hasNextPage () {
+    return this.page.pageInfo.hasNextPage
   }
 
-  isLastPage () {
-    return !(this.page.pageInfo.hasNextPage)
+  isEmpty () {
+    return this.getEdges().length === 0
   }
 
   lookupNodeClass () {
@@ -247,7 +247,7 @@ export class Issue {
       }
     }
 
-    if (!(this.projectItems.isLastPage())) {
+    if (this.projectItems.hasNextPage()) {
       remoteRecordQueryParams.push({
         parentId: this.#id,
         localPage: this.projectItems
@@ -358,7 +358,7 @@ export class ProjectItem extends RecordWithGraphQLID {
       this.columnName = columnNameList[0].getName()
 
       return this.columnName
-    } else if (!(this.#fieldValues.isLastPage())) {
+    } else if (this.#fieldValues.hasNextPage()) {
       return {
         parentId: this.getId(),
         localPage: this.#fieldValues
