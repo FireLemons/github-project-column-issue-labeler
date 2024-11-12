@@ -11,27 +11,37 @@ var Indentation;
     Indentation["tab"] = "\t";
 })(Indentation || (exports.Indentation = Indentation = {}));
 class Logger {
-    baseIndentation;
-    indentationCharacter;
+    #baseIndentation;
+    #indentationCharacter;
     constructor(indentationCharacter = Indentation.space) {
-        this.baseIndentation = 0;
-        this.indentationCharacter = indentationCharacter;
+        this.#baseIndentation = 0;
+        this.#indentationCharacter = indentationCharacter;
     }
     addBaseIndentation(amount) {
-        this.baseIndentation = Math.max(0, this.baseIndentation + amount);
-        // console.log(`Indentation: ${this.baseIndentation}`)
+        this.#baseIndentation = Math.max(0, this.#baseIndentation + amount);
+        // console.log(`Indentation: ${this.#baseIndentation}`)
     }
     info(message, indentationCount = 0) {
-        console.info(this.#makePrettyString(message, 'INFO', this.baseIndentation + indentationCount, cli_color_1.default.cyan));
+        console.info(this.#makePrettyString(message, 'INFO', this.#baseIndentation + indentationCount, cli_color_1.default.cyan));
     }
     error(message, indentationCount = 0) {
-        console.error(this.#makePrettyString(message, 'FAIL', this.baseIndentation + indentationCount, cli_color_1.default.red));
+        console.error(this.#makePrettyString(message, 'FAIL', this.#baseIndentation + indentationCount, cli_color_1.default.red));
+    }
+    tryErrorLogErrorObject(error, indentationCount = 0) {
+        if (error instanceof Error) {
+            this.error(error.stack ?? error.message, indentationCount);
+        }
+    }
+    tryWarnLogErrorObject(error, indentationCount = 0) {
+        if (error instanceof Error) {
+            this.warn(error.stack ?? error.message, indentationCount);
+        }
     }
     warn(message, indentationCount = 0) {
-        console.warn(this.#makePrettyString(message, 'WARN', this.baseIndentation + indentationCount, cli_color_1.default.yellow));
+        console.warn(this.#makePrettyString(message, 'WARN', this.#baseIndentation + indentationCount, cli_color_1.default.yellow));
     }
     #indentationAmountToString(indentationAmount) {
-        return this.indentationCharacter.repeat(indentationAmount);
+        return this.#indentationCharacter.repeat(indentationAmount);
     }
     #formatSubequentLines(lines, spaceIndentationCount, applyColor) {
         if (lines.length === 0) {

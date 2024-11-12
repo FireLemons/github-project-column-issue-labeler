@@ -16,9 +16,7 @@ function main() {
       configFileContents = ConfigTestData[configDataDescription]
     } catch (error) {
       logger.error('Failed to load config', 2)
-      if (error instanceof Error) {
-        logger.error(error.stack ?? error.message, 4)
-      }
+      logger.tryErrorLogErrorObject(error, 4)
 
       return
     }

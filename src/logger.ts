@@ -6,33 +6,45 @@ export enum Indentation {
 }
 
 export class Logger {
-  baseIndentation: number
-  indentationCharacter: string
+  #baseIndentation: number
+  #indentationCharacter: string
 
   constructor (indentationCharacter: Indentation = Indentation.space) {
-    this.baseIndentation = 0
-    this.indentationCharacter = indentationCharacter
+    this.#baseIndentation = 0
+    this.#indentationCharacter = indentationCharacter
   }
 
   addBaseIndentation (amount: number) {
-    this.baseIndentation = Math.max(0, this.baseIndentation + amount)
-    // console.log(`Indentation: ${this.baseIndentation}`)
+    this.#baseIndentation = Math.max(0, this.#baseIndentation + amount)
+    // console.log(`Indentation: ${this.#baseIndentation}`)
   }
 
   info (message: string, indentationCount: number = 0) {
-    console.info(this.#makePrettyString(message, 'INFO', this.baseIndentation + indentationCount, commandLineColor.cyan))
+    console.info(this.#makePrettyString(message, 'INFO', this.#baseIndentation + indentationCount, commandLineColor.cyan))
   }
 
   error (message: string, indentationCount: number = 0) {
-    console.error(this.#makePrettyString(message, 'FAIL', this.baseIndentation + indentationCount, commandLineColor.red))
+    console.error(this.#makePrettyString(message, 'FAIL', this.#baseIndentation + indentationCount, commandLineColor.red))
+  }
+
+  tryErrorLogErrorObject (error: any, indentationCount: number = 0) {
+    if (error instanceof Error) {
+      this.error(error.stack ?? error.message, indentationCount)
+    }
+  }
+
+  tryWarnLogErrorObject (error: any, indentationCount: number = 0) {
+    if (error instanceof Error) {
+      this.warn(error.stack ?? error.message, indentationCount)
+    }
   }
 
   warn (message: string, indentationCount: number = 0) {
-    console.warn(this.#makePrettyString(message, 'WARN', this.baseIndentation + indentationCount, commandLineColor.yellow))
+    console.warn(this.#makePrettyString(message, 'WARN', this.#baseIndentation + indentationCount, commandLineColor.yellow))
   }
 
   #indentationAmountToString (indentationAmount: number): string {
-    return this.indentationCharacter.repeat(indentationAmount)
+    return this.#indentationCharacter.repeat(indentationAmount)
   }
 
   #formatSubequentLines (lines: string[], spaceIndentationCount: number, applyColor: (...text: any[]) => string): string {

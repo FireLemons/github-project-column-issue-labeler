@@ -32,9 +32,7 @@ async function main () {
     configFileContents = await loadConfig()
   } catch (error) {
     logger.error('Failed to load config', 2)
-    if (error instanceof Error) {
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
     return
@@ -55,10 +53,8 @@ async function main () {
 
     logger.info('Initialized github API client')
   } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to initialize github API client', 2)
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.error('Failed to initialize github API client', 2)
+    logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
     return
@@ -79,10 +75,8 @@ async function main () {
 
     logger.info('Fetched issue page', 2)
   } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to fetch issue page', 2)
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.error('Failed to fetch issue page', 2)
+    logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
     return
@@ -96,10 +90,8 @@ async function main () {
 
     logger.info('Fetched expanded column name search space for issue', 2)
   } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to fetch expanded column name search space for issue', 2)
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.error('Failed to fetch expanded column name search space for issue', 2)
+    logger.tryErrorLogErrorObject(error, 4)
   }
 
   try {
@@ -110,10 +102,8 @@ async function main () {
 
     logger.info('Fetched project item page', 2)
   } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to fetch project item page', 2)
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.error('Failed to fetch project item page', 2)
+    logger.tryErrorLogErrorObject(error, 4)
   }
 
   logger.info('Searching for project item id')
@@ -135,10 +125,8 @@ async function main () {
 
       logger.info('Fetched field value page', 2)
     } catch (error) {
-      if (error instanceof Error) {
-        logger.error('Failed to fetch field value page', 2)
-        logger.error(error.stack ?? error.message, 4)
-      }
+      logger.error('Failed to fetch field value page', 2)
+      logger.tryErrorLogErrorObject(error, 4)
     }
 
     logger.addBaseIndentation(-2)
@@ -154,10 +142,8 @@ async function main () {
 
     logger.info('Fetched label page', 2)
   } catch (error) {
-    if (error instanceof Error) {
-      logger.error('Failed to fetch label page', 2)
-      logger.error(error.stack ?? error.message, 4)
-    }
+    logger.error('Failed to fetch label page', 2)
+    logger.tryErrorLogErrorObject(error, 4)
   }
 }
 

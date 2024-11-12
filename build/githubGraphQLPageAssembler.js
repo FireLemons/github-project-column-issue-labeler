@@ -40,9 +40,7 @@ class GithubGraphQLPageAssembler {
                 }
                 else {
                     logger.warn('Failed to fetch all issues. Continuing with subset of successfully fetched issues');
-                    if (error instanceof Error) {
-                        logger.warn(error.stack ?? error.message, 2);
-                    }
+                    logger.tryWarnLogErrorObject(error, 2);
                     issues.disableRemoteDataFetching();
                     return issues;
                 }

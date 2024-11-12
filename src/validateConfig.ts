@@ -43,10 +43,7 @@ function filterShallowInvalidColumnsAndGroupDuplicates (unvalidatedColumns: any[
       groupColumn(shallowValidatedColumn, columnMap)
     } catch (error) {
       logger.warn(`Could not make valid column from value at index: ${index}. Skipping column.`)
-
-      if (error instanceof Error) {
-        logger.error(error.stack ?? error.message, 2)
-      }
+      logger.tryWarnLogErrorObject(error, 2)
     }
 
     logger.addBaseIndentation(-4)
@@ -70,10 +67,7 @@ function filterShallowInvalidProjectsAndGroupDuplicates (unvalidatedProjects: an
       groupProject(shallowValidateProject(project), projectMap)
     } catch (error) {
       logger.warn(`Could not make valid project from value at index: ${index}. Skipping project.`)
-
-      if (error instanceof Error) {
-        logger.error(error.stack ?? error.message, 2)
-      }
+      logger.tryWarnLogErrorObject(error, 2)
     }
 
     logger.addBaseIndentation(-4)
@@ -404,10 +398,9 @@ export function validateConfig (config: string): Config | null {
   } catch (error) {
     logger.addBaseIndentation(-4)
 
-    if (error instanceof Error) {
-      logger.error('Failed to validate config')
-      logger.error(error.stack ?? error.message, 2)
-    }
+    logger.error('Failed to validate config')
+    logger.tryErrorLogErrorObject(error, 2)
+
     return null
   }
 }
@@ -450,10 +443,7 @@ function validateLabelingRules (arr: any[]): LabelingRule[] {
       }
     } catch (error) {
       logger.warn(`Could not make valid labeling rule from value at index: ${index}. Skipping rule.`)
-
-      if (error instanceof Error) {
-        logger.error(error.stack ?? error.message, 2)
-      }
+      logger.tryWarnLogErrorObject(error, 2)
     }
 
     logger.addBaseIndentation(-2)
