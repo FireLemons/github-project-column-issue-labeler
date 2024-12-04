@@ -7,7 +7,7 @@
     "build": "npx tsc",
     "build:dev": "npx tsc --watch",
     "lint": "npx ts-standard",
-    "start": "node ./index.js",
+    "start": "npx ts-node ./index.ts",
     "test": "npx jest --silent",
     "test:validation-indentation": "npx ts-node tests/validateConfigIndentationManualVerification.ts",
     "test:verbose": "npx jest",
