@@ -1,10 +1,12 @@
 import fs from 'fs'
 import ConfigTestData from './configTestData'
-import { validateConfig } from '../src/validateConfig'
+import ConfigValidator from '../src/validateConfig'
+import { Logger } from '../src/logger'
 import { Column, Config, LabelingAction, LabelingRule, Project, isShallowColumn, isShallowLabelingRule } from '../src/configObjects'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
-const fsPromises = fs.promises
+const logger = new Logger()
+const configValidator = new ConfigValidator(logger)
 
 function countSpaceIndentationOfLoggerMessage (text: string): number {
   return text.slice(11).search(/\S/)
@@ -35,7 +37,7 @@ describe('validateConfig()', () => {
       resetSpies()
       const configContents = ConfigTestData.invalidJSON
 
-      validatedConfig = validateConfig(configContents.toString())
+      validatedConfig = configValidator.validateConfig(configContents.toString())
 
       consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
     })
@@ -59,7 +61,7 @@ describe('validateConfig()', () => {
       resetSpies()
       const configContents = ConfigTestData.configMissingKey
 
-      validatedConfig = validateConfig(configContents.toString())
+      validatedConfig = configValidator.validateConfig(configContents.toString())
 
       consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
     })
@@ -84,7 +86,7 @@ describe('validateConfig()', () => {
         resetSpies()
         const configContents = ConfigTestData.configWrongTypeAccessToken
 
-        validatedConfig = validateConfig(configContents.toString())
+        validatedConfig = configValidator.validateConfig(configContents.toString())
 
         consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
       })
@@ -108,7 +110,7 @@ describe('validateConfig()', () => {
         resetSpies()
         const configContents = ConfigTestData.configWhiteSpaceOnlyAccessToken
 
-        validatedConfig = validateConfig(configContents.toString())
+        validatedConfig = configValidator.validateConfig(configContents.toString())
 
         consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
       })
@@ -132,7 +134,7 @@ describe('validateConfig()', () => {
         resetSpies()
         const configContents = ConfigTestData.configWrongTypeRepo
 
-        validatedConfig = validateConfig(configContents.toString())
+        validatedConfig = configValidator.validateConfig(configContents.toString())
 
         consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
       })
@@ -157,7 +159,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.repoWrongTypeOwnerName
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -181,7 +183,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.repoWhitespaceOnlyOwnerName
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -205,7 +207,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.repoWrongTypeName
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -229,7 +231,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.repoWhitespaceOnlyName
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -255,7 +257,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.configWrongTypeProjects
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -273,138 +275,132 @@ describe('validateConfig()', () => {
 
       describe('when a project is not an object', () => {
         const PROJECTS_COUNT = 3
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.projectArrayValuesWrongType
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        test('it prints errors with the index of the invalid element', () => {
+        test('it prints warnings with the index of the invalid element', () => {
           for (let i = 0; i < PROJECTS_COUNT; i++) {
-            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid project from value at index: ${i}\\. Skipping project\\.`))
-            expect(consoleErrorCalls[i][0]).toMatch(/Project must be an object/)
+            expect(consoleWarnCalls[i * 2][0]).toMatch(new RegExp(`Could not make valid project from value at index: ${i}\\. Skipping project\\.`))
+            expect(consoleWarnCalls[(i * 2) + 1][0]).toMatch(/Project must be an object/)
           }
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           for (let i = 0; i < PROJECTS_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
 
       describe('when the project is missing a required key', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.projectMissingRequiredKey
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
         describe('when "columns" is missing', () => {
-          test('errors are printed with the index of the invalid project', () => {
+          test('warnings are printed with the index of the invalid project', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid project from value at index: 0\. Skipping project\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/key "columns" was not found in the object/)
+            expect(consoleWarnCalls[1][0]).toMatch(/key "columns" was not found in the object/)
           })
         })
 
         describe('when "ownerLogin" is missing', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/key "ownerLogin" was not found in the object/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
+            expect(consoleWarnCalls[3][0]).toMatch(/key "ownerLogin" was not found in the object/)
           })
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           const PROJECT_COUNT = 2
 
           for(let i = 0; i < PROJECT_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
 
       describe('when a project has invalid values', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.projectInvalidValues
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
         describe('when "columns" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid project', () => {
+          test('warnings are printed with the index of the invalid project', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid project from value at index: 0\. Skipping project\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/Member "columns" was found not to be an array/)
+            expect(consoleWarnCalls[1][0]).toMatch(/Member "columns" was found not to be an array/)
           })
         })
 
         describe('when "number" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/Member "number" was found not to be a number/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 1\. Skipping project\./)
+            expect(consoleWarnCalls[3][0]).toMatch(/Member "number" was found not to be a number/)
           })
         })
 
         describe('when "number" is less than 1', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid project from value at index: 2\. Skipping project\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/Number must be greater than 0/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid project from value at index: 2\. Skipping project\./)
+            expect(consoleWarnCalls[5][0]).toMatch(/Number must be greater than 0/)
           })
         })
 
         describe('when "number" is not an integer', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid project from value at index: 3\. Skipping project\./)
-            expect(consoleErrorCalls[3][0]).toMatch(/Number must be an integer/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[6][0]).toMatch(/Could not make valid project from value at index: 3\. Skipping project\./)
+            expect(consoleWarnCalls[7][0]).toMatch(/Number must be an integer/)
           })
         })
 
         describe('when "ownerLogin" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid project from value at index: 4\. Skipping project\./)
-            expect(consoleErrorCalls[4][0]).toMatch(/Member "ownerLogin" was found not to be a string/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[8][0]).toMatch(/Could not make valid project from value at index: 4\. Skipping project\./)
+            expect(consoleWarnCalls[9][0]).toMatch(/Member "ownerLogin" was found not to be a string/)
           })
         })
 
         describe('when "ownerLogin" contains only whitespace', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[5][0]).toMatch(/Could not make valid project from value at index: 5\. Skipping project\./)
-            expect(consoleErrorCalls[5][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[10][0]).toMatch(/Could not make valid project from value at index: 5\. Skipping project\./)
+            expect(consoleWarnCalls[11][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
           })
         })
 
         describe('when "ownerLogin" is empty string', () => {
-          test('errors are printed with the index of the invalid project', () => {
-            expect(consoleWarnCalls[6][0]).toMatch(/Could not make valid project from value at index: 6\. Skipping project\./)
-            expect(consoleErrorCalls[6][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
+          test('warnings are printed with the index of the invalid project', () => {
+            expect(consoleWarnCalls[12][0]).toMatch(/Could not make valid project from value at index: 6\. Skipping project\./)
+            expect(consoleWarnCalls[13][0]).toMatch(/ownerLogin must contain at least one non whitespace character/)
           })
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           const PROJECT_COUNT = 7
 
           for(let i = 0; i < PROJECT_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
@@ -417,7 +413,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.projectDuplicatesNameOnly
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -478,7 +474,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.projectDuplicatesNameAndNumber
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -514,7 +510,7 @@ describe('validateConfig()', () => {
         beforeAll(() => {
           const configContents = ConfigTestData.projectDuplicatesNameButNotNumber
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
         })
 
         test('the projects are not considered duplicates', () => {
@@ -536,7 +532,7 @@ describe('validateConfig()', () => {
         beforeAll(() => {
           const configContents = ConfigTestData.projectDuplicatesNumberButNotName
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
         })
 
         test('the projects are not considered duplicates', () => {
@@ -562,7 +558,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.configWrongTypeColumns
 
-          validatedConfig = validateConfig(configContents.toString())
+          validatedConfig = configValidator.validateConfig(configContents.toString())
 
           consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
@@ -580,117 +576,111 @@ describe('validateConfig()', () => {
 
       describe('when a column is not an object', () => {
         const COLUMN_COUNT = 3
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.columnArrayValuesWrongType
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
-        test('it prints errors with the index of the invalid element', () => {
+        test('it prints warnings with the index of the invalid element', () => {
           for (let i = 0; i < COLUMN_COUNT; i++) {
-            expect(consoleWarnCalls[i][0]).toMatch(new RegExp(`Could not make valid column from value at index: ${i}\\. Skipping column\\.`))
-            expect(consoleErrorCalls[i][0]).toMatch(/Column must be an object/)
+            expect(consoleWarnCalls[i * 2][0]).toMatch(new RegExp(`Could not make valid column from value at index: ${i}\\. Skipping column\\.`))
+            expect(consoleWarnCalls[(i * 2) + 1][0]).toMatch(/Column must be an object/)
           }
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           for (let i = 0; i < COLUMN_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
 
       describe('when the column is missing a required key', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.columnMissingRequiredKey
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
         describe('when "labelingRules" is missing', () => {
-          test('errors are printed with the index of the invalid column', () => {
+          test('warnings are printed with the index of the invalid column', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column from value at index: 0\. Skipping column\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/key "labelingRules" was not found in the object/)
+            expect(consoleWarnCalls[1][0]).toMatch(/key "labelingRules" was not found in the object/)
           })
         })
 
         describe('when "name" is missing', () => {
-          test('errors are printed with the index of the invalid column', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/key "name" was not found in the object/)
+          test('warnings are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
+            expect(consoleWarnCalls[3][0]).toMatch(/key "name" was not found in the object/)
           })
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           const COLUMN_COUNT = 2
 
           for(let i = 0; i < COLUMN_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
 
       describe('when a column has invalid values', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
 
         beforeAll(() => {
           resetSpies()
           const configContents = ConfigTestData.columnInvalidValues
 
-          validateConfig(configContents.toString())
+          configValidator.validateConfig(configContents.toString())
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
         describe('when "name" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid column', () => {
+          test('warnings are printed with the index of the invalid column', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid column from value at index: 0\. Skipping column\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/Member "name" was found not to be a string/)
+            expect(consoleWarnCalls[1][0]).toMatch(/Member "name" was found not to be a string/)
           })
         })
 
         describe('when "labelingRules" is of the wrong type', () => {
-          test('errors are printed with the index of the invalid column', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/Member "labelingRules" was found not to be an array/)
+          test('warnings are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column from value at index: 1\. Skipping column\./)
+            expect(consoleWarnCalls[3][0]).toMatch(/Member "labelingRules" was found not to be an array/)
           })
         })
 
         describe('when "name" contains only whitespace', () => {
-          test('errors are printed with the index of the invalid column', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid column from value at index: 2\. Skipping column\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/name must contain at least one non whitespace character/)
+          test('warnings are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid column from value at index: 2\. Skipping column\./)
+            expect(consoleWarnCalls[5][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
         describe('when "name" is empty string', () => {
-          test('errors are printed with the index of the invalid column', () => {
-            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid column from value at index: 3\. Skipping column\./)
-            expect(consoleErrorCalls[3][0]).toMatch(/name must contain at least one non whitespace character/)
+          test('warnings are printed with the index of the invalid column', () => {
+            expect(consoleWarnCalls[6][0]).toMatch(/Could not make valid column from value at index: 3\. Skipping column\./)
+            expect(consoleWarnCalls[7][0]).toMatch(/name must contain at least one non whitespace character/)
           })
         })
 
-        test('it indents the error output more than the warning output', () => {
+        test('it indents the error stack more than the preceding warning message', () => {
           const COLUMN_COUNT = 4
 
           for(let i = 0; i < COLUMN_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
       })
@@ -703,7 +693,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnDuplicateNames
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -730,7 +720,6 @@ describe('validateConfig()', () => {
       })
 
       describe('when all of the labeling rules of a column are invalid', () => {
-        let consoleErrorCalls: [message?: any, ...optionalParams: any[]][]
         let consoleWarnCalls: [message?: any, ...optionalParams: any[]][]
         let validatedConfig: Config
 
@@ -738,64 +727,63 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnAllInvalidLabelingRules
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
-          consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         })
 
         describe('when the rule is missing both required keys', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
+          test('warnings are printed with the index of the invalid labeling rule', () => {
             expect(consoleWarnCalls[0][0]).toMatch(/Could not make valid labeling rule from value at index: 0\. Skipping rule\./)
-            expect(consoleErrorCalls[0][0]).toMatch(/key "[a-zA-Z]+" was not found in the object/)
+            expect(consoleWarnCalls[1][0]).toMatch(/key "[a-zA-Z]+" was not found in the object/)
           })
         })
 
         describe('when the rule is missing the "labels" key', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
-            expect(consoleWarnCalls[1][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
-            expect(consoleErrorCalls[1][0]).toMatch(/key "labels" was not found in the object/)
+          test('warnings are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid labeling rule from value at index: 1\. Skipping rule\./)
+            expect(consoleWarnCalls[3][0]).toMatch(/key "labels" was not found in the object/)
           })
         })
 
         describe('when the rule is missing the "action" key', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
-            expect(consoleWarnCalls[2][0]).toMatch(/Could not make valid labeling rule from value at index: 2\. Skipping rule\./)
-            expect(consoleErrorCalls[2][0]).toMatch(/key "action" was not found in the object/)
+          test('warnings are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid labeling rule from value at index: 2\. Skipping rule\./)
+            expect(consoleWarnCalls[5][0]).toMatch(/key "action" was not found in the object/)
           })
         })
 
         describe('when the value of "action" is not a string', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
-            expect(consoleWarnCalls[3][0]).toMatch(/Could not make valid labeling rule from value at index: 3\. Skipping rule\./)
-            expect(consoleErrorCalls[3][0]).toMatch(/Member "action" was found not to be a string/)
+          test('warnings are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[6][0]).toMatch(/Could not make valid labeling rule from value at index: 3\. Skipping rule\./)
+            expect(consoleWarnCalls[7][0]).toMatch(/Member "action" was found not to be a string/)
           })
         })
 
         describe('when the value of "labels" is not an array', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
-            expect(consoleWarnCalls[4][0]).toMatch(/Could not make valid labeling rule from value at index: 4\. Skipping rule\./)
-            expect(consoleErrorCalls[4][0]).toMatch(/Member "labels" was found not to be an array/)
+          test('warnings are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[8][0]).toMatch(/Could not make valid labeling rule from value at index: 4\. Skipping rule\./)
+            expect(consoleWarnCalls[9][0]).toMatch(/Member "labels" was found not to be an array/)
           })
         })
 
         describe('when the value of "action" is not supported', () => {
-          test('errors are printed with the index of the invalid labeling rule', () => {
-            expect(consoleWarnCalls[5][0]).toMatch(/Could not make valid labeling rule from value at index: 5\. Skipping rule\./)
-            expect(consoleErrorCalls[5][0]).toMatch(/Labeling action ".+" is not supported. Supported actions are: \["ADD","REMOVE","SET"\]/)
+          test('warnings are printed with the index of the invalid labeling rule', () => {
+            expect(consoleWarnCalls[10][0]).toMatch(/Could not make valid labeling rule from value at index: 5\. Skipping rule\./)
+            expect(consoleWarnCalls[11][0]).toMatch(/Labeling action ".+" is not supported. Supported actions are: \["ADD","REMOVE","SET"\]/)
           })
         })
 
-        it('indents the error output more than the warning output', () => {
+        it('indents the error stack more than the preceding warning message', () => {
           const LABELING_RULE_COUNT = 6
 
           for(let i = 0; i < LABELING_RULE_COUNT; i++) {
-            expect(hasGreaterIndentation(consoleWarnCalls[i][0], consoleErrorCalls[i][0])).toBe(true)
+            expect(hasGreaterIndentation(consoleWarnCalls[i * 2][0], consoleWarnCalls[(i * 2) + 1][0])).toBe(true)
           }
         })
 
         it('prints a warning that the column configuration will not be used', () => {
-          expect(consoleWarnCalls[6][0]).toMatch(/Column with name:"column name" did not contain any valid labeling rules. Skipping column./)
+          expect(consoleWarnCalls[12][0]).toMatch(/Column with name:"column name" did not contain any valid labeling rules. Skipping column./)
         })
 
         it('will cause the validated config to be null because all columns are invalid', () => {
@@ -811,7 +799,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.labelingRulesActionOrderPrecedence
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
         })
@@ -846,7 +834,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.lableingRulesActionTypePrecedence
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
         })
@@ -881,7 +869,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.labelingRulesInvalidLabels
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -925,7 +913,7 @@ describe('validateConfig()', () => {
           resetSpies()
           const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
 
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
@@ -1001,7 +989,7 @@ describe('validateConfig()', () => {
             resetSpies()
             const configContents = ConfigTestData.labelingRulesConflict
 
-            validatedConfig = validateConfig(configContents.toString())!
+            validatedConfig = configValidator.validateConfig(configContents.toString())!
 
             consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           })
@@ -1033,7 +1021,7 @@ describe('validateConfig()', () => {
         beforeAll(() => {
           const configContents = ConfigTestData.configInvalidNonEssentialSections
 
-          validatedConfig = validateConfig(configContents.toString())!
+          validatedConfig = configValidator.validateConfig(configContents.toString())!
         })
 
         it('will not contain the invalid project', () => {
@@ -1163,7 +1151,7 @@ describe('validateConfig()', () => {
           beforeAll(() => {
             const configContents = ConfigTestData.columnLabelDuplicationAndUnsortedAddRemoveActions
 
-            validatedConfig = validateConfig(configContents.toString())!
+            validatedConfig = configValidator.validateConfig(configContents.toString())!
           })
 
           it('removes the duplicates', () => {
@@ -1222,7 +1210,7 @@ describe('validateConfig()', () => {
           beforeAll(() => {
             const configContents = ConfigTestData.labelingRulesSetActionAndDuplicateLabels
 
-            validatedConfig = validateConfig(configContents.toString())!
+            validatedConfig = configValidator.validateConfig(configContents.toString())!
           })
 
           it('removes the duplicates', () => {
@@ -1264,7 +1252,7 @@ describe('validateConfig()', () => {
       beforeAll(() => {
         const configContents = ConfigTestData.configTrailingWhitespaceValues
 
-        validatedConfig = validateConfig(configContents.toString())!
+        validatedConfig = configValidator.validateConfig(configContents.toString())!
       })
 
       describe('the github access token', () => {
@@ -1367,7 +1355,7 @@ describe('validateConfig()', () => {
         resetSpies()
         const configContents = ConfigTestData.configNormal
 
-        validatedConfig = validateConfig(configContents.toString())!
+        validatedConfig = configValidator.validateConfig(configContents.toString())!
 
         consoleErrorCalls = consoleLoggingFunctionSpies.error.mock.calls
         consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
