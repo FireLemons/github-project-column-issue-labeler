@@ -1,9 +1,8 @@
 import { Logger } from '../src/logger'
-import { validateConfig } from '../src/validateConfig'
+import ConfigValidator from '../src/validateConfig'
 
 const ConfigTestData: { [key: string]: any } = require('./configTestData').default
 const logger = new Logger()
-const TEST_FOLDER_PATH = './tests/'
 
 function main() {
   let configFileContents: string
@@ -21,7 +20,7 @@ function main() {
       return
     }
 
-    validateConfig(configFileContents)
+    new ConfigValidator(logger).validateConfig(configFileContents)
 
     console.log('') // newline
   }
