@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { GithubAPIClient, IssuePageResponse } from '../src/githubAPIClient'
 import { Logger } from '../src/logger'
-import { validateConfig } from '../src/validateConfig'
+import ConfigValidator from '../src/validateConfig'
 
 const logger = new Logger()
 const requestResponseDir = './temp/request_responses'
@@ -38,7 +38,7 @@ async function main () {
     return
   }
 
-  const config = validateConfig(configFileContents)
+  const config = new ConfigValidator(logger).validateConfig(configFileContents)
 
   if (config === null) {
     return

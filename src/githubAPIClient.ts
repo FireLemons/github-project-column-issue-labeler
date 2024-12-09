@@ -28,7 +28,7 @@ export interface GraphQLPagePOJO<T> {
   }
 }
 
-interface IssuePOJO {
+export interface IssuePOJO {
   id: string,
   number: number,
   labels: GraphQLPagePOJO<LabelPOJO>
