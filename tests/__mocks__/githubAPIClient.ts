@@ -1,8 +1,22 @@
-export const mockFetchExpandedColumnNameSearchSpace = jest.fn()
-export const mockFetchFieldValuePage = jest.fn()
-export const mockFetchIssuePage = jest.fn()
-export const mockFetchLabelPage = jest.fn()
-export const mockFetchProjectItemPage = jest.fn()
+function mockFetchExpandedColumnNameSearchSpace () {
+  throw new Error('Unexpected mock call')
+}
+
+function mockFetchFieldValuePage () {
+  throw new Error('Unexpected mock call')
+}
+
+function mockFetchIssuePage () {
+  throw new Error('Unexpected mock call')
+}
+
+function mockFetchLabelPage () {
+  throw new Error('Unexpected mock call')
+}
+
+function mockFetchProjectItemPage () {
+  throw new Error('Unexpected mock call')
+}
 
 const mockGithubAPIClient = jest.fn().mockImplementation(() => {
   return {
