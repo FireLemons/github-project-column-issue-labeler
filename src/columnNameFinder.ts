@@ -23,10 +23,10 @@ export default class ColumnNameFinder {
     this.#remoteSearchSpaceParameterQueue = []
   }
 
-  async findColumnNames (projectKey?: ProjectPrimaryKeyHumanReadable): Promise<string[] | null> {
+  async findColumnNames (projectKey?: ProjectPrimaryKeyHumanReadable): Promise<string[]> {
     const cacheCheckResult = this.#findCachedResult(projectKey)
 
-    if (cacheCheckResult !== null) {
+    if (cacheCheckResult.length > 0) {
       return cacheCheckResult
     }
   
@@ -44,7 +44,7 @@ export default class ColumnNameFinder {
       hasNewSearchSpace = await this.#tryAddRemoteSearchSpace()
     } while (hasNewSearchSpace)
 
-    return this.#cachedSearchResults.size === 0 ? null : this.#getAllFoundColumnNames()
+    return this.#getAllFoundColumnNames()
   }
 
   hasDisabledRemoteSearchSpace () {
@@ -55,14 +55,14 @@ export default class ColumnNameFinder {
     this.#cachedSearchResults.set(projectKey.asStringKey(), columnName)
   }
 
-  #findCachedResult (projectKey?: ProjectPrimaryKeyHumanReadable): string[] | null {
+  #findCachedResult (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
     if (projectKey !== undefined) {
       const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.asStringKey())
-      return projectKeyCachedResult === undefined ? null : [ projectKeyCachedResult ]
+      return projectKeyCachedResult === undefined ? [] : [ projectKeyCachedResult ]
     } else if (!(this.#hasAdditionalRemoteSearchSpace()) && this.#cachedSearchResults.size !== 0) {
       return this.#getAllFoundColumnNames()
     } else {
-      return null
+      return []
     }
   }
 
@@ -76,7 +76,7 @@ export default class ColumnNameFinder {
     return !(projectItemPage.isEmpty()) && projectItemPage.hasNextPage()
   }
 
-  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): string[] | null {
+  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
 
@@ -112,7 +112,7 @@ export default class ColumnNameFinder {
       i--
     }
 
-    return null
+    return []
   }
 
   async #tryAddExpandedSearchSpace() {

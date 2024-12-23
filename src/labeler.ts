@@ -106,7 +106,7 @@ export default class Labeler {
       const columnNameSearchResult = await columnNameFinder.findColumnNames()
       console.log(issue.getNumber(), columnNameSearchResult)
 
-      if (columnNameSearchResult === null) {
+      if (columnNameSearchResult.length <= 0) {
         if (columnNameFinder.hasDisabledRemoteSearchSpace()) {
           this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
           this.logger.error('Unable to conduct complete search for column name')

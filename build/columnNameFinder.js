@@ -18,7 +18,7 @@ class ColumnNameFinder {
     }
     async findColumnNames(projectKey) {
         const cacheCheckResult = this.#findCachedResult(projectKey);
-        if (cacheCheckResult !== null) {
+        if (cacheCheckResult.length > 0) {
             return cacheCheckResult;
         }
         let hasNewSearchSpace = false;
@@ -31,7 +31,7 @@ class ColumnNameFinder {
             }
             hasNewSearchSpace = await this.#tryAddRemoteSearchSpace();
         } while (hasNewSearchSpace);
-        return this.#cachedSearchResults.size === 0 ? null : this.#getAllFoundColumnNames();
+        return this.#getAllFoundColumnNames();
     }
     hasDisabledRemoteSearchSpace() {
         return this.#hasDisabledSearchSpace;
@@ -42,13 +42,13 @@ class ColumnNameFinder {
     #findCachedResult(projectKey) {
         if (projectKey !== undefined) {
             const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.asStringKey());
-            return projectKeyCachedResult === undefined ? null : [projectKeyCachedResult];
+            return projectKeyCachedResult === undefined ? [] : [projectKeyCachedResult];
         }
         else if (!(this.#hasAdditionalRemoteSearchSpace()) && this.#cachedSearchResults.size !== 0) {
             return this.#getAllFoundColumnNames();
         }
         else {
-            return null;
+            return [];
         }
     }
     #getAllFoundColumnNames() {
@@ -88,7 +88,7 @@ class ColumnNameFinder {
             }
             i--;
         }
-        return null;
+        return [];
     }
     async #tryAddExpandedSearchSpace() {
         try {
