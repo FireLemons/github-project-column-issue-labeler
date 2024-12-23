@@ -10,6 +10,16 @@ const defaultProjectOwnerLogin = '29;UhhP@%nooLB#ms'
 const idOfProjectItemToBeMerged = 'B)\')eMiV\'I~$jVoNlw'
 
 export default { // all test data returns a unique copy to avoid complications from side effects
+  getEmptyPagePOJO () {
+    return {
+      edges: [],
+      pageInfo: {
+        endCursor: defaultLabelPageEndCursor,
+        hasNextPage: false
+      }
+    }
+  },
+
   getFieldValuePOJO () {
     return {
       name: defaultFieldValueName
@@ -918,15 +928,6 @@ export default { // all test data returns a unique copy to avoid complications f
           }
         }
       ],
-      pageInfo: {
-        endCursor: defaultLabelPageEndCursor,
-        hasNextPage: false
-      }
-    }
-  },
-  getEmptyLabelPagePOJO () {
-    return {
-      edges: [],
       pageInfo: {
         endCursor: defaultLabelPageEndCursor,
         hasNextPage: false

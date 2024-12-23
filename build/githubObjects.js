@@ -62,6 +62,9 @@ class GraphQLPage {
         }
     }
     appendPage(page) {
+        if (page.lookupNodeClass() !== this.nodeClass) {
+            throw new TypeError('Node type mismatch between pages');
+        }
         this.page.edges.push(...page.getEdges());
         this.page.pageInfo = page.getPageInfo();
     }
@@ -120,9 +123,9 @@ class GraphQLPageMergeable extends GraphQLPage {
         return deletedNode;
     }
     merge(page) {
-        const firstNode = this.page.edges[0].node;
-        if (!(firstNode instanceof RecordWithGraphQLID)) {
-            throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.');
+        const PageToBeMergedNodeClass = page.lookupNodeClass();
+        if (PageToBeMergedNodeClass !== this.nodeClass) {
+            throw new TypeError('Node type mismatch between pages');
         }
         for (const edge of page.getEdges()) {
             const { node } = edge;
@@ -169,52 +172,12 @@ class Issue {
         this.#id = issuePOJO.id;
         this.#columnNameMap = new Map();
     }
-    applyExpandedSearchSpace(expandedColumnNameSearchSpace) {
-        this.projectItems.merge(expandedColumnNameSearchSpace);
-        this.#hasExpandedSearchSpace = true;
-    }
     disableColumnNameRemoteSearchSpace() {
         const { projectItems } = this;
         for (const projectItem of projectItems.getNodeArray()) {
             projectItem.getFieldValuePage().disableRemoteDataFetching();
         }
         projectItems.disableRemoteDataFetching();
-    }
-    findColumnName(projectKey) {
-        const cachedSearch = this.#lookupCachedColumnName(projectKey);
-        if (cachedSearch) {
-            return cachedSearch;
-        }
-        const remoteRecordQueryParams = [];
-        const projectItemEdges = this.projectItems.getEdges();
-        let i = projectItemEdges.length - 1;
-        while (i >= 0) {
-            const projectItem = projectItemEdges[i].node;
-            const columnNameSearchResult = projectItem.findColumnName();
-            if (columnNameSearchResult === null) {
-                this.projectItems.delete(i);
-                i--;
-            }
-            else if (TypeChecker.isString(columnNameSearchResult)) {
-                this.projectItems.delete(i);
-                i--;
-                this.#cacheSearchResult(projectItem);
-                if (projectKey === undefined || projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
-                    return columnNameSearchResult;
-                }
-            }
-            else {
-                remoteRecordQueryParams.push(columnNameSearchResult);
-                i--;
-            }
-        }
-        if (this.projectItems.hasNextPage()) {
-            remoteRecordQueryParams.push({
-                parentId: this.#id,
-                localPage: this.projectItems
-            });
-        }
-        return this.#determineRemoteQueryParams(remoteRecordQueryParams);
     }
     getId() {
         return this.#id;
@@ -232,34 +195,6 @@ class Issue {
     }
     getProjectItemPage() {
         return this.projectItems;
-    }
-    hasInaccessibleRemoteSearchSpace() {
-        return this.#hasInaccessibleRemoteSearchSpace;
-    }
-    markRemoteSearchSpaceAsNotCompletelyAcessible() {
-        this.#hasInaccessibleRemoteSearchSpace = true;
-    }
-    #cacheSearchResult(projectItem) {
-        this.#columnNameMap.set(projectItem.getProjectHumanReadablePrimaryKey().asStringKey(), projectItem.findColumnName());
-    }
-    #determineRemoteQueryParams(remoteRecordQueryParams) {
-        if (remoteRecordQueryParams.length === 0) {
-            return null;
-        }
-        else if (!(this.#hasExpandedSearchSpace)) {
-            return this;
-        }
-        else {
-            return remoteRecordQueryParams;
-        }
-    }
-    #lookupCachedColumnName(projectKey) {
-        if (projectKey === undefined) {
-            return this.#columnNameMap.keys().next()?.value;
-        }
-        else {
-            return this.#columnNameMap.get(projectKey.asStringKey());
-        }
     }
 }
 exports.Issue = Issue;
@@ -302,12 +237,6 @@ class ProjectItem extends RecordWithGraphQLID {
             this.columnName = columnNameList[0].getName();
             return this.columnName;
         }
-        else if (this.#fieldValues.hasNextPage()) {
-            return {
-                parentId: this.getId(),
-                localPage: this.#fieldValues
-            };
-        }
         return null;
     }
     getFieldValuePage() {
@@ -319,13 +248,13 @@ class ProjectItem extends RecordWithGraphQLID {
 }
 exports.ProjectItem = ProjectItem;
 class ProjectPrimaryKeyHumanReadable {
-    #name;
+    #ownerName;
     #number;
     #stringKey;
-    constructor(name, number = 0) {
-        this.#name = name;
+    constructor(ownerName, number = 0) {
+        this.#ownerName = ownerName;
         this.#number = number;
-        this.#stringKey = `${name} ${number}`;
+        this.#stringKey = `${ownerName} ${number}`;
     }
     asStringKey() {
         return this.#stringKey;
@@ -334,7 +263,7 @@ class ProjectPrimaryKeyHumanReadable {
         return this.#stringKey === projectKey.asStringKey();
     }
     getName() {
-        return this.#name;
+        return this.#ownerName;
     }
     getNumber() {
         return this.#number;

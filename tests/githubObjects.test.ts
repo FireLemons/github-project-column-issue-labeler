@@ -1,6 +1,5 @@
-import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, ProjectPrimaryKeyHumanReadable, RecordWithGraphQLID, RemoteRecordPageQueryParameters, initializeNodes } from '../src/githubObjects'
+import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, ProjectPrimaryKeyHumanReadable, RecordWithGraphQLID } from '../src/githubObjects'
 import GithubObjectsTestData from './githubObjectsTestData'
-import * as TypeChecker from '../src/typeChecker'
 
 describe('The FieldValue class', () => {
   describe('constructor', () => {
@@ -200,7 +199,7 @@ describe('The GraphQLPage class', () => {
 
   describe('isEmpty()', () => {
     it('returns true if the page does not have nodes', () => {
-      const labelPage = new GraphQLPage(GithubObjectsTestData.getEmptyLabelPagePOJO())
+      const labelPage = new GraphQLPage(GithubObjectsTestData.getEmptyPagePOJO())
 
       expect(labelPage.isEmpty()).toBeTruthy()
     })
@@ -228,6 +227,10 @@ describe('The GraphQLPage class', () => {
 })
 
 describe('The GraphQLPageMergeable class', () => {
+  describe('constructor', () => {
+
+  })
+
   describe('delete()', () => {
     it('removes the edge at the index passed from the graphQL page', () => {
       const projectItemPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
@@ -350,6 +353,28 @@ describe('The GraphQLPageMergeable class', () => {
 
       expect(page.getPageInfo()).not.toEqual(oldPageInfo)
     })
+
+    it('can merge a page with no nodes', () => {
+      page.merge(new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getEmptyPagePOJO(), ProjectItem))
+    })
+
+    it('throws an error when attempting to merge a page with a different node class', () => {
+      class DifferentNodeClass extends RecordWithGraphQLID {
+        constructor () {
+          super('id')
+        }
+      }
+
+      expect(() => {
+        page.merge(new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getProjectItemPagePOJOToBeMerged(), DifferentNodeClass))
+      })
+    })
+
+    it("throws an error when attempting to merge a page with nodes that aren't instances of any class", () => {
+      expect(() => {
+        page.merge(new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getProjectItemPagePOJOToBeMerged()))
+      })
+    })
   })
 })
 
@@ -421,98 +446,6 @@ describe('The Issue class', () => {
       for (const fieldValuePage of fieldValuePages) {
         expect(fieldValuePage.hasNextPage()).toBe(false)
       }
-    })
-  })
-
-  describe('findColumnName()', () => {
-    describe('when the search space does not contain column names', () => {
-      describe('when the search space is complete', () => {
-        it('returns null when the column name could not be found', () => {
-          const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithoutColumnNames())
-
-          expect(issue.findColumnName()).toBe(null)
-        })
-      })
-
-      describe('when the search space is incomplete', () => {
-        describe('when project parameters are passed to findColumnName', () => {
-          it('returns an issue when the expanded column name search space has not yet been applied to the issue', () => {
-            const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
-            const issue = new Issue(issuePOJO)
-            const projectKey = issue.projectItems.getNodeArray()[0].getProjectHumanReadablePrimaryKey()
-
-            expect(issue.findColumnName(projectKey)).toBeInstanceOf(Issue)
-          })
-
-          it('returns a set of remote query parameters including each incomplete page in the search space when the extended column name search space has been applied to the issue', () => {
-            const issuePOJO = GithubObjectsTestData.getIssuePOJOWithoutColumnNamesAndIncompleteLocalSearchSpace()
-            const project = issuePOJO.projectItems.edges[0].node.project
-            const projectItemId = issuePOJO.projectItems.edges[0].node.id
-            const issue = new Issue(issuePOJO)
-            
-            issue.applyExpandedSearchSpace(issue.getProjectItemPage())
-
-            const columnNameSearchResult = issue.findColumnName(new ProjectPrimaryKeyHumanReadable(project.owner.login, project.number))
-
-            expect(Array.isArray(columnNameSearchResult)).toBe(true)
-
-            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-              return queryParameters.parentId === projectItemId &&
-                queryParameters.localPage.lookupNodeClass() === FieldValue
-            })).not.toBe(undefined)
-
-            expect((columnNameSearchResult as Array<RemoteRecordPageQueryParameters>).find((queryParameters) => {
-              return queryParameters.parentId === issuePOJO.id &&
-                queryParameters.localPage.lookupNodeClass() === ProjectItem
-            })).not.toBe(undefined)
-          })
-        })
-      })
-    })
-
-    describe('when the search space contains column names', () => {
-      let issuePOJO: any
-
-      beforeEach(() => {
-        issuePOJO = GithubObjectsTestData.getIssuePOJOWithManyProjectItems()
-      })
-
-      describe('when projects are not enabled', () => {
-        it('returns the column name', () => {
-          const issue = new Issue(issuePOJO)
-
-          expect(TypeChecker.isString(issue.findColumnName())).toBe(true)
-        })
-      })
-
-      describe('when projects parameters are passed', () => {
-        it('does not return a column name if the project item does not match the passed project number', () => {
-          const projectOwnerName = issuePOJO.projectItems.edges[0].node.project.owner.login
-          const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, 100)
-          const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO)
-
-          expect(issue.findColumnName(projectKey)).not.toBe(nonMatchingColumnName)
-        })
-
-        it('does not return a column name if the project item does not match the passed project owner name', () => {
-          const projectNumber = issuePOJO.projectItems.edges[0].node.project.number
-          const projectKey = new ProjectPrimaryKeyHumanReadable('Non matching name', projectNumber)
-          const nonMatchingColumnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO)
-
-          expect(issue.findColumnName(projectKey)).not.toBe(nonMatchingColumnName)
-        })
-
-        it('returns a column name if the project owner and number match the project filtering parameters', () => {
-          const projectPOJO = issuePOJO.projectItems.edges[1].node.project
-          const projectKey = new ProjectPrimaryKeyHumanReadable(projectPOJO.owner.login, projectPOJO.number)
-          const columnName = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
-          const issue = new Issue(issuePOJO)
-
-          expect(issue.findColumnName(projectKey)).toBe(columnName)
-        })
-      })
     })
   })
 
@@ -618,22 +551,11 @@ describe('The ProjectItem class', () => {
   })
 
   describe('findColumnName()', () => {
-    it('returns null if the column name could not be found with complete pages', () => {
+    it('returns null if the column name could not be found', () => {
       const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJOWithoutColumnName()
       const projectItem = new ProjectItem(projectItemPOJO)
 
       expect(projectItem.findColumnName()).toBe(null)
-    })
-
-    it('returns an object containing parameters to fetch more data on a fail', () => {
-      const projectItemPOJO = GithubObjectsTestData.getProjectItemPOJOWithoutLocalColumnName()
-      const projectItemId = projectItemPOJO.id
-      const projectItem = new ProjectItem(projectItemPOJO)
-
-      expect(projectItem.findColumnName()).toEqual({
-        parentId: projectItemId,
-        localPage: projectItem.getFieldValuePage()
-      })
     })
 
     it('returns the column name on a successful search', () => {

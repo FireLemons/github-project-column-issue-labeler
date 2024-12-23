@@ -64,6 +64,10 @@ export class GraphQLPage<T> {
   }
 
   appendPage (page: GraphQLPage<T>) {
+    if (page.lookupNodeClass() !== this.nodeClass) {
+      throw new TypeError('Node type mismatch between pages')
+    }
+
     this.page.edges.push(...page.getEdges())
     this.page.pageInfo = page.getPageInfo()
   }
@@ -142,10 +146,10 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
   }
 
   merge (page: GraphQLPageMergeable<T>) {
-    const firstNode = this.page.edges[0].node
+    const PageToBeMergedNodeClass = page.lookupNodeClass()
 
-    if (!(firstNode instanceof RecordWithGraphQLID)) {
-      throw new ReferenceError('Failed to merge pages. Page to be merged does not contain nodes with ids.')
+    if (PageToBeMergedNodeClass !== this.nodeClass) {
+      throw new TypeError('Node type mismatch between pages')
     }
 
     for (const edge of page.getEdges()) {
@@ -198,11 +202,6 @@ export class Issue {
     this.#columnNameMap = new Map()
   }
 
-  applyExpandedSearchSpace (expandedColumnNameSearchSpace: GraphQLPageMergeable<ProjectItem>) {
-    this.projectItems.merge(expandedColumnNameSearchSpace)
-    this.#hasExpandedSearchSpace = true
-  }
-
   disableColumnNameRemoteSearchSpace ():void {
     const { projectItems } = this
 
@@ -211,50 +210,6 @@ export class Issue {
     }
 
     projectItems.disableRemoteDataFetching()
-  }
-
-  findColumnName (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    const cachedSearch = this.#lookupCachedColumnName(projectKey)
-
-    if (cachedSearch) {
-      return cachedSearch
-    }
-
-    const remoteRecordQueryParams: RemoteRecordPageQueryParameters[] = []
-    const projectItemEdges = this.projectItems.getEdges()
-
-    let i = projectItemEdges.length - 1
-
-    while (i >= 0) {
-      const projectItem = projectItemEdges[i].node
-      const columnNameSearchResult = projectItem.findColumnName()
-
-      if (columnNameSearchResult === null) {
-        this.projectItems.delete(i)
-        i--
-      } else if (TypeChecker.isString(columnNameSearchResult)) {
-        this.projectItems.delete(i)
-        i--
-
-        this.#cacheSearchResult(projectItem)
-
-        if (projectKey === undefined || projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
-          return columnNameSearchResult
-        }
-      } else {
-        remoteRecordQueryParams.push(columnNameSearchResult)
-        i--
-      }
-    }
-
-    if (this.projectItems.hasNextPage()) {
-      remoteRecordQueryParams.push({
-        parentId: this.#id,
-        localPage: this.projectItems
-      })
-    }
-
-    return this.#determineRemoteQueryParams(remoteRecordQueryParams)
   }
 
   getId ():string {
@@ -277,36 +232,6 @@ export class Issue {
 
   getProjectItemPage ():GraphQLPageMergeable<ProjectItem> {
     return this.projectItems
-  }
-
-  hasInaccessibleRemoteSearchSpace ():boolean {
-    return this.#hasInaccessibleRemoteSearchSpace
-  }
-
-  markRemoteSearchSpaceAsNotCompletelyAcessible () {
-    this.#hasInaccessibleRemoteSearchSpace = true
-  }
-
-  #cacheSearchResult (projectItem: ProjectItem) {
-    this.#columnNameMap.set(projectItem.getProjectHumanReadablePrimaryKey().asStringKey(), projectItem.findColumnName() as string)
-  }
-
-  #determineRemoteQueryParams (remoteRecordQueryParams: RemoteRecordPageQueryParameters[]) {
-    if (remoteRecordQueryParams.length === 0) {
-      return null
-    } else if (!(this.#hasExpandedSearchSpace)) {
-      return this
-    } else {
-      return remoteRecordQueryParams
-    }
-  }
-
-  #lookupCachedColumnName (projectKey?: ProjectPrimaryKeyHumanReadable) {
-    if (projectKey === undefined) {
-      return this.#columnNameMap.keys().next()?.value
-    } else {
-      return this.#columnNameMap.get(projectKey.asStringKey())
-    }
   }
 }
 
@@ -358,11 +283,6 @@ export class ProjectItem extends RecordWithGraphQLID {
       this.columnName = columnNameList[0].getName()
 
       return this.columnName
-    } else if (this.#fieldValues.hasNextPage()) {
-      return {
-        parentId: this.getId(),
-        localPage: this.#fieldValues
-      }
     }
 
     return null
@@ -378,14 +298,14 @@ export class ProjectItem extends RecordWithGraphQLID {
 }
 
 export class ProjectPrimaryKeyHumanReadable {
-  #name: string
+  #ownerName: string
   #number: number
   #stringKey: string
 
-  constructor (name: string, number: number = 0) {
-    this.#name = name
+  constructor (ownerName: string, number: number = 0) {
+    this.#ownerName = ownerName
     this.#number = number
-    this.#stringKey = `${name} ${number}`
+    this.#stringKey = `${ownerName} ${number}`
   }
 
   asStringKey () {
@@ -397,7 +317,7 @@ export class ProjectPrimaryKeyHumanReadable {
   }
 
   getName () {
-    return this.#name
+    return this.#ownerName
   }
 
   getNumber () {

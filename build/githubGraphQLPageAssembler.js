@@ -9,14 +9,6 @@ class GithubGraphQLPageAssembler {
     constructor(githubAPIClient) {
         this.githubAPIClient = githubAPIClient;
     }
-    async fetchAdditionalSearchSpace(queryParams) {
-        if (queryParams instanceof githubObjects_1.Issue) {
-            await this.#expandIssueSearchSpace(queryParams);
-        }
-        else {
-            await this.#expandPage(queryParams.localPage, queryParams.parentId);
-        }
-    }
     async fetchAllIssues() {
         logger.addBaseIndentation(2);
         let cursor;
@@ -48,29 +40,6 @@ class GithubGraphQLPageAssembler {
         } while (issues?.hasNextPage());
         logger.addBaseIndentation(-2);
         return issues;
-    }
-    async #expandPage(page, parentId) {
-        const PageNodeClass = page.lookupNodeClass();
-        const endCursor = page.getEndCursor();
-        switch (PageNodeClass) {
-            case githubObjects_1.FieldValue:
-                const fieldValuePagePOJO = (await this.githubAPIClient.fetchFieldValuePage(parentId, page.getEndCursor())).node.fieldValues;
-                page.appendPage(new githubObjects_1.GraphQLPage(fieldValuePagePOJO, githubObjects_1.FieldValue));
-                break;
-            case githubObjects_1.Label:
-                const labelPagePOJO = (await this.githubAPIClient.fetchLabelPage(parentId, page.getEndCursor())).node.labels;
-                page.appendPage(new githubObjects_1.GraphQLPage(labelPagePOJO, githubObjects_1.Label));
-                break;
-            case githubObjects_1.ProjectItem:
-                const projectItemPagePOJO = (await this.githubAPIClient.fetchProjectItemPage(parentId, page.getEndCursor())).node.projectItems;
-                page.appendPage(new githubObjects_1.GraphQLPageMergeable(projectItemPagePOJO, githubObjects_1.ProjectItem));
-                break;
-        }
-    }
-    async #expandIssueSearchSpace(issue) {
-        const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems;
-        const expandedColumnNameSearchSpace = new githubObjects_1.GraphQLPageMergeable(expandedColumnNameSearchSpacePOJO, githubObjects_1.ProjectItem);
-        issue.applyExpandedSearchSpace(expandedColumnNameSearchSpace);
     }
 }
 exports.GithubGraphQLPageAssembler = GithubGraphQLPageAssembler;

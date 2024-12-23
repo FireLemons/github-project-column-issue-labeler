@@ -1,9 +1,9 @@
 // Javascript destructuring assignment
 import { GithubAPIClient, GraphQLPagePOJO, IssuePOJO } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
-import { GraphQLPage, GraphQLPageMergeable, Issue, ProjectItem, ProjectPrimaryKeyHumanReadable, RemoteRecordPageQueryParameters } from './githubObjects'
+import { GraphQLPage, Issue, ProjectPrimaryKeyHumanReadable, RemoteRecordPageQueryParameters } from './githubObjects'
 import { Logger } from './logger'
-import * as TypeChecker from './typeChecker'
+import ColumnNameFinder from './columnNameFinder'
 import { LabelingRule } from './configObjects'
 
 interface columnNameSearchResults {
@@ -38,17 +38,6 @@ export default class Labeler {
       issuesWithColumnNamesCount: 0,
       issuesNotRequiringLabeling: 0,
       issuesWithFailedLabelings: 0
-    }
-  }
-
-  async addRemoteSearchSpace (issue: Issue, remoteSearchSpaceQueryParameters?: RemoteRecordPageQueryParameters) {
-    if (remoteSearchSpaceQueryParameters) {
-      const expandedColumnNameSearchSpacePOJO = (await this.githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId())).node.projectItems
-      const expandedColumnNameSearchSpace = new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO, ProjectItem)
-
-      issue.applyExpandedSearchSpace(expandedColumnNameSearchSpace)
-    } else {
-
     }
   }
 
@@ -113,29 +102,26 @@ export default class Labeler {
     try {
       let additonalRemoteSpaceFetched
 
-      do {
-        const columnNameSearchResult = issue.findColumnName()
-        additonalRemoteSpaceFetched = false
+      const columnNameFinder = new ColumnNameFinder(this.githubAPIClient, issue)
+      const columnNameSearchResult = await columnNameFinder.findColumnNames()
+      console.log(issue.getNumber(), columnNameSearchResult)
 
-        if (columnNameSearchResult === null) {
-          if (issue.hasInaccessibleRemoteSearchSpace()) {
-            this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-            this.logger.error('Failed to find column name using available search space and could not fetch all column name search space')
-            this.stats.issuesWithFailedLabelings++
-          } else {
-            this.stats.issuesNotRequiringLabeling++
-          }
-        } else if (TypeChecker.isString(columnNameSearchResult)) {
-          const labelingRule = this.findLabelingRule(columnNameSearchResult)
-
-          if (labelingRule !== undefined && !(this.isAlreadyLabeled(issue, labelingRule))) {
-            this.labelIssue(issue, labelingRule)
-          }
+      if (columnNameSearchResult === null) {
+        if (columnNameFinder.hasDisabledRemoteSearchSpace()) {
+          this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
+          this.logger.error('Unable to conduct complete search for column name')
+          this.stats.issuesWithFailedLabelings++
         } else {
-          await this.addRemoteSearchSpace(issue, columnNameSearchResult)
-          additonalRemoteSpaceFetched = true
+          this.stats.issuesNotRequiringLabeling++
         }
-      } while (additonalRemoteSpaceFetched)
+      } else {
+        console.log(`Found column name for issue #${issue.getNumber()}`)
+        /* const labelingRule = this.findLabelingRule(columnNameSearchResult)
+
+        if (labelingRule !== undefined && !(this.isAlreadyLabeled(issue, labelingRule))) {
+          this.labelIssue(issue, labelingRule)
+        }*/
+      }
     } catch (error) {
       this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
       this.logger.tryErrorLogErrorObject(error, 2)
@@ -151,88 +137,6 @@ export default class Labeler {
     for(const issue of issues) {
       this.processIssue(issue)
     }
-  }
-
-  searchLocalSearchSpaceForColumnNames (issues: Issue[]) {
-    const remoteSearchSpaceQueryParametersWithIssue: remoteSearchSpaceQueryParametersWithIssue[] = []
-    const issuesWithColumnNames: Issue[] = []
-
-    while(issues.length > 0) {
-      const issue = issues.pop()!
-
-      try {
-        const columnNameSearchResult = issue.findColumnName()
-        if (columnNameSearchResult === null) {
-          if (issue.hasInaccessibleRemoteSearchSpace()) {
-            this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-            this.logger.error('Failed to find column name using available search space and could not fetch all column name search space')
-            this.stats.issuesWithFailedLabelings++
-          } else {
-            this.stats.issuesNotRequiringLabeling++
-          }
-        } else if (TypeChecker.isString(columnNameSearchResult)) {
-          issuesWithColumnNames.push(issue)
-        } else {
-          remoteSearchSpaceQueryParametersWithIssue.push({
-            issue: issue,
-            remoteSearchSpaceQueryParameters: columnNameSearchResult
-          })
-        }
-      } catch (error) {
-        this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-        this.logger.tryErrorLogErrorObject(error, 2)
-
-        this.stats.issuesWithFailedLabelings++
-      }
-    }
-
-    return {
-      issuesWithColumnNames,
-      remoteSearchSpaceQueryParametersWithIssue
-    }
-  }
-
-  async fetchRemoteSearchSpace (remoteSearchSpaceQueryParametersWithIssue: remoteSearchSpaceQueryParametersWithIssue[]): Promise<Issue[]> {
-    const issuesWithNewlyFetchedSearchSpace: Issue[] = []
-
-    while(remoteSearchSpaceQueryParametersWithIssue.length > 0) {
-      const { issue, remoteSearchSpaceQueryParameters } = remoteSearchSpaceQueryParametersWithIssue.pop()!
-      if (remoteSearchSpaceQueryParameters instanceof Issue) {
-        try {
-          await this.githubGraphQLPageAssembler.fetchAdditionalSearchSpace(remoteSearchSpaceQueryParameters)
-          issuesWithNewlyFetchedSearchSpace.push(issue)
-        } catch (error) {
-          issue.disableColumnNameRemoteSearchSpace()
-
-          this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-          this.logger.error('Failed to find column name using available search space and could not fetch all column name search space')
-          this.logger.tryErrorLogErrorObject(error, 2)
-        }
-      } else {
-        let failedSearchCount = 0//replace with error list
-
-        for (const singleQueryParameters of remoteSearchSpaceQueryParameters) {
-          try {
-            await this.githubGraphQLPageAssembler.fetchAdditionalSearchSpace(singleQueryParameters)
-          } catch (error) {
-            failedSearchCount++
-          }
-        }
-
-        if (failedSearchCount > 0) {
-          issue.markRemoteSearchSpaceAsNotCompletelyAcessible()
-        }
-
-        if (failedSearchCount !== remoteSearchSpaceQueryParameters.length) {
-          issuesWithNewlyFetchedSearchSpace.push(issue)
-        } else {
-          this.logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-          this.logger.error('Failed to find column name using available search space and could not fetch all column name search space')
-        }
-      }
-    }
-
-    return issuesWithNewlyFetchedSearchSpace
   }
 
   async labelIssues () {
@@ -251,16 +155,6 @@ export default class Labeler {
       return
     }
 
-    const issues = issuePage.getNodeArray()
-
-    this.logger.info('Searching for column names of issues')
-    let issuesToBeSearched = issues.slice(0)
-
-    do {
-      const {issuesWithColumnNames, remoteSearchSpaceQueryParametersWithIssue} = this.searchLocalSearchSpaceForColumnNames(issuesToBeSearched)
-      console.log(JSON.stringify(issuesWithColumnNames.map((issue) => { return issue.getNumber() }), null, 2))
-
-      issuesToBeSearched = await this.fetchRemoteSearchSpace(remoteSearchSpaceQueryParametersWithIssue)
-    } while (issuesToBeSearched.length > 0)
+    this.processIssuePage(issuePage)
   }
 }
