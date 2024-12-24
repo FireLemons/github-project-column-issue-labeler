@@ -1,10 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { GithubAPIClient, IssuePageResponse } from '../src/githubAPIClient'
-import { Logger } from '../src/logger'
-import ConfigValidator from '../src/validateConfig'
+import { GithubAPIClient, IssuePageResponse } from '../../src/githubAPIClient'
+import { Logger } from '../../src/logger'
+import ConfigValidator from '../../src/validateConfig'
 
 const logger = new Logger()
-const requestResponseDir = './temp/request_responses'
+const requestResponseDir = '../temp/request_responses'
 
 async function loadConfig (): Promise<string> {
   const configContents = await readFile('./config.json')

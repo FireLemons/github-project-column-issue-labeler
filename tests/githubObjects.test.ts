@@ -1,5 +1,5 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, ProjectPrimaryKeyHumanReadable, RecordWithGraphQLID } from '../src/githubObjects'
-import GithubObjectsTestData from './githubObjectsTestData'
+import GithubObjectsTestData from './data/githubObjectsTestData'
 
 describe('The FieldValue class', () => {
   describe('constructor', () => {

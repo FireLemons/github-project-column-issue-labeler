@@ -9,9 +9,9 @@
     "lint": "npx ts-standard",
     "start": "npx ts-node ./index.ts",
     "test": "npx jest --silent",
-    "test:validation-indentation": "npx ts-node tests/validateConfigIndentationManualVerification.ts",
+    "test:validation-indentation": "npx ts-node tests/scripts/validateConfigIndentationManualVerification.ts",
     "test:verbose": "npx jest",
-    "sample-requests": "npx ts-node tests/fetchSampleRequestResponses.ts"
+    "sample-requests": "npx ts-node tests/scripts/fetchSampleRequestResponses.ts"
   },
   "repository": {
     "type": "git",

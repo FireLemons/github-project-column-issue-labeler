@@ -1,6 +1,6 @@
 import { GithubAPIClient } from '../src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from '../src/githubGraphQLPageAssembler'
-import GithubObjectsTestData from './githubObjectsTestData'
+import GithubObjectsTestData from './data/githubObjectsTestData'
 
 jest.mock('../src/githubAPIClient')
 
