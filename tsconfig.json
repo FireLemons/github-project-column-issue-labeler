@@ -1,16 +1,8 @@
 {
-  "extends": "@tsconfig/node-lts/tsconfig.json",
   "compilerOptions": {
     "noEmit": true
   },
-  "files": [
-    "src/githubAPIClient.ts",
-    "src/githubGraphQLPageAssembler.ts",
-    "src/githubObjects.ts",
-    "src/labeler.ts",
-    "src/logger.ts",
-    "src/typeChecker.ts",
-    "src/util.ts",
-    "src/validateConfig.ts"
-  ]
+  "extends": "@tsconfig/node-lts/tsconfig.json",
+  "exclude": ["node_modules"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
 }
