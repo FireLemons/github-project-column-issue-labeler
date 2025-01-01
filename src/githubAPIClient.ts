@@ -23,7 +23,7 @@ export interface GraphQLPagePOJO<T> {
     node: T
   }[]
   pageInfo: {
-    endCursor: string
+    endCursor: string | null
     hasNextPage: boolean
   }
 }

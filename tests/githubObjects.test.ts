@@ -289,7 +289,7 @@ describe('The GraphQLPageMergeable class', () => {
     beforeEach(() => {
       const existingPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
       const newPagePOJO = GithubObjectsTestData.getProjectItemPagePOJOToBeMerged()
-  
+
       deletedProjectItemPOJO = existingPagePOJO.edges[0].node
       existingProjectItemPOJO = existingPagePOJO.edges[1].node
       existingProjectItemPOJOUpdated = newPagePOJO.edges[1].node

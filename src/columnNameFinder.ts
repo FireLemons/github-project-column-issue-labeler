@@ -29,22 +29,20 @@ export default class ColumnNameFinder {
     if (cacheCheckResult.length > 0) {
       return cacheCheckResult
     }
-  
-    let hasNewSearchSpace = false
-    const issue = this.#issue
 
     do {
-      const localColumnNameSearchResult = this.#searchLocallyForColumnName(projectKey)
+      this.#searchLocallyForColumnName(projectKey)
 
-      if (projectKey !== undefined) {
-        this.#remoteSearchSpaceParameterQueue = []
-        return localColumnNameSearchResult
-      }
+      await this.#tryAddRemoteSearchSpace()
+    } while (this.#hasAdditionalRemoteSearchSpace())
 
-      hasNewSearchSpace = await this.#tryAddRemoteSearchSpace()
-    } while (hasNewSearchSpace)
+    if (projectKey === undefined) {
+      return this.#getAllFoundColumnNames()
+    } else {
+      let columnNameLookup = this.#cachedSearchResults.get(projectKey.asStringKey())
 
-    return this.#getAllFoundColumnNames()
+      return columnNameLookup === undefined ? [] : [columnNameLookup]
+    }
   }
 
   hasDisabledRemoteSearchSpace () {
@@ -72,11 +70,14 @@ export default class ColumnNameFinder {
 
   #hasAdditionalRemoteSearchSpace (): boolean {
     const projectItemPage = this.#issue.getProjectItemPage()
+    const projectItemContainingIncompleteFieldValuePage = projectItemPage.getNodeArray().find((projectItem) => {
+      return projectItem.getFieldValuePage().hasNextPage()
+    })
 
-    return !(projectItemPage.isEmpty()) && projectItemPage.hasNextPage()
+    return projectItemPage.hasNextPage() || projectItemContainingIncompleteFieldValuePage !== undefined
   }
 
-  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
+  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): void {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
 
@@ -84,9 +85,9 @@ export default class ColumnNameFinder {
 
     while (i >= 0) {
       const projectItem = projectItems[i]
-      const columnNameSearchResult = projectItem.findColumnName()
+      const columnNameSearchResults = projectItem.findColumnName()
 
-      if (columnNameSearchResult === null) {
+      if (columnNameSearchResults === null) {
         if (this.#hasExpandedSearchSpace) {
           const fieldValuePage = projectItem.getFieldValuePage()
 
@@ -102,17 +103,15 @@ export default class ColumnNameFinder {
       } else {
         projectItemPage.delete(i)
 
-        this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResult)
+        this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResults)
 
         if (projectKey !== undefined && projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
-          return [ columnNameSearchResult ]
+          return
         }
       }
 
       i--
     }
-
-    return []
   }
 
   async #tryAddExpandedSearchSpace() {
@@ -121,11 +120,9 @@ export default class ColumnNameFinder {
       const expandedColumnNameSearchSpacePOJO = (await this.#githubAPIClient.fetchExpandedColumnNameSearchSpace(issue.getId()))
       this.#issue.getProjectItemPage().merge(new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO.node.projectItems, ProjectItem))
       this.#hasExpandedSearchSpace = true
-      return true
     } catch (error) {
       this.#hasDisabledSearchSpace = true
       this.#issue.disableColumnNameRemoteSearchSpace()
-      return false
     }
   }
 
@@ -143,12 +140,9 @@ export default class ColumnNameFinder {
           (page as GraphQLPageMergeable<ProjectItem>).appendPage(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
           break
       }
-
-      return true
     } catch (error) {
       this.#hasDisabledSearchSpace = true
       page.disableRemoteDataFetching()
-      return false
     }
   }
 
@@ -156,7 +150,6 @@ export default class ColumnNameFinder {
     const projectItemPage = this.#issue.getProjectItemPage()
 
     if (this.#hasExpandedSearchSpace) {
-      let hasNewSearchSpace = false
       const remoteSearchSpaceParameterQueue = this.#remoteSearchSpaceParameterQueue
 
       if (projectItemPage.hasNextPage()) {
@@ -169,12 +162,10 @@ export default class ColumnNameFinder {
       while (remoteSearchSpaceParameterQueue.length > 0) {
         const { localPage, parentId } = remoteSearchSpaceParameterQueue.pop()!
 
-        hasNewSearchSpace = hasNewSearchSpace || await this.#tryAddPage(localPage, parentId)
+        await this.#tryAddPage(localPage, parentId)
       }
-
-      return hasNewSearchSpace
     } else {
-      return await this.#tryAddExpandedSearchSpace()
+      await this.#tryAddExpandedSearchSpace()
     }
   }
 }

@@ -1,5 +1,5 @@
 import fs from 'fs'
-import ConfigTestData from './configTestData'
+import ConfigTestData from './data/configTestData'
 import ConfigValidator from '../src/validateConfig'
 import { Logger } from '../src/logger'
 import { Column, Config, LabelingAction, LabelingRule, Project, isShallowColumn, isShallowLabelingRule } from '../src/configObjects'
