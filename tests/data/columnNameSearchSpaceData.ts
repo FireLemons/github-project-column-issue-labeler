@@ -227,6 +227,159 @@ export default {
       }
     }
   },
+  getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems (): IssuePOJO {
+    return {
+      id: defaultIssueId,
+      number: defaultIssueNumber,
+      labels: getEmptyLabelPage(),
+      projectItems: {
+        edges: [
+          {
+            node: {
+              id: '-P34.$e(JN/%!Ld"-o',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'b"z-7(8eF~M8w8\\x5P',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: 'zM0x?^FWWI^P=(Orjz'
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'FnC9mzt(Olx00c266i',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'O,#n(e*p)I:Dd]`xD!'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'zZ)+.`>s1]frU(nh2t',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 2,
+                owner: {
+                  login: 'v0Yc&C[yg;@OjR+5:='
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'p~!m;o2%&UZw<X_yG*',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: '2*gj8eMu$ky8Afb-~<'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'yvGmQY[E7l#7vFfGv[',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 2,
+                owner: {
+                  login: 'J\\3AYiMFArLr\'r7GYX'
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'e}\'ZIDwd\\p_#Q7nRt',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'FcDpp3/-K>]wBDF;<+'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: '\'L=NuW;GN5r_*lyxgI',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: 'zM0x?^FWWI^P=(Orjz'
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: '}eAnx.&,<V;}[{}2f?',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'P?Z5>__u.=L:k$+/"F',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: 'zM0x?^FWWI^P=(Orjz'
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'PpVTHvRBlCcNm_QE5B',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {}
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'QcN{PE*Sr.xs#U|JZ;',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: 'zM0x?^FWWI^P=(Orjz'
+                }
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultProjectItemPageEndCursor,
+          hasNextPage: false
+        }
+      }
+    }
+  },
   getIssuePOJOWithCompleteEmptySearchSpace (): IssuePOJO {
     return {
       id: defaultIssueId,

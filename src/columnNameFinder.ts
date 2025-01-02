@@ -88,17 +88,15 @@ export default class ColumnNameFinder {
       const columnNameSearchResults = projectItem.findColumnName()
 
       if (columnNameSearchResults === null) {
-        if (this.#hasExpandedSearchSpace) {
-          const fieldValuePage = projectItem.getFieldValuePage()
+        const fieldValuePage = projectItem.getFieldValuePage()
 
-          if (fieldValuePage.hasNextPage()) {
-            this.#remoteSearchSpaceParameterQueue.push({
-              parentId: projectItem.getId(),
-              localPage: fieldValuePage
-            })
-          } else {
-            projectItemPage.delete(i)
-          }
+        if (fieldValuePage.hasNextPage() && this.#hasExpandedSearchSpace) {
+          this.#remoteSearchSpaceParameterQueue.push({
+            parentId: projectItem.getId(),
+            localPage: fieldValuePage
+          })
+        } else if (!(fieldValuePage.hasNextPage())) {
+          projectItemPage.delete(i)
         }
       } else {
         projectItemPage.delete(i)

@@ -106,21 +106,59 @@ describe('findColumnNames()', () => {
   })
 
   describe('without a project key parameter', () => {
-    it('searches the entire search space for all column names', () => {
-      throw new Error('unimplimented')
+    it('searches the entire search space for all column names', async () => {
+      const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
+      const issue = new Issue(issuePOJO)
+
+      const finder = new ColumnNameFinder(githubAPIClient, issue)
+      await finder.findColumnNames()
+
+      expect(issue.getProjectItemPage().getEdges().length).toBe(0)
     })
 
-    it('returns all column names in the search space', () => {
-      throw new Error('unimplimented')
+    it('returns all column names in the search space', async () => {
+      const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
+      const columnName1 = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+      const columnName2 = issuePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name
+      const columnName3 = issuePOJO.projectItems.edges[3].node.fieldValues.edges[0].node.name
+
+      const finder = new ColumnNameFinder(githubAPIClient, new Issue(issuePOJO))
+      const searchResult = await finder.findColumnNames()
+
+      expect(searchResult).toContain(columnName1)
+      expect(searchResult).toContain(columnName2)
+      expect(searchResult).toContain(columnName3)
     })
 
-    it('returns empty array if no column names are in the search space', () => {
+    it('returns empty array if no column names are in the search space', async () => {
+      const finder = new ColumnNameFinder(githubAPIClient, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithCompleteEmptySearchSpace()))
+      const searchResult = await finder.findColumnNames()
+
+      expect(searchResult).toEqual([])
+    })
+
+    it('caches the search result so it does not fetch the remote search space again', async () => {
       const finder = new ColumnNameFinder(githubAPIClient, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace()))
-      throw new Error('unimplimented')
-    })
 
-    it('caches the search result so it does not fetch the remote search space again', () => {
-      throw new Error('unimplimented')
+      const expandedSpaceFetchSpy = jest.spyOn(githubAPIClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAnIncompleteProjectItemPageAndAnIncompleteFieldValuePage())
+      const fieldValuePageFetchSpy = jest.spyOn(githubAPIClient, 'fetchFieldValuePage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getFieldValuePageResponseContainingAColumnNameAndNoAdditionalPagesIndicated())
+      const projectItemPageFetchSpy = jest.spyOn(githubAPIClient, 'fetchProjectItemPage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getProjectItemPageResponseContainingTwoColumnNamesAndNoAdditionalPagesIndicated())
+
+      expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(0)
+      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(0)
+      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(0)
+
+      await finder.findColumnNames()
+
+      expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
+      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
+      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
+
+      await finder.findColumnNames()
+
+      expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
+      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
+      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
     })
   })
 })
