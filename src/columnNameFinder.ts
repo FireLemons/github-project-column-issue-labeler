@@ -1,13 +1,26 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, ProjectItem, ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import { GithubAPIClient } from './githubAPIClient'
 
+export enum RemoteSearchSpaceType {
+  EXPANDED_SEARCH_SPACE = 'EXPANDED_SEARCH_SPACE',
+  FIELD_VALUE_PAGE = 'FIELD_VALUE_PAGE',
+  PROJECT_ITEM_PAGE = 'PROJECT_ITEM_PAGE',
+  UNDEFINED = 'UNDEFINED'
+}
+
 interface RemoteRecordPageQueryParameters {
   localPage: GraphQLPage<FieldValue> | GraphQLPageMergeable<ProjectItem>
   parentId: string
 }
 
+interface RemoteSearchSpaceAccessErrorWithSpaceType {
+  error: Error
+  type: RemoteSearchSpaceType
+}
+
 export default class ColumnNameFinder {
   #cachedSearchResults: Map<string, string>
+  #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
   #githubAPIClient: GithubAPIClient
   #hasDisabledSearchSpace: boolean
   #hasExpandedSearchSpace: boolean
@@ -16,11 +29,16 @@ export default class ColumnNameFinder {
 
   constructor (githubAPIClient: GithubAPIClient, issue: Issue) {
     this.#cachedSearchResults = new Map()
+    this.#remoteSearchSpaceAccessErrors = []
     this.#hasDisabledSearchSpace = false
     this.#hasExpandedSearchSpace = false
     this.#githubAPIClient = githubAPIClient
     this.#issue = issue
     this.#remoteSearchSpaceParameterQueue = []
+  }
+
+  getRemoteSearchSpaceAccessErrors () {
+    return this.#remoteSearchSpaceAccessErrors
   }
 
   async findColumnNames (projectKey?: ProjectPrimaryKeyHumanReadable): Promise<string[]> {
@@ -77,6 +95,15 @@ export default class ColumnNameFinder {
     return projectItemPage.hasNextPage() || projectItemContainingIncompleteFieldValuePage !== undefined
   }
 
+  #storeIfError (error: any, type: RemoteSearchSpaceType) {
+    if (error instanceof Error) {
+      this.#remoteSearchSpaceAccessErrors.push({
+        error,
+        type
+      })
+    }
+  }
+
   #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): void {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
@@ -120,6 +147,7 @@ export default class ColumnNameFinder {
       this.#hasExpandedSearchSpace = true
     } catch (error) {
       this.#hasDisabledSearchSpace = true
+      this.#storeIfError(error, RemoteSearchSpaceType.EXPANDED_SEARCH_SPACE)
       this.#issue.disableColumnNameRemoteSearchSpace()
     }
   }
@@ -137,9 +165,26 @@ export default class ColumnNameFinder {
           const projectItemPagePOJO = (await this.#githubAPIClient.fetchProjectItemPage(parentId, page.getEndCursor())).node.projectItems;
           (page as GraphQLPageMergeable<ProjectItem>).appendPage(new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem))
           break
+        default:
+          throw new Error('Unsupported page node type')
       }
     } catch (error) {
       this.#hasDisabledSearchSpace = true
+
+      let remoteSearchSpaceType
+
+      switch (PageNodeClass) {
+        case FieldValue:
+          remoteSearchSpaceType = RemoteSearchSpaceType.FIELD_VALUE_PAGE
+          break
+        case ProjectItem:
+          remoteSearchSpaceType = RemoteSearchSpaceType.PROJECT_ITEM_PAGE
+          break
+        default:
+          remoteSearchSpaceType = RemoteSearchSpaceType.UNDEFINED
+      }
+
+      this.#storeIfError(error, remoteSearchSpaceType)
       page.disableRemoteDataFetching()
     }
   }
