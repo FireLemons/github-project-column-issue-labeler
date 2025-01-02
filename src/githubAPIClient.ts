@@ -130,18 +130,18 @@ fragment projectItemPage on ProjectV2ItemConnection {
 }`
 
 export class GithubAPIClient {
-  octokit: Octokit
-  repoOwnerName: string
-  repoName: string
+  #octokit: Octokit
+  #repoOwnerName: string
+  #repoName: string
 
   constructor (githubAPIKey: string, repoName: string, repoOwnerName: string) {
-    this.octokit = new Octokit({ auth: githubAPIKey })
-    this.repoName = repoName
-    this.repoOwnerName = repoOwnerName
+    this.#octokit = new Octokit({ auth: githubAPIKey })
+    this.#repoName = repoName
+    this.#repoOwnerName = repoOwnerName
   }
 
   fetchExpandedColumnNameSearchSpace (issueId: string): Promise<ExtendedColumnNameSearchSpaceResponse> {
-    return this.octokit.graphql(`
+    return this.#octokit.graphql(`
       query expandedColumnNameSearchSpace($issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!){
         node(id: $issueId) {
           ... on Issue {
@@ -163,7 +163,7 @@ export class GithubAPIClient {
   }
 
   fetchFieldValuePage (projectItemId: string, cursor?: string | null): Promise<FieldValuePageResponse> {
-    return this.octokit.graphql(`
+    return this.#octokit.graphql(`
       query fieldValuePage ($cursor: String, $pageSizeFieldValue: Int!, $projectItemId: ID!) {
         node (id: $projectItemId) {
           ... on ProjectV2Item {
@@ -184,7 +184,7 @@ export class GithubAPIClient {
   }
 
   fetchIssuePage (cursor?: string | null): Promise<IssuePageResponse> {
-    return this.octokit.graphql(`
+    return this.#octokit.graphql(`
       query issuesEachWithLabelsAndColumn($cursor: String, $pageSizeIssue: Int!, $pageSizeLabel: Int!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!, $repoName: String!, $repoOwnerName: String!){
         repository (name: $repoName, owner: $repoOwnerName) {
           issues (first: $pageSizeIssue, after: $cursor) {
@@ -221,14 +221,14 @@ export class GithubAPIClient {
         pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
         pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
         pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
-        repoName: this.repoName,
-        repoOwnerName: this.repoOwnerName
+        repoName: this.#repoName,
+        repoOwnerName: this.#repoOwnerName
       }
     )
   }
 
   fetchLabelPage (issueId: string, cursor?: string | null): Promise<LabelPageResponse> {
-    return this.octokit.graphql(`
+    return this.#octokit.graphql(`
       query pageOfLabelsOfIssue($cursor: String, $issueId: ID!, $pageSize: Int!) {
         node (id: $issueId) {
           ... on Issue {
@@ -249,7 +249,7 @@ export class GithubAPIClient {
   }
 
   fetchProjectItemPage (issueId: string, cursor?: string | null): Promise<ProjectItemPageResponse> {
-    return this.octokit.graphql(`
+    return this.#octokit.graphql(`
       query pageOfProjectItemsOfIssue($cursor: String, $issueId: ID!, $pageSizeFieldValue: Int!, $pageSizeProjectItem: Int!) {
         node (id: $issueId) {
           ... on Issue {
