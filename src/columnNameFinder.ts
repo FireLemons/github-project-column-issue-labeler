@@ -22,7 +22,6 @@ export default class ColumnNameFinder {
   #cachedSearchResults: Map<string, string>
   #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
   #githubAPIClient: GithubAPIClient
-  #hasDisabledSearchSpace: boolean
   #hasExpandedSearchSpace: boolean
   #issue: Issue
   #remoteSearchSpaceParameterQueue: RemoteRecordPageQueryParameters[]
@@ -30,7 +29,6 @@ export default class ColumnNameFinder {
   constructor (githubAPIClient: GithubAPIClient, issue: Issue) {
     this.#cachedSearchResults = new Map()
     this.#remoteSearchSpaceAccessErrors = []
-    this.#hasDisabledSearchSpace = false
     this.#hasExpandedSearchSpace = false
     this.#githubAPIClient = githubAPIClient
     this.#issue = issue
@@ -64,7 +62,7 @@ export default class ColumnNameFinder {
   }
 
   hasDisabledRemoteSearchSpace () {
-    return this.#hasDisabledSearchSpace
+    return this.#remoteSearchSpaceAccessErrors.length > 0
   }
 
   #cacheSearchResult (projectKey: ProjectPrimaryKeyHumanReadable, columnName: string) {
@@ -146,7 +144,6 @@ export default class ColumnNameFinder {
       this.#issue.getProjectItemPage().merge(new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO.node.projectItems, ProjectItem))
       this.#hasExpandedSearchSpace = true
     } catch (error) {
-      this.#hasDisabledSearchSpace = true
       this.#storeIfError(error, RemoteSearchSpaceType.EXPANDED_SEARCH_SPACE)
       this.#issue.disableColumnNameRemoteSearchSpace()
     }
@@ -169,8 +166,6 @@ export default class ColumnNameFinder {
           throw new Error('Unsupported page node type')
       }
     } catch (error) {
-      this.#hasDisabledSearchSpace = true
-
       let remoteSearchSpaceType
 
       switch (PageNodeClass) {
