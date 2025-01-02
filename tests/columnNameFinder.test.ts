@@ -27,6 +27,19 @@ describe('findColumnNames()', () => {
       expect(searchResult[0]).toBe(targetColumnName)
     })
 
+    it('returns the same result when called twice with the same parameters', async () => {
+      const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
+      const targetProjectItemPOJO = issuePOJO.projectItems.edges[2]
+      const targetProjectPOJO = targetProjectItemPOJO.node.project
+      const targetProjectKey = new ProjectPrimaryKeyHumanReadable(targetProjectPOJO.owner.login, targetProjectPOJO.number)
+      const nonMatchingProjectKey = new ProjectPrimaryKeyHumanReadable('unmatched owner name', 6)
+
+      const finder = new ColumnNameFinder(githubAPIClient, new Issue(issuePOJO))
+
+      expect(await finder.findColumnNames(targetProjectKey)).toEqual(await finder.findColumnNames(targetProjectKey))
+      expect(await finder.findColumnNames(nonMatchingProjectKey)).toEqual(await finder.findColumnNames(nonMatchingProjectKey))
+    })
+
     it('returns empty array if no column name could be found with a matching project key', async () => {
       const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
       const targetProjectKey = new ProjectPrimaryKeyHumanReadable('unmatched project owner name', 1)
@@ -128,6 +141,12 @@ describe('findColumnNames()', () => {
       expect(searchResult).toContain(columnName1)
       expect(searchResult).toContain(columnName2)
       expect(searchResult).toContain(columnName3)
+    })
+
+    it('returns the same result when called twice', async () => {
+      const finder = new ColumnNameFinder(githubAPIClient, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()))
+
+      expect(await finder.findColumnNames()).toEqual(await finder.findColumnNames())
     })
 
     it('returns empty array if no column names are in the search space', async () => {
