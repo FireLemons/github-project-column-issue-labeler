@@ -479,7 +479,7 @@ describe('validateConfig()', () => {
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
         })
 
-        test('only one project with the name remains in the validated config', () => {
+        test('only one project with the name and number remains in the validated config', () => {
           expect(validatedConfig.projects!.filter((project) => {
             return project.ownerLogin === 'duplicate project name' && project.number === 1
           }).length).toBe(1)

@@ -40,10 +40,14 @@ export default class ColumnNameFinder {
   }
 
   async findColumnNames (projectKey?: ProjectPrimaryKeyHumanReadable): Promise<string[]> {
-    const cacheCheckResult = this.#findCachedResult(projectKey)
+    if (projectKey !== undefined && projectKey.hasNumber()) {
+      const cacheCheckResult = this.#findCachedResult(projectKey)
 
-    if (cacheCheckResult.length > 0) {
-      return cacheCheckResult
+      if (cacheCheckResult.length > 0) {
+        return cacheCheckResult
+      }
+    } else if (this.#isSearchComplete()) {
+      return this.#findCachedResult(projectKey)
     }
 
     do {
@@ -52,13 +56,7 @@ export default class ColumnNameFinder {
       await this.#tryAddRemoteSearchSpace()
     } while (this.#hasAdditionalRemoteSearchSpace())
 
-    if (projectKey === undefined) {
-      return this.#getAllFoundColumnNames()
-    } else {
-      let columnNameLookup = this.#cachedSearchResults.get(projectKey.asStringKey())
-
-      return columnNameLookup === undefined ? [] : [columnNameLookup]
-    }
+    return this.#findCachedResult(projectKey)
   }
 
   hasDisabledRemoteSearchSpace () {
@@ -71,9 +69,22 @@ export default class ColumnNameFinder {
 
   #findCachedResult (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
     if (projectKey !== undefined) {
-      const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.asStringKey())
-      return projectKeyCachedResult === undefined ? [] : [ projectKeyCachedResult ]
-    } else if (!(this.#hasAdditionalRemoteSearchSpace()) && this.#cachedSearchResults.size !== 0) {
+      if (!(projectKey.hasNumber())) {
+        const columnNames = []
+        const projectNameMatchTestRegex = new RegExp(`^${projectKey.getName()} \d+`)
+
+        for (const [projectKeyAsString, columnName] of this.#cachedSearchResults) {
+          if(projectNameMatchTestRegex.test(projectKeyAsString)) {
+            columnNames.push(columnName)
+          }
+        }
+
+        return columnNames
+      } else {
+        const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.asStringKey())
+        return projectKeyCachedResult === undefined ? [] : [ projectKeyCachedResult ]
+      }
+    } else if (this.#cachedSearchResults.size !== 0) {
       return this.#getAllFoundColumnNames()
     } else {
       return []
@@ -91,6 +102,14 @@ export default class ColumnNameFinder {
     })
 
     return projectItemPage.hasNextPage() || projectItemContainingIncompleteFieldValuePage !== undefined
+  }
+
+  #hasLocalUnsearchedSpace (): boolean {
+    return !(this.#issue.getProjectItemPage().isEmpty())
+  }
+
+  #isSearchComplete (): boolean {
+    return !(this.#hasAdditionalRemoteSearchSpace() || this.#hasLocalUnsearchedSpace())
   }
 
   #storeIfError (error: any, type: RemoteSearchSpaceType) {

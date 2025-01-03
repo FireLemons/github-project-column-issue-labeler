@@ -323,6 +323,10 @@ export class ProjectPrimaryKeyHumanReadable {
   getNumber () {
     return this.#number
   }
+
+  hasNumber () {
+    return this.#number !== 0
+  }
 }
 
 function tryInitializeNode (GithubObjectClass: Constructable<any>, graphQLEdge: { node: any }) {
