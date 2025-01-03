@@ -61,7 +61,7 @@ describe('findColumnNames()', () => {
     it('caches the search result so it does not fetch the remote search space again', async () => {
       const finder = new ColumnNameFinder(githubAPIClient, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace()))
 
-      const expandedColumnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAnIncompleteProjectItemPageAndAnIncompleteFieldValuePage()
+      const expandedColumnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAColumnNameAndIncompletePages()
       const targetProjectPOJO = expandedColumnNameSearchSpacePOJO.node.projectItems.edges[0].node.project
       const targetProjectKey = new ProjectPrimaryKeyHumanReadable(targetProjectPOJO.owner.login, targetProjectPOJO.number)
 
@@ -76,14 +76,14 @@ describe('findColumnNames()', () => {
       await finder.findColumnNames(targetProjectKey)
 
       expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
-      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
-      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
+      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(0)
+      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(0)
 
       await finder.findColumnNames(targetProjectKey)
 
       expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
-      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
-      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
+      expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(0)
+      expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(0)
     })
 
     it('caches all column names found during the search so it does not fetch the remote search space again', async () => {

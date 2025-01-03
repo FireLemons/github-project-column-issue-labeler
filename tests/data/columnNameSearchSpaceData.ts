@@ -56,6 +56,48 @@ export default {
       }
     }
   },
+  getExtendedColumnNameResponseContainingAColumnNameAndIncompletePages (): ExtendedColumnNameSearchSpaceResponse {
+    return {
+      node: {
+        number: 1,
+        projectItems: {
+          edges: [
+            {
+              node: {
+                id: '|sA7{l$P_=<W:Ks\'Ul',
+                fieldValues: {
+                  edges: [
+                    {
+                      node: {
+                        name: '(4A]yE7gktgl\'lNyHN'
+                      }
+                    },
+                    {
+                      node: {}
+                    }
+                  ],
+                  pageInfo: {
+                    hasNextPage: true,
+                    endCursor: 'b"z-7(8eF~M8w8\\x5P'
+                  }
+                },
+                project: {
+                  number: 1,
+                  owner: {
+                    login: 'p<Sk636S"U\\~xm"b>_'
+                  }
+                }
+              }
+            }
+          ],
+          pageInfo: {
+            hasNextPage: true,
+            endCursor: defaultProjectItemPageEndCursor
+          }
+        }
+      }
+    }
+  },
   getExtendedColumnNameResponseContainingTwoColumnNamesAndOnlyCompletePages (): ExtendedColumnNameSearchSpaceResponse {
     return {
       node: {

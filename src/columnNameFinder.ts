@@ -51,7 +51,12 @@ export default class ColumnNameFinder {
     }
 
     do {
-      this.#searchLocallyForColumnName(projectKey)
+      const searchResult = this.#searchLocallyForColumnName(projectKey)
+
+      if (searchResult !== undefined) {
+        this.#remoteSearchSpaceParameterQueue = []
+        return [ searchResult ]
+      }
 
       await this.#tryAddRemoteSearchSpace()
     } while (this.#hasAdditionalRemoteSearchSpace())
@@ -121,7 +126,7 @@ export default class ColumnNameFinder {
     }
   }
 
-  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): void {
+  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): string | undefined {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
 
@@ -129,9 +134,9 @@ export default class ColumnNameFinder {
 
     while (i >= 0) {
       const projectItem = projectItems[i]
-      const columnNameSearchResults = projectItem.findColumnName()
+      const columnNameSearchResult = projectItem.findColumnName()
 
-      if (columnNameSearchResults === null) {
+      if (columnNameSearchResult === null) {
         const fieldValuePage = projectItem.getFieldValuePage()
 
         if (fieldValuePage.hasNextPage() && this.#hasExpandedSearchSpace) {
@@ -145,10 +150,10 @@ export default class ColumnNameFinder {
       } else {
         projectItemPage.delete(i)
 
-        this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResults)
+        this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResult)
 
         if (projectKey !== undefined && projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
-          return
+          return columnNameSearchResult
         }
       }
 
