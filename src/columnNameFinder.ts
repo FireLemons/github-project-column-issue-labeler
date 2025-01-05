@@ -18,6 +18,10 @@ interface RemoteSearchSpaceAccessErrorWithSpaceType {
   type: RemoteSearchSpaceType
 }
 
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export default class ColumnNameFinder {
   #cachedSearchResults: Map<string, string>
   #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
@@ -76,7 +80,7 @@ export default class ColumnNameFinder {
     if (projectKey !== undefined) {
       if (!(projectKey.hasNumber())) {
         const columnNames = []
-        const projectNameMatchTestRegex = new RegExp(`^${projectKey.getName()} \d+`)
+        const projectNameMatchTestRegex = new RegExp(`^${escapeRegExp(projectKey.getName())} \d+`)
 
         for (const [projectKeyAsString, columnName] of this.#cachedSearchResults) {
           if(projectNameMatchTestRegex.test(projectKeyAsString)) {

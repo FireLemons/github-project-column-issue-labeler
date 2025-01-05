@@ -1,20 +1,10 @@
 // Javascript destructuring assignment
 import { GithubAPIClient, GraphQLPagePOJO, IssuePOJO } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
-import { GraphQLPage, Issue, ProjectPrimaryKeyHumanReadable, RemoteRecordPageQueryParameters } from './githubObjects'
+import { GraphQLPage, Issue, ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import { Logger } from './logger'
 import ColumnNameFinder from './columnNameFinder'
 import { LabelingRule } from './configObjects'
-
-interface columnNameSearchResults {
-  issuesWithColumnNames: Issue[]
-  issuesWithoutColumnNames: number[]
-}
-
-interface remoteSearchSpaceQueryParametersWithIssue {
-  issue: Issue
-  remoteSearchSpaceQueryParameters: Issue | RemoteRecordPageQueryParameters[]
-}[]
 
 interface stats {
   issueCount: number
@@ -100,8 +90,6 @@ export default class Labeler {
 
   async processIssue (issue: Issue) {
     try {
-      let additonalRemoteSpaceFetched
-
       const columnNameFinder = new ColumnNameFinder(this.githubAPIClient, issue)
       const columnNameSearchResult = await columnNameFinder.findColumnNames()
       console.log(issue.getNumber(), columnNameSearchResult)
