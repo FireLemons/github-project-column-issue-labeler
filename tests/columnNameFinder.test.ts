@@ -131,18 +131,21 @@ describe('findColumnNames()', () => {
       expect(issue.getProjectItemPage().getEdges().length).toBe(0)
     })
 
-    it('returns all column names in the search space', async () => {
-      /*const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
+    it('returns all the column names with matching project owner names in the search space', async () => {
+      const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
       const columnName1 = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
       const columnName2 = issuePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name
       const columnName3 = issuePOJO.projectItems.edges[3].node.fieldValues.edges[0].node.name
+      const targetProjectOwnerName = issuePOJO.projectItems.edges[2].node.project.owner.login
+
+      expect(targetProjectOwnerName).toBe(issuePOJO.projectItems.edges[3].node.project.owner.login)
 
       const finder = new ColumnNameFinder(githubAPIClient, new Issue(issuePOJO))
-      const searchResult = await finder.findColumnNames()
+      const searchResult = await finder.findColumnNames(new ProjectPrimaryKeyHumanReadable(targetProjectOwnerName))
 
-      expect(searchResult).toContain(columnName1)
+      expect(searchResult).not.toContain(columnName1)
       expect(searchResult).toContain(columnName2)
-      expect(searchResult).toContain(columnName3)*/
+      expect(searchResult).toContain(columnName3)
     })
 
     it('returns the same result when called twice', async () => {

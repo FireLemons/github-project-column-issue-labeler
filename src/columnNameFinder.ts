@@ -18,12 +18,8 @@ interface RemoteSearchSpaceAccessErrorWithSpaceType {
   type: RemoteSearchSpaceType
 }
 
-function escapeRegExp(str: string) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 export default class ColumnNameFinder {
-  #cachedSearchResults: Map<string, string>
+  #cachedSearchResults: Map<string, Map<number, string>>
   #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
   #githubAPIClient: GithubAPIClient
   #hasExpandedSearchSpace: boolean
@@ -73,24 +69,25 @@ export default class ColumnNameFinder {
   }
 
   #cacheSearchResult (projectKey: ProjectPrimaryKeyHumanReadable, columnName: string) {
-    this.#cachedSearchResults.set(projectKey.asStringKey(), columnName)
+    const cachedSearchResults = this.#cachedSearchResults
+    let projectNumberMap = cachedSearchResults.get(projectKey.getName())
+
+    if (projectNumberMap === undefined) {
+      projectNumberMap = new Map()
+      cachedSearchResults.set(projectKey.getName(), projectNumberMap)
+    }
+
+    projectNumberMap.set(projectKey.getNumber(), columnName)
   }
 
   #findCachedResult (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
     if (projectKey !== undefined) {
       if (!(projectKey.hasNumber())) {
-        const columnNames = []
-        const projectNameMatchTestRegex = new RegExp(`^${escapeRegExp(projectKey.getName())} \d+`)
+        const columnNamesMatchingProjectOwnerName = this.#cachedSearchResults.get(projectKey.getName())
 
-        for (const [projectKeyAsString, columnName] of this.#cachedSearchResults) {
-          if(projectNameMatchTestRegex.test(projectKeyAsString)) {
-            columnNames.push(columnName)
-          }
-        }
-
-        return columnNames
+        return columnNamesMatchingProjectOwnerName === undefined ? [] : Array.from(columnNamesMatchingProjectOwnerName.values())
       } else {
-        const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.asStringKey())
+        const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.getName())?.get(projectKey.getNumber())
         return projectKeyCachedResult === undefined ? [] : [ projectKeyCachedResult ]
       }
     } else if (this.#cachedSearchResults.size !== 0) {
@@ -100,8 +97,16 @@ export default class ColumnNameFinder {
     }
   }
 
-  #getAllFoundColumnNames () {
-    return Array.from(this.#cachedSearchResults.values())
+  #getAllFoundColumnNames (): string[] {
+    const columnNames = []
+
+    for (const [projectOwnerName, projectNumberColumnNameMap] of this.#cachedSearchResults) {
+      for (const [projectNumber, columnName] of projectNumberColumnNameMap) {
+        columnNames.push(columnName)
+      }
+    }
+
+    return columnNames
   }
 
   #hasAdditionalRemoteSearchSpace (): boolean {
