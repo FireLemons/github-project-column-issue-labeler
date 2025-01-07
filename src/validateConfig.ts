@@ -2,6 +2,7 @@ import { Logger } from './logger'
 import { Column, Config, LabelingAction, LabelingRule, Project } from './configObjects'
 import * as typeChecker from './typeChecker'
 import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicatesFromSortedArray } from './util'
+import { ProjectPrimaryKeyHumanReadable } from './githubObjects'
 
 export default class ConfigValidator {
   logger: Logger
@@ -171,9 +172,9 @@ export default class ConfigValidator {
     }
   }
 
-  #groupProject (shallowValidatedProject: { columns: any[], number?: number, ownerLogin: string }, projectMap: Map<string, Map<number, any[]>>) {
-    const projectOwnerName = shallowValidatedProject.ownerLogin
-    const projectNumber: number = shallowValidatedProject.number ?? 0
+  #groupProject (shallowValidatedProject: { columns: any[], projectKey: ProjectPrimaryKeyHumanReadable }, projectMap: Map<string, Map<number, any[]>>) {
+    const projectOwnerName = shallowValidatedProject.projectKey.getName()
+    const projectNumber: number = shallowValidatedProject.projectKey.getNumber() ?? 0
     let projectNumberMap: Map<number, any[]>
 
     if (projectMap.has(projectOwnerName)) {
@@ -290,10 +291,7 @@ export default class ConfigValidator {
 
     const trimmedOwnerLogin = object.ownerLogin.trim()
 
-    const validatedProject: Project = {
-      columns: object.columns,
-      ownerLogin: trimmedOwnerLogin
-    }
+    let validatedProject: Project
 
     if ('number' in object) {
       typeChecker.validateObjectMember(object, 'number', typeChecker.Type.number)
@@ -306,7 +304,15 @@ export default class ConfigValidator {
         throw new RangeError('Number must be greater than 0')
       }
 
-      validatedProject.number = object.number
+      validatedProject = {
+        columns: object.columns,
+        projectKey: new ProjectPrimaryKeyHumanReadable(trimmedOwnerLogin, object.number)
+      }
+    } else {
+      validatedProject = {
+        columns: object.columns,
+        projectKey: new ProjectPrimaryKeyHumanReadable(trimmedOwnerLogin)
+      }
     }
 
     if (!(trimmedOwnerLogin.length)) {
@@ -372,7 +378,7 @@ export default class ConfigValidator {
         if (numberLessColumns.length !== 0) {
           validatedProjects.push({
             columns: numberLessColumns,
-            ownerLogin: projectOwnerName
+            projectKey: new ProjectPrimaryKeyHumanReadable(projectOwnerName)
           })
         } else {
           this.logger.warn(`Project with owner name:"${projectOwnerName}" and no number did not contain any valid columns. Skipping project.`)
@@ -390,8 +396,7 @@ export default class ConfigValidator {
         if (validatedColumns.length !== 0) {
           validatedProjects.push({
             columns: validatedColumns,
-            number: projectNumber,
-            ownerLogin: projectOwnerName
+            projectKey: new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
           })
         } else {
           this.logger.warn(`Project with owner name:"${projectOwnerName}" and number:"${projectNumber}" did not contain any valid columns. Skipping project.`)

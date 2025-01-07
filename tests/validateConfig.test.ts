@@ -420,7 +420,7 @@ describe('validateConfig()', () => {
 
         test('only one project with the name remains in the validated config', () => {
           expect(validatedConfig.projects!.filter((project) => {
-            return project.ownerLogin === 'duplicate project name'
+            return project.projectKey.getName() === 'duplicate project name'
           }).length).toBe(1)
         })
 
@@ -481,7 +481,7 @@ describe('validateConfig()', () => {
 
         test('only one project with the name and number remains in the validated config', () => {
           expect(validatedConfig.projects!.filter((project) => {
-            return project.ownerLogin === 'duplicate project name' && project.number === 1
+            return project.projectKey.getName() === 'duplicate project name' && project.projectKey.getNumber() === 1
           }).length).toBe(1)
         })
 
@@ -517,11 +517,11 @@ describe('validateConfig()', () => {
           const projects = validatedConfig.projects!
 
           expect(projects.filter((project) => {
-            return project.ownerLogin === 'duplicate project name' && project.number === 1
+            return project.projectKey.getName() === 'duplicate project name' && project.projectKey.getNumber() === 1
           }).length).toBe(1)
 
           expect(projects.filter((project) => {
-            return project.ownerLogin === 'duplicate project name' && project.number === 2
+            return project.projectKey.getName() === 'duplicate project name' && project.projectKey.getNumber() === 2
           }).length).toBe(1)
         })
       })
@@ -539,11 +539,11 @@ describe('validateConfig()', () => {
           const projects = validatedConfig.projects!
 
           expect(projects.filter((project) => {
-            return project.ownerLogin === 'project name' && project.number === 1
+            return project.projectKey.getName() === 'project name' && project.projectKey.getNumber() === 1
           }).length).toBe(1)
 
           expect(projects.filter((project) => {
-            return project.ownerLogin === 'different project name' && project.number === 1
+            return project.projectKey.getName() === 'different project name' && project.projectKey.getNumber() === 1
           }).length).toBe(1)
         })
       })
@@ -1026,13 +1026,13 @@ describe('validateConfig()', () => {
 
         it('will not contain the invalid project', () => {
           expect(validatedConfig.projects!.find((project) => {
-            return project.ownerLogin === 'invalid project'
+            return project.projectKey.getName() === 'invalid project'
           })).toBe(undefined)
         })
 
         it('will contain the valid project', () => {
           expect(validatedConfig.projects!.find((project) => {
-            return project.ownerLogin === 'valid project'
+            return project.projectKey.getName() === 'valid project'
           })).not.toBe(undefined)
         })
 
@@ -1281,7 +1281,7 @@ describe('validateConfig()', () => {
             expect(projects!.length).toBeGreaterThan(0)
 
             for(let project of projects!) {
-              expect(hasTrailingWhitespace(project.ownerLogin)).toBe(false)
+              expect(hasTrailingWhitespace(project.projectKey.getName())).toBe(false)
             }
           })
         })
@@ -1394,8 +1394,8 @@ describe('validateConfig()', () => {
 
             const project = projects[0]
 
-            expect(project.number).toBe(2)
-            expect(project.ownerLogin).toBe('githubOrganizationName')
+            expect(project.projectKey.getNumber()).toBe(2)
+            expect(project.projectKey.getName()).toBe('githubOrganizationName')
           })
 
           describe('columns', () => {

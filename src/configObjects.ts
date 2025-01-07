@@ -1,3 +1,4 @@
+import { ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import * as TypeChecker from './typeChecker'
 
 export interface Column {
@@ -28,8 +29,7 @@ export interface LabelingRule {
 
 export interface Project {
   columns: Column[]
-  number?: number
-  ownerLogin: string
+  projectKey: ProjectPrimaryKeyHumanReadable
 }
 
 export function isShallowColumn (value: any): value is Column {
