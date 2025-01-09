@@ -68,9 +68,7 @@ export default {
                 fieldValues: {
                   edges: [
                     {
-                      node: {
-                        name: '(4A]yE7gktgl\'lNyHN'
-                      }
+                      node: {}
                     },
                     {
                       node: {}

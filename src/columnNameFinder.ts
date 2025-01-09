@@ -50,16 +50,12 @@ export default class ColumnNameFinder {
       return this.#findCachedResult(projectKey)
     }
 
-    do {
-      const searchResult = this.#searchLocallyForColumnName(projectKey)
+    this.#searchLocallyForColumnName(projectKey)
 
-      if (searchResult !== undefined) {
-        this.#remoteSearchSpaceParameterQueue = []
-        return [ searchResult ]
-      }
-
+    while (this.#hasAdditionalRemoteSearchSpace()) {
       await this.#tryAddRemoteSearchSpace()
-    } while (this.#hasAdditionalRemoteSearchSpace())
+      this.#searchLocallyForColumnName(projectKey)
+    }
 
     return this.#findCachedResult(projectKey)
   }
@@ -135,7 +131,7 @@ export default class ColumnNameFinder {
     }
   }
 
-  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): string | undefined {
+  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): void {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
 
@@ -160,10 +156,6 @@ export default class ColumnNameFinder {
         projectItemPage.delete(i)
 
         this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResult)
-
-        if (projectKey !== undefined && projectItem.getProjectHumanReadablePrimaryKey().equals(projectKey)) {
-          return columnNameSearchResult
-        }
       }
 
       i--
