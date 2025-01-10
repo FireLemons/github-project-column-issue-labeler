@@ -252,7 +252,6 @@ export class Label {
 }
 
 export class ProjectItem extends RecordWithGraphQLID {
-  columnName?: string
   #fieldValues: GraphQLPage<FieldValue>
   projectPrimaryKeyHumanReadable: ProjectPrimaryKeyHumanReadable
 
@@ -273,16 +272,12 @@ export class ProjectItem extends RecordWithGraphQLID {
   }
 
   findColumnName () {
-    if (this.columnName !== undefined) {
-      return this.columnName
-    }
-
     const columnNameList = this.#fieldValues.getNodeArray()
 
-    if (columnNameList.length !== 0) {
-      this.columnName = columnNameList[0].getName()
+    // Assuming a project item can only contain one column name
 
-      return this.columnName
+    if (columnNameList.length !== 0) {
+      return columnNameList[0].getName()
     }
 
     return null
