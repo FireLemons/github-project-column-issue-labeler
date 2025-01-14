@@ -1287,6 +1287,21 @@ describe('validateConfig()', () => {
               }
             })
           })
+
+          describe('the labeling rules of a column', () => {
+            describe('the action of the labeling rule', () => {
+              it('is not affected by the trailing whitespace', () => {
+                expect(columns.length).toBeGreaterThan(0)
+
+                for(let column of columns!) {
+                  const { labelingRules } = column
+
+                  expect(labelingRules.has(LabelingAction.ADD)).toBe(true)
+                  expect(labelingRules.has(LabelingAction.REMOVE)).toBe(true)
+                }
+              })
+            })
+          })
         })
       })
     })
