@@ -3,7 +3,13 @@ import * as TypeChecker from './typeChecker'
 
 export interface Column {
   name: string
-  labelingRules: LabelingRule[]
+  labelingRules: Map<LabelingAction, string[]>
+}
+
+export enum LabelingAction {
+  ADD = 'ADD',
+  REMOVE = 'REMOVE',
+  SET = 'SET'
 }
 
 export interface Config {
@@ -15,14 +21,9 @@ export interface Config {
   columns?: Column[]
   projects?: Project[]
 }
+  
 
-export enum LabelingAction {
-  ADD = 'ADD',
-  REMOVE = 'REMOVE',
-  SET = 'SET'
-}
-
-export interface LabelingRule {
+export interface LabelingRulePOJO {
   action: LabelingAction
   labels: string[]
 }
@@ -32,7 +33,7 @@ export interface Project {
   projectKey: ProjectPrimaryKeyHumanReadable
 }
 
-export function isShallowColumn (value: any): value is Column {
+export function isShallowColumnPOJO (value: any): value is Column {
   if (!(TypeChecker.isObject(value))) {
     return false
   }
@@ -47,7 +48,7 @@ export function isShallowColumn (value: any): value is Column {
   return true
 }
 
-export function isShallowLabelingRule (value: any): value is LabelingRule {
+export function isShallowLabelingRule (value: any): value is LabelingRulePOJO {
   if (!(TypeChecker.isObject(value))) {
     return false
   }
@@ -66,3 +67,25 @@ export function isShallowLabelingRule (value: any): value is LabelingRule {
 
   return true
 }
+
+/*export class Config {
+  #accessToken: string
+  repo: {
+    name: string
+    ownerName: string
+  }
+  columns?: Column[]
+  projects?: Project[]
+
+  constructor (configPOJO: string) {
+    
+  }
+
+  isProjectMode (): boolean {
+    throw new Error('unimplimented')
+  }
+
+  toString (prettyPrint: boolean): string {
+    throw new Error('unimplimented')
+  }
+}*/

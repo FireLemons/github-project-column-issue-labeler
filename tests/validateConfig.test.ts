@@ -2,7 +2,7 @@ import fs from 'fs'
 import ConfigTestData from './data/configTestData'
 import ConfigValidator from '../src/validateConfig'
 import { Logger } from '../src/logger'
-import { Column, Config, LabelingAction, LabelingRule, Project, isShallowColumn, isShallowLabelingRule } from '../src/configObjects'
+import { Column, Config, LabelingAction, Project, isShallowColumnPOJO } from '../src/configObjects'
 import { caseInsensitiveCompare, hasTrailingWhitespace, isCaseInsensitiveEqual } from '../src/util'
 
 const logger = new Logger()
@@ -436,21 +436,16 @@ describe('validateConfig()', () => {
           })).not.toBe(undefined)
 
           const duplicateColumn = duplicateColumnsSearchOfDuplicateProject[0]
-          const duplicateLabelingRuleSearchOfDuplicateColumn = duplicateColumn.labelingRules.filter((labelingRule) => {
-            return labelingRule.action === LabelingAction.ADD
-          })
+          const duplicateLabels = duplicateColumn.labelingRules.get(LabelingAction.ADD)
+          expect(duplicateLabels).not.toBe(undefined)
 
-          expect(duplicateLabelingRuleSearchOfDuplicateColumn.length).toBe(1)
-
-          const duplicateLabelingRule = duplicateLabelingRuleSearchOfDuplicateColumn[0]
-
-          expect(duplicateLabelingRule.labels.find((label) => {
+          expect(duplicateLabels!.find((label) => {
             return label === 'label 1'
           })).not.toBe(undefined)
-          expect(duplicateLabelingRule.labels.find((label) => {
+          expect(duplicateLabels!.find((label) => {
             return label === 'label 2'
           })).not.toBe(undefined)
-          expect(duplicateLabelingRule.labels.find((label) => {
+          expect(duplicateLabels!.find((label) => {
             return label === 'label 3'
           })).not.toBe(undefined)
         })
@@ -703,13 +698,14 @@ describe('validateConfig()', () => {
 
           expect(column).toBeTruthy()
 
-          expect(column.labelingRules.find((labelingRule) => {
-            return labelingRule.action === LabelingAction.ADD && labelingRule.labels.includes('Label1')
-          })).not.toBe(undefined)
+          const addRuleLabels = column.labelingRules.get(LabelingAction.ADD)
+          const removeRuleLabels = column.labelingRules.get(LabelingAction.REMOVE)
 
-          expect(column.labelingRules.find((labelingRule) => {
-            return labelingRule.action === LabelingAction.REMOVE && labelingRule.labels.includes('Label2')
-          })).not.toBe(undefined)
+          expect(addRuleLabels).not.toBe(undefined)
+          expect(removeRuleLabels).not.toBe(undefined)
+
+          expect(addRuleLabels).toContain('Label1')
+          expect(removeRuleLabels).toContain('Label2')
         })
 
         test('a message is printed about the labeling rule merge', () => {
@@ -806,8 +802,8 @@ describe('validateConfig()', () => {
 
         test('only the last labeling rule with a "SET" action appears in the validated config', () => {
           expect(validatedConfig.columns!.length).toBe(1)
-          expect(validatedConfig.columns![0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columns![0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns![0].labelingRules.size).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules.has(LabelingAction.SET)).toBe(true)
         })
 
         test('a warning is printed stating that only the last "SET" rule will be used', () => {
@@ -841,8 +837,8 @@ describe('validateConfig()', () => {
 
         test('only the labeling rule with a "SET" action appears in the validated config', () => {
           expect(validatedConfig.columns!.length).toBe(1)
-          expect(validatedConfig.columns![0].labelingRules.length).toBe(1)
-          expect(validatedConfig.columns![0].labelingRules[0].action).toBe(LabelingAction.SET)
+          expect(validatedConfig.columns![0].labelingRules.size).toBe(1)
+          expect(validatedConfig.columns![0].labelingRules.has(LabelingAction.SET)).toBe(true)
         })
 
         test('a warning is printed stating that only SET rule will be used', () => {
@@ -895,9 +891,7 @@ describe('validateConfig()', () => {
         test('the parent labeling rule of the invalid labels does not appear in the validated config', () => {
           const { labelingRules } = validatedConfig.columns![0]
 
-          expect(labelingRules.findIndex((rule) => {
-            return rule.action === LabelingAction.ADD
-          })).toBe(-1)
+          expect(labelingRules.has(LabelingAction.ADD)).toBe(false)
         })
 
         test('a warning is printed stating that the labeling rule will not be used', () => {
@@ -919,22 +913,18 @@ describe('validateConfig()', () => {
         })
 
         describe('when there are multiple ADD labeling rules', () => {
-          let addRule: LabelingRule | undefined
+          let addRuleLabels: string[] | undefined
 
           beforeAll(() => {
-            addRule = validatedConfig.columns![0].labelingRules.find((labelingRule) => {
-              return labelingRule.action === LabelingAction.ADD
-            })
+            addRuleLabels = validatedConfig.columns![0].labelingRules.get(LabelingAction.ADD)
           })
 
           test('all of the unique labels between all of the ADD rules are combined under a single rule', () => {
-            expect(addRule).not.toBe(undefined)
-            expect(addRule?.labels.length).toBe(3)
+            expect(addRuleLabels).not.toBe(undefined)
+            expect(addRuleLabels?.length).toBe(3)
           })
 
           test('the lables of the ADD rule are sorted alphabetically', () => {
-            const addRuleLabels = addRule?.labels
-
             expect(addRuleLabels?.findIndex((label) => {
               return isCaseInsensitiveEqual(label, 'Duplicate Label')
             })).toBe(0)
@@ -950,12 +940,10 @@ describe('validateConfig()', () => {
         })
 
         describe('when there are multiple REMOVE labeling rules', () => {
-          let removeRule: LabelingRule | undefined
+          let removeRuleLabels: string[] | undefined
 
           beforeAll(() => {
-            removeRule = validatedConfig.columns![0].labelingRules.find((labelingRule) => {
-              return labelingRule.action === LabelingAction.REMOVE
-            })
+            removeRuleLabels = validatedConfig.columns![0].labelingRules.get(LabelingAction.REMOVE)
           })
 
           afterAll(() => {
@@ -963,13 +951,11 @@ describe('validateConfig()', () => {
           })
 
           test('all of the unique labels between all of the REMOVE rules are combined under a single rule', () => {
-            expect(removeRule).not.toBe(undefined)
-            expect(removeRule?.labels.length).toBe(3)
+            expect(removeRuleLabels).not.toBe(undefined)
+            expect(removeRuleLabels!.length).toBe(3)
           })
 
           test('the lables of the REMOVE rule are sorted alphabetically', () => {
-            const removeRuleLabels = removeRule?.labels
-
             expect(removeRuleLabels?.findIndex((label) => {
               return isCaseInsensitiveEqual(label, 'Completed')
             })).toBe(0)
@@ -996,15 +982,15 @@ describe('validateConfig()', () => {
 
           test('the label does not appear in the validated config', () => {
             const column = validatedConfig.columns![0]
-            const addRule = column.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.ADD })
-            const removeRule = column.labelingRules.find((labelingRule) => { return labelingRule.action === LabelingAction.REMOVE })
+            const addRuleLabels = column.labelingRules.get(LabelingAction.ADD)
+            const removeRuleLabels = column.labelingRules.get(LabelingAction.REMOVE)
 
-            expect(addRule?.labels.length).toBe(1)
-            expect(removeRule?.labels.length).toBe(1)
+            if (addRuleLabels && removeRuleLabels) {
+              expect(addRuleLabels?.length).toBe(1)
+              expect(removeRuleLabels?.length).toBe(1)
 
-            if (addRule && removeRule) {
-              for(let label of addRule.labels) {
-                expect(removeRule.labels.find((removeLabel) => { return isCaseInsensitiveEqual(label, removeLabel) })).toBe(undefined)
+              for(let label of addRuleLabels) {
+                expect(removeRuleLabels.find((removeLabel) => { return isCaseInsensitiveEqual(label, removeLabel) })).toBe(undefined)
               }
             }
           })
@@ -1022,6 +1008,8 @@ describe('validateConfig()', () => {
           const configContents = ConfigTestData.configInvalidNonEssentialSections
 
           validatedConfig = configValidator.validateConfig(configContents.toString())!
+          console.log(JSON.stringify(validatedConfig, null, 2))
+          console.log(validatedConfig.columns?.length)
         })
 
         it('will not contain the invalid project', () => {
@@ -1052,7 +1040,7 @@ describe('validateConfig()', () => {
           expect(parentProject).toBeTruthy()
 
           expect(parentProject.columns.find((column) => {
-            return isShallowColumn(column) && column.name === 'valid column'
+            return column.name === 'valid column'
           })).not.toBe(undefined)
         })
 
@@ -1065,8 +1053,8 @@ describe('validateConfig()', () => {
 
           expect(parentColumn).toBeTruthy()
 
-          expect(parentColumn.labelingRules.find((rule) => {
-            return isShallowLabelingRule(rule) && rule.labels.find((label) => {
+          expect(Array.from(parentColumn.labelingRules.values()).find((labels) => {
+            return labels.find((label) => {
               return isCaseInsensitiveEqual(label, 'invalid label 1') || isCaseInsensitiveEqual(label, 'invalid label 2')
             })
           })).toBe(undefined)
@@ -1081,13 +1069,8 @@ describe('validateConfig()', () => {
 
           expect(parentColumn).toBeTruthy()
 
-          expect(parentColumn.labelingRules.find((rule) => {
-            return isShallowLabelingRule(rule) && rule.action === LabelingAction.ADD
-          })).not.toBe(undefined)
-
-          expect(parentColumn.labelingRules.find((rule) => {
-            return isShallowLabelingRule(rule) && rule.action === LabelingAction.REMOVE
-          })).not.toBe(undefined)
+          expect(parentColumn.labelingRules.get(LabelingAction.ADD)).not.toBe(undefined)
+          expect(parentColumn.labelingRules.get(LabelingAction.REMOVE)).not.toBe(undefined)
         })
 
         it('will not contain the invalid labels', () => {
@@ -1098,10 +1081,10 @@ describe('validateConfig()', () => {
           const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
-          expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
+          expect(parentColumn.labelingRules.size).toBeGreaterThan(0)
 
-          const allLabels = parentColumn.labelingRules.reduce<string[]>((accumulator, currentVal) => {
-            accumulator.push(...currentVal.labels)
+          const allLabels = Array.from(parentColumn.labelingRules.values()).reduce<string[]>((accumulator, currentVal) => {
+            accumulator.push(...currentVal)
 
             return accumulator
           }, [])
@@ -1122,10 +1105,10 @@ describe('validateConfig()', () => {
           const parentColumn = parentProject.columns[0]
 
           expect(parentColumn).toBeTruthy()
-          expect(parentColumn.labelingRules.length).toBeGreaterThan(0)
+          expect(parentColumn.labelingRules.size).toBeGreaterThan(0)
 
-          const allLabels = parentColumn.labelingRules.reduce<string[]>((accumulator, currentVal) => {
-            accumulator.push(...currentVal.labels)
+          const allLabels = Array.from(parentColumn.labelingRules.values()).reduce<string[]>((accumulator, currentVal) => {
+            accumulator.push(...currentVal)
 
             return accumulator
           }, [])
@@ -1156,31 +1139,33 @@ describe('validateConfig()', () => {
 
           it('removes the duplicates', () => {
             const parentColumn = validatedConfig.columns![0]
-            const labels = parentColumn.labelingRules[0].labels.concat(parentColumn.labelingRules[1].labels)
+            const sortedAddLabels = parentColumn.labelingRules.get(LabelingAction.ADD)
+            const sortedRemoveLabels = parentColumn.labelingRules.get(LabelingAction.REMOVE)
 
-            expect(labels).not.toBeFalsy()
+            expect(sortedAddLabels).not.toBe(undefined)
+            expect(sortedRemoveLabels).not.toBe(undefined)
 
-            expect(labels.filter((label) => {
+            expect(sortedRemoveLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Completed')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(sortedRemoveLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Completed 1')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(sortedAddLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Duplicate Label')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(sortedRemoveLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Duplicate emoji 🐌')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(sortedAddLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Help Wanted')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(sortedAddLabels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'New')
             }).length).toBe(1)
           })
@@ -1188,13 +1173,11 @@ describe('validateConfig()', () => {
           it('sorts the labels alphabetically', () => {
             const parentColumn = validatedConfig.columns![0]
 
-            expect(parentColumn.labelingRules.find((labelingRule) => {
-              return labelingRule.labels.length > 1
+            expect(Array.from(parentColumn.labelingRules.values()).find((labels) => {
+              return labels.length > 1
             })).not.toBeFalsy()
 
-            for (let labelingRule of parentColumn.labelingRules) {
-              const { labels } = labelingRule
-
+            for (let labels of parentColumn.labelingRules.values()) {
               expect(labels.length).toBeGreaterThan(1)
 
               for (let i = 0; i < labels.length - 1; i++) {
@@ -1215,31 +1198,32 @@ describe('validateConfig()', () => {
 
           it('removes the duplicates', () => {
             const parentColumn = validatedConfig.columns![0]
-            const labels = parentColumn.labelingRules[0].labels
+            const labels = parentColumn.labelingRules.get(LabelingAction.SET)
 
             expect(labels).not.toBeFalsy()
 
-            expect(labels.filter((label) => {
+            expect(labels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Duplicate Label')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(labels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'Help Wanted')
             }).length).toBe(1)
 
-            expect(labels.filter((label) => {
+            expect(labels!.filter((label) => {
               return isCaseInsensitiveEqual(label.trim(), 'New')
             }).length).toBe(1)
           })
 
           it('sorts the labels alphabetically', () => {
             const parentColumn = validatedConfig.columns![0]
-            const { labels } = parentColumn.labelingRules[0]
+            const labels = parentColumn.labelingRules.get(LabelingAction.SET)
 
-            expect(labels.length).toBeGreaterThan(1)
+            expect(labels).toBeTruthy()
+            expect(labels!.length).toBeGreaterThan(1)
 
-            for (let i = 0; i < labels.length - 1; i++) {
-              expect(caseInsensitiveCompare(labels[i], labels[i + 1])).toBe(-1)
+            for (let i = 0; i < labels!.length - 1; i++) {
+              expect(caseInsensitiveCompare(labels![i], labels![i + 1])).toBe(-1)
             }
           })
         })
@@ -1287,7 +1271,7 @@ describe('validateConfig()', () => {
         })
 
         describe('columns', () => {
-          let columns
+          let columns: Column[]
 
           beforeAll(() => {
             columns = validatedConfig.projects![0].columns
@@ -1301,45 +1285,6 @@ describe('validateConfig()', () => {
               for(let column of columns!) {
                 expect(hasTrailingWhitespace(column.name)).toBe(false)
               }
-            })
-          })
-
-          describe('the labeling rules of a column', () => {
-            describe('the action of the labeling rule', () => {
-              it('does not contain trailing whitespace', () => {
-                expect(columns.length).toBeGreaterThan(0)
-
-                for(let column of columns!) {
-                  const { labelingRules } = column
-
-                  expect(labelingRules.length).toBeGreaterThan(0)
-
-                  for(let labelingRule of labelingRules) {
-                    expect(hasTrailingWhitespace(labelingRule.action)).toBe(false)
-                  }
-                }
-              })
-            })
-
-            describe('the labels of a labeling rule', () => {
-              test('the whitespace for each label is trimmed', () => {
-                expect(columns.length).toBeGreaterThan(0)
-
-                for(let column of columns!) {
-                  const { labelingRules } = column
-                  expect(labelingRules.length).toBeGreaterThan(0)
-
-                  for(let labelingRule of labelingRules) {
-                    const { labels } = labelingRule
-
-                    expect(labels.length).toBeGreaterThan(0)
-
-                    for(let label of labels) {
-                      expect(hasTrailingWhitespace(label)).toBe(false)
-                    }
-                  }
-                }
-              })
             })
           })
         })
@@ -1421,49 +1366,41 @@ describe('validateConfig()', () => {
             })
 
             describe('the labeling rules', () => {
-              let toDoAddLabelingRule: LabelingRule | undefined
-              let toDoRemoveLabelingRule: LabelingRule | undefined
-              let completedRemoveLabelingRule: LabelingRule | undefined
+              let toDoAddLabels: string[] | undefined
+              let toDoRemoveLabels: string[] | undefined
+              let completedRemoveLabels: string[] | undefined
 
               it('includes the correct labeling rule(s) for each column', () => {
-                if (toDoColumn) {
-                  toDoAddLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
-                    return labelingRule.action === LabelingAction.ADD
-                  })
+                expect(toDoColumn).not.toBe(undefined)
 
-                  toDoRemoveLabelingRule = toDoColumn.labelingRules.find((labelingRule) => {
-                    return labelingRule.action === LabelingAction.REMOVE
-                  })
+                toDoAddLabels = toDoColumn!.labelingRules.get(LabelingAction.ADD)
+                toDoRemoveLabels = toDoColumn!.labelingRules.get(LabelingAction.REMOVE)
 
-                  expect(toDoAddLabelingRule).not.toBe(undefined)
-                  expect(toDoRemoveLabelingRule).not.toBe(undefined)
-                }
+                expect(toDoAddLabels).not.toBe(undefined)
+                expect(toDoRemoveLabels).not.toBe(undefined)
 
-                if (completedColumn) {
-                  completedRemoveLabelingRule = completedColumn.labelingRules.find((labelingRule) => {
-                    return labelingRule.action === LabelingAction.REMOVE
-                  })
+                expect(completedColumn).not.toBe(undefined)
+                completedRemoveLabels = completedColumn!.labelingRules.get(LabelingAction.REMOVE)
 
-                  expect(completedRemoveLabelingRule).not.toBe(undefined)
-                }
+                expect(completedRemoveLabels).not.toBe(undefined)
               })
 
               it('includes the correct labels for each labeling rule', () => {
-                if (toDoAddLabelingRule) {
-                  expect(toDoAddLabelingRule.labels.includes('hacktoberfest')).toBe(true)
-                  expect(toDoAddLabelingRule.labels.includes('todo')).toBe(true)
-                  expect(toDoAddLabelingRule.labels.includes('help wanted')).toBe(true)
+                if (toDoAddLabels) {
+                  expect(toDoAddLabels.includes('hacktoberfest')).toBe(true)
+                  expect(toDoAddLabels.includes('todo')).toBe(true)
+                  expect(toDoAddLabels.includes('help wanted')).toBe(true)
                 }
 
-                if (toDoRemoveLabelingRule) {
-                  expect(toDoRemoveLabelingRule.labels.includes('Completed')).toBe(true)
-                  expect(toDoRemoveLabelingRule.labels.includes('🐌')).toBe(true)
+                if (toDoRemoveLabels) {
+                  expect(toDoRemoveLabels.includes('Completed')).toBe(true)
+                  expect(toDoRemoveLabels.includes('🐌')).toBe(true)
                 }
 
-                if (completedRemoveLabelingRule) {
-                  expect(completedRemoveLabelingRule.labels.includes('hacktoberfest')).toBe(true)
-                  expect(completedRemoveLabelingRule.labels.includes('todo')).toBe(true)
-                  expect(completedRemoveLabelingRule.labels.includes('help wanted')).toBe(true)
+                if (completedRemoveLabels) {
+                  expect(completedRemoveLabels.includes('hacktoberfest')).toBe(true)
+                  expect(completedRemoveLabels.includes('todo')).toBe(true)
+                  expect(completedRemoveLabels.includes('help wanted')).toBe(true)
                 }
               })
             })

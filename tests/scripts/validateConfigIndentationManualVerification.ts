@@ -1,7 +1,7 @@
 import { Logger } from '../../src/logger'
 import ConfigValidator from '../../src/validateConfig'
 
-const ConfigTestData: { [key: string]: any } = require('./configTestData').default
+const ConfigTestData: { [key: string]: any } = require('../data/configTestData').default
 const logger = new Logger()
 
 function main() {

@@ -1,5 +1,5 @@
 import { Logger } from './logger'
-import { Column, Config, LabelingAction, LabelingRule, Project } from './configObjects'
+import { Column, Config, LabelingAction, LabelingRulePOJO, Project } from './configObjects'
 import * as typeChecker from './typeChecker'
 import { caseInsensitiveCompare, caseInsensitiveAlphabetization, removeCaseInsensitiveDuplicatesFromSortedArray } from './util'
 import { ProjectPrimaryKeyHumanReadable } from './githubObjects'
@@ -90,7 +90,7 @@ export default class ConfigValidator {
     }
   }
 
-  #determineLabelingRules (rules: LabelingRule[]): Map<LabelingAction, string[]> {
+  #determineLabelingRules (rules: LabelingRulePOJO[]): Map<LabelingAction, string[]> {
     const lastSetRuleIndex = rules.findLastIndex((rule) => rule.action === LabelingAction.SET)
     let determinedLabelingRules: Map<LabelingAction, string[]>
 
@@ -101,7 +101,7 @@ export default class ConfigValidator {
 
       determinedLabelingRules = new Map(
         [
-          [lastSetRule.action, lastSetRule.labels]
+          [LabelingAction.SET, lastSetRule.labels]
         ]
       )
     } else {
@@ -194,7 +194,7 @@ export default class ConfigValidator {
     }
   }
 
-  #groupLabelsByAction (rules: LabelingRule[]): Map<LabelingAction, string[]> {
+  #groupLabelsByAction (rules: LabelingRulePOJO[]): Map<LabelingAction, string[]> {
     const consolidatedLabels: Map<LabelingAction, string[]> = new Map()
 
     for (const rule of rules) {
@@ -215,19 +215,6 @@ export default class ConfigValidator {
 
   isLabelingAction (str: string): str is LabelingAction {
     return Object.keys(LabelingAction).includes(str)
-  }
-
-  labelingRuleMapToArray (labelingRuleMap: Map<LabelingAction, string[]>): LabelingRule[] {
-    const labelingRules = []
-
-    for (const [labelingAction, labels] of labelingRuleMap) {
-      labelingRules.push({
-        action: labelingAction,
-        labels: labels
-      })
-    }
-
-    return labelingRules
   }
 
   #removeDuplicateLabelsFromLabelingRules (labelingRuleMap: Map<LabelingAction, string[]>) {
@@ -260,7 +247,7 @@ export default class ConfigValidator {
     }
   }
 
-  #shallowValidateColumn (object: any): Column {
+  #shallowValidateColumn (object: any): { name: string, labelingRules: any[] } {
     if (!typeChecker.isObject(object)) {
       throw new TypeError('Column must be an object')
     }
@@ -337,13 +324,15 @@ export default class ConfigValidator {
 
       this.#removeDuplicateLabelsFromLabelingRules(determinedLabelingRules)
 
+      console.log(determinedLabelingRules)
+
       if (this.hasAddAndRemoveRule(determinedLabelingRules)) {
         this.#removeMatchingCaseInsensitiveLabelsBetweenArrays(determinedLabelingRules.get(LabelingAction.ADD)!, determinedLabelingRules.get(LabelingAction.REMOVE)!)
       }
 
-      const validatedLabelingRules = this.labelingRuleMapToArray(determinedLabelingRules)
+      const validatedLabelingRules = determinedLabelingRules
 
-      if (validatedLabelingRules.length !== 0) {
+      if (validatedLabelingRules.size !== 0) {
         validatedColumns.push({
           labelingRules: validatedLabelingRules,
           name: columnName
@@ -415,7 +404,7 @@ export default class ConfigValidator {
     return this.#validateChildrenOfColumns(this.filterShallowInvalidColumnsAndGroupDuplicates(unvalidatedColumns))
   }
 
-  #validateLabelingRule (object: any): LabelingRule {
+  #validateLabelingRule (object: any): LabelingRulePOJO {
     if (!typeChecker.isObject(object)) {
       throw new TypeError('Labeling rule must be an object')
     }
@@ -436,8 +425,8 @@ export default class ConfigValidator {
     }
   }
 
-  #validateLabelingRules (arr: any[]): LabelingRule[] {
-    const validatedLabelingRules: LabelingRule[] = []
+  #validateLabelingRules (arr: any[]): LabelingRulePOJO[] {
+    const validatedLabelingRules: LabelingRulePOJO[] = []
 
     arr.forEach((labelingRule: any, index: number) => {
       this.logger.info(`Checking labeling rule at index ${index}`)
