@@ -4,14 +4,14 @@
   "description": "Manages labels for issues based on what column they're in in a kanban style github version 2 project",
   "main": "labeler.js",
   "scripts": {
-    "build": "npx tsc",
-    "build:dev": "npx tsc --watch",
-    "lint": "npx ts-standard",
-    "start": "npx ts-node ./index.ts",
-    "test": "npx jest --silent",
+    "build": "npm exec tsc",
+    "build:dev": "npm exec tsc --watch",
+    "lint": "npm exec ts-standard",
+    "start": "npm exec ts-node ./index.ts",
+    "test": "npm exec jest --silent",
     "test:validation-indentation": "npx ts-node tests/scripts/validateConfigIndentationManualVerification.ts",
-    "test:verbose": "npx jest",
-    "sample-requests": "npx ts-node tests/scripts/fetchSampleRequestResponses.ts"
+    "test:verbose": "npm exec jest",
+    "sample-requests": "npm exec ts-node tests/scripts/fetchSampleRequestResponses.ts"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
     "@types/node": "^20.10.4",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
     "ts-standard": "^12.0.2",
     "typescript": "^5.3.3"
   },
