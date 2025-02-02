@@ -3,6 +3,7 @@ import {
   caseInsensitiveCompare,
   hasTrailingWhitespace,
   isCaseInsensitiveEqual,
+  nestedMapsToObject,
   removeCaseInsensitiveDuplicatesFromSortedArray
 } from '../src/util'
 
@@ -60,6 +61,70 @@ describe('isCaseInsensitiveEqual()', () => {
 
   it('returns false when both arguments do not contain the same letters in the same order', () => {
     expect(isCaseInsensitiveEqual('AzZ', ' azz')).toBe(false)
+  })
+})
+
+describe('nestedMapsToObject()', () => {
+  it('returns an empty object when passed an empty map', () => {
+    expect(nestedMapsToObject(new Map())).toEqual({})
+  })
+
+  it('can convert deeply nested maps to objects', () => {
+    const nestedMaps = new Map([
+      ['depth1', new Map([
+        ['depth2', new Map([
+          ['depth3', new Map([
+            ['depth4', true]
+          ])]
+        ])]
+      ])],
+    ])
+
+    const nestedMapsObjectAnalog = {
+      depth1: {
+        depth2: {
+          depth3: {
+            depth4: true
+          }
+        }
+      }
+    }
+
+    expect(nestedMapsToObject(nestedMaps)).toEqual(nestedMapsObjectAnalog)
+  })
+
+  it('can convert multiple submaps of a map to objects', () => {
+    const highBranchingMaps = new Map([
+      ['branchA', new Map([
+        ['a', 'a']
+      ])],
+      ['branchB', new Map([
+        ['b', 'b']
+      ])],
+      ['branchC', new Map([
+        ['c', 'c']
+      ])],
+      ['branchD', new Map([
+        ['d', 'd']
+      ])]
+    ])
+
+    const highBranchingMapsObjectAnalog = {
+      branchA: {
+        a: 'a'
+      },
+      branchB: {
+        b: 'b'
+      },
+      branchC: {
+        c: 'c'
+      },
+      branchD: {
+        d: 'd'
+      }
+    }
+
+    expect(nestedMapsToObject(highBranchingMaps)).toEqual(highBranchingMapsObjectAnalog)
   })
 })
 
