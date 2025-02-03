@@ -598,14 +598,34 @@ describe('The ProjectItem class', () => {
 })
 
 describe('The ProjectPrimaryKeyHumanReadable class', () => {
-  describe('asStringKey()', () => {
-    it('returns the project owner name concatenated with the project number separated by a space', () => {
-      const projectOwnerName = 'U]WA60G8Go[E@#\'flR'
-      const projectNumber = 50943
+  describe('constructor', () => {
+    it('throws an error when passed a non integer for the number', () => {
+      expect(() => {
+        new ProjectPrimaryKeyHumanReadable('non integer', 1.5)
+      }).toThrow(TypeError)
+    })
 
+    it('throws an error when passed values equal to or below zero', () => {
+      expect(() => {
+        new ProjectPrimaryKeyHumanReadable('invalid range', 0)
+      }).toThrow(TypeError)
+
+      expect(() => {
+        new ProjectPrimaryKeyHumanReadable('invalid range', -1)
+      }).toThrow(TypeError)
+    })
+  })
+
+  describe('asPOJO()', () => {
+    it('returns a plain old javascript object(POJO) representation of the key with the correct owner name and number', () => {
+      const projectNumber = 90843250
+      const projectOwnerName = 'xWnyJp-{SV4(~Oms-N'
       const projectKey = new ProjectPrimaryKeyHumanReadable(projectOwnerName, projectNumber)
 
-      expect(projectKey.asStringKey()).toBe(`${projectOwnerName} ${projectNumber}`)
+      expect(projectKey.asPOJO()).toEqual({
+        ownerName: projectOwnerName,
+        number: projectNumber
+      })
     })
   })
 
@@ -654,6 +674,20 @@ describe('The ProjectPrimaryKeyHumanReadable class', () => {
       const projectKey = new ProjectPrimaryKeyHumanReadable('', projectNumber)
 
       expect(projectKey.getNumber()).toBe(projectNumber)
+    })
+  })
+
+  describe('hasNumber()', () => {
+    it('returns true if the projectKey includes a number', () => {
+      const projectKey = new ProjectPrimaryKeyHumanReadable('name only')
+
+      expect(projectKey.hasNumber()).toBe(false)
+    })
+
+    it('returns false if the projectKey does not include a number', () => {
+      const projectKey = new ProjectPrimaryKeyHumanReadable('name and number', 1)
+
+      expect(projectKey.hasNumber()).toBe(true)
     })
   })
 })

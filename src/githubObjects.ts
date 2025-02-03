@@ -297,18 +297,29 @@ export class ProjectPrimaryKeyHumanReadable {
   #number: number
   #stringKey: string
 
-  constructor (ownerName: string, number: number = 0) {
+  constructor (ownerName: string, number?: number) {
+    if (number !== undefined) {
+      if (!(TypeChecker.isPositiveRealInteger(number))) {
+        throw new TypeError('param number must be an integer greater than 0')
+      }
+    } else {
+      number = 0
+    }
+
     this.#ownerName = ownerName
     this.#number = number
     this.#stringKey = `${ownerName} ${number}`
   }
 
-  asStringKey () {
-    return this.#stringKey
+  asPOJO () {
+    return {
+      ownerName: this.#ownerName,
+      number: this.#number
+    }
   }
 
   equals (projectKey: ProjectPrimaryKeyHumanReadable) {
-    return this.#stringKey === projectKey.asStringKey()
+    return this.#ownerName === projectKey.getName() && this.#number === projectKey.getNumber()
   }
 
   getName () {
