@@ -1,6 +1,4 @@
-interface objectWithKeys {
-  [key: string]: any
-}
+import { GenericObjectWithStringKeys } from "./util"
 
 export enum Type {
   array = 'array',
@@ -15,11 +13,15 @@ export function isObject (obj: any): boolean {
   return typeof obj === 'object' && !Array.isArray(obj) && obj !== null
 }
 
+export function isPositiveRealInteger (obj: any) {
+  return Number.isInteger(obj) && obj > 0
+}
+
 export function isString (obj: any): obj is string {
   return typeof obj === 'string'
 }
 
-export function validateObjectMember (obj: objectWithKeys, key: string, type: Type): void {
+export function validateObjectMember (obj: GenericObjectWithStringKeys, key: string, type: Type): void {
   if (!(key in obj)) {
     throw new ReferenceError(`key "${key}" was not found in the object`)
   }
