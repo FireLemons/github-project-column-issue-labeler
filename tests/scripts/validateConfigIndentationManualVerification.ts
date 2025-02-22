@@ -1,5 +1,5 @@
 import { Logger } from '../../src/logger'
-import ConfigValidator from '../../src/validateConfig'
+import { Config } from '../../src/config'
 
 const ConfigTestData: { [key: string]: any } = require('../data/configTestData').default
 const logger = new Logger()
@@ -20,7 +20,17 @@ function main() {
       return
     }
 
-    new ConfigValidator(logger).validateConfig(configFileContents)
+    try {
+      const config = new Config(configFileContents, logger)
+
+      logger.info('Validated Config:')
+      logger.info(config.toString(true))
+    } catch (error) {
+      logger.addBaseIndentation(-4)
+
+      logger.error('Failed to validate config')
+      logger.tryErrorLogErrorObject(error, 2)
+    }
 
     console.log('') // newline
   }

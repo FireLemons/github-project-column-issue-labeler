@@ -6,12 +6,24 @@ export function caseInsensitiveAlphabetization (arr: string[]): string[] {
   return arr.toSorted(caseInsensitiveCompare)
 }
 
-export function caseInsensitiveCompare (str1: string, str2: string): number{
+/**
+ * @returns -1 if str1 comes before str2, 0 if str1 and str2 are equivalent, 1 if str1 comes after str2
+ */
+export function caseInsensitiveCompare (str1: string, str2: string): number {
   return str1.localeCompare(str2, undefined, { sensitivity: 'base' })
 }
 
-export function combineSortedCaseInsensititveUniqueStringArrays (sortedArr1: string[], sortedArr2: string[]) {
+export function firstKeyValuePairOfMap (map: Map<any, any>) {
+  if (map.size === 0) {
+    return undefined
+  }
 
+  const [key, value] = map.entries().next().value!
+
+  return {
+    key,
+    value
+  }
 }
 
 export function hasTrailingWhitespace (str: string): boolean {
@@ -33,13 +45,12 @@ export function nestedMapsToObject (rootMap: Map<any, any>) {
 
   while(mapProcessStack.length > 0) {
     const { map, key, parentObject} = mapProcessStack.pop()!
-
     const mapAsObject = Object.fromEntries(map.entries())
 
     for (const newObjectKey in mapAsObject) {
       const value = mapAsObject[newObjectKey]
 
-      if(value instanceof Map) {
+      if (value.constructor.name === 'Map') {
         mapProcessStack.push({
           key: newObjectKey,
           map: value,

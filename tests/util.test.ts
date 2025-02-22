@@ -1,6 +1,7 @@
 import { 
   caseInsensitiveAlphabetization,
   caseInsensitiveCompare,
+  firstKeyValuePairOfMap,
   hasTrailingWhitespace,
   isCaseInsensitiveEqual,
   nestedMapsToObject,
@@ -41,6 +42,21 @@ describe('caseInsensitiveCompare()', () => {
 
   it('returns 1 when the first argument comes after the second argument alphabetically', () => {
     expect(caseInsensitiveCompare('b', 'A')).toBe(1)
+  })
+})
+
+describe('firstTupleOfMap()', () => {
+  it ('returns the first key value pair of the map', () => {
+    const tuple: [unknown, unknown] = ['4\'(/gs,I|88YAXqkR%', '@UDnZYG+>B-cSb/>Eo']
+    const map = new Map([tuple])
+
+    expect(firstKeyValuePairOfMap(map)).toEqual(tuple)
+  })
+
+  it ('returns undefined when the map is empty', () => {
+    const map = new Map()
+
+    expect(firstKeyValuePairOfMap(map)).toEqual(undefined)
   })
 })
 
