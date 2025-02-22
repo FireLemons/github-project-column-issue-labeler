@@ -1,94 +1,221 @@
-const defaultRepoValue = {
+/**
+ * Used primarily as an expression to represent an array
+ * @returns a new array combining the original array and the new element
+ */
+function append (arr: any[], element: any) {
+  const arrCopy = arr.slice()
+
+  arrCopy.push(element)
+
+  return arrCopy
+}
+
+const defaultRepo = {
   name: 'repo name',
   ownerName: 'repo owner'
 }
 
-export default {
-  invalidJSON: `
-    {
-      keyWithoutQuotes: "value"
-    }`,
+const minimalLabels = [ 'label' ]
 
+const labelingActionEmptyLabels = {
+  action: 'add',
+  labels: []
+}
+const labelingActionInvalidLabels = {
+  action: 'add',
+  labels: [ '  ', 3 ]
+}
+const labelingActionMissingAction = {
+  labels: minimalLabels
+}
+const labelingActionMissingLabels = {
+  action: 'add'
+}
+const labelingActionConflictAdd = {
+  action: 'add',
+  labels: [ 'conflicting label' ]
+}
+const labelingActionConflictRemove = {
+  action: 'remove',
+  labels: [ 'conflicting label' ]
+}
+const labelingActionUnsupportedAction = {
+  action: 'erase',
+  labels: minimalLabels
+}
+const labelingActionWrongTypeAction = {
+  action: 0,
+  labels: minimalLabels
+}
+const labelingActionWrongTypeLabels = {
+  action: 'add',
+  labels: 0
+}
+const minimalLabelingActions = [
+  {
+    action: 'add',
+    labels: minimalLabels
+  }
+]
+const allInvalidLabelingActions = [
+  'wrong type',
+  labelingActionEmptyLabels,
+  labelingActionInvalidLabels,
+  labelingActionMissingAction,
+  labelingActionMissingLabels,
+  labelingActionConflictAdd,
+  labelingActionConflictRemove,
+  labelingActionUnsupportedAction,
+  labelingActionWrongTypeAction,
+  labelingActionWrongTypeLabels
+]
+
+const columnEmptyName = {
+  name: '       ',
+  labelingActions: minimalLabelingActions
+}
+const columnInvalidLabelingActions = {
+  name: 'column name',
+  labelingActions: allInvalidLabelingActions
+}
+const columnMissingLabelingActions = {
+  name: 'column name'
+}
+const columnMissingName = {
+  labelingActions: minimalLabelingActions
+}
+const columnWrongTypeLabelingActions = {
+  name: 'column name',
+  labelingActions: 0
+}
+const columnWrongTypeName = {
+  name: 0,
+  labelingActions: minimalLabelingActions
+}
+const minimalColumns = [
+  {
+    name: 'column name',
+    labelingActions: minimalLabelingActions
+  }
+]
+const allInvalidColumns = [
+  'wrong type',
+  columnEmptyName,
+  columnInvalidLabelingActions,
+  columnMissingLabelingActions,
+  columnMissingName,
+  columnWrongTypeLabelingActions,
+  columnWrongTypeName
+]
+
+const projectEmptyOwnerLogin = {
+  columns: minimalColumns,
+  number: 1,
+  ownerLogin: '    '
+}
+const projectInvalidColumns = {
+  columns: allInvalidColumns,
+  number: 1,
+  ownerLogin: 'owner name'
+}
+const projectMissingColumns = {
+  number: 1,
+  ownerLogin: 'owner name'
+}
+const projectMissingOwnerLogin = {
+  columns: minimalColumns,
+  number: 1
+}
+const projectOutOfBoundsNumber = {
+  columns: minimalColumns,
+  number: -1,
+  ownerLogin: 'owner name'
+}
+const projectWrongTypeColumns = {
+  columns: 0,
+  number: 1,
+  ownerLogin: 'owner name'
+}
+const projectWrongTypeNumber = {
+  columns: minimalColumns,
+  number: '1',
+  ownerLogin: 'owner name'
+}
+const projectWrongTypeOwnerLogin = {
+  columns: minimalColumns,
+  number: 1,
+  ownerLogin: 0
+}
+const allInvalidProjects = [
+  'wrong type',
+  projectEmptyOwnerLogin,
+  projectInvalidColumns,
+  projectMissingColumns,
+  projectMissingOwnerLogin,
+  projectOutOfBoundsNumber,
+  projectWrongTypeColumns,
+  projectWrongTypeNumber,
+  projectWrongTypeOwnerLogin
+]
+const minimalProjects = [
+  {
+    columns: minimalColumns,
+    ownerLogin: 'owner name'
+  }
+]
+
+export default {
   configMissingKey: JSON.stringify({
     'wrong-name-for-github-token': 'token',
-    repo: defaultRepoValue,
-    columns: [
-    ]
+    repo: defaultRepo,
+    columns: minimalColumns
   }),
   configWhiteSpaceOnlyAccessToken: JSON.stringify({
     accessToken: ' ',
-    repo: defaultRepoValue,
-    columns: [
-    ]
+    repo: defaultRepo,
+    columns: minimalColumns
   }),
   configWrongTypeAccessToken: JSON.stringify({
     accessToken: 3,
-    repo: defaultRepoValue,
-    columns: [
-    ]
+    repo: defaultRepo,
+    columns: minimalColumns
   }),
   configWrongTypeColumns: JSON.stringify({
     accessToken: 'token',
-    repo: defaultRepoValue,
+    repo: defaultRepo,
     columns: 'not supposed to be a string'
   }),
   configWrongTypeProjects: JSON.stringify({
     accessToken: 'token',
-    repo: defaultRepoValue,
+    repo: defaultRepo,
     projects: 'not supposed to be a string'
   }),
   configWrongTypeRepo: JSON.stringify({
     accessToken: 'token',
     repo: [],
-    columns: [
-      {
-        name: 'to do',
-        labelingRules: [
-          {
-            action: 'add',
-            labels: ['hacktoberfest']
-          }
-        ]
-      }
-    ]
+    columns: minimalColumns
   }),
   configInvalidNonEssentialSections: JSON.stringify({
     accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'valid project',
-        columns: [
-          {
-            name: 'valid column',
-            labelingRules: [
-              {
-                action: 'Add',
-                labels: ['Help Wanted']
-              },
-              {
-                action: 'Remove',
-                labels: ['Done', 'Completed', '', 4, '     ']
-              },
-              {
-                action: 'invalid action',
-                labels: ['invalid label 1', 'invalid label 2']
-              }
-            ]
-          },
-          {
-            name: 'invalid column'
-          }
-        ]
-      },
-      {
-        ownerLogin: 'invalid project'
-      }
-    ]
+    repo: defaultRepo,
+    projects: append(allInvalidProjects, {
+      ownerLogin: 'valid project',
+      columns: [
+        {
+          labelingActions: [
+            {
+              action: 'add',
+              labels: ['valid label']
+            }
+          ],
+          name: 'valid column'
+        }
+      ]
+    })
   }),
   configNormal: JSON.stringify({
     accessToken: 'access token',
-    repo: defaultRepoValue,
+    repo: defaultRepo,
     projects: [
       {
         ownerLogin: 'githubOrganizationName',
@@ -96,7 +223,7 @@ export default {
         columns: [
           {
             name: 'to do',
-            labelingRules: [
+            labelingActions: [
               {
                 action: 'add',
                 labels: ['hacktoberfest']
@@ -113,7 +240,7 @@ export default {
           },
           {
             name: 'completed',
-            labelingRules: [
+            labelingActions: [
               {
                 action: 'remove',
                 labels: ['hacktoberfest']
@@ -136,28 +263,279 @@ export default {
     },
     projects: [
       {
-        ownerLogin: ' owner name ',
+        ownerLogin: 'owner name ',
         columns: [
           {
-            name: ' column name ',
-            labelingRules: [
+            name: 'column name ',
+            labelingActions: [
               {
                 action: ' add ',
-                labels: ['label ', ' label 2', ' label 3 ']
-              },
+                labels: ['label 1 ', ' label 2', ' label 3 ']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: ' owner name',
+        columns: [
+          {
+            name: ' column name',
+            labelingActions: [
               {
-                action: 'add',
-                labels: [' label ', 'label 2 ', ' label 3 ']
-              },
-              {
-                action: ' remove ',
-                labels: [' 🐌 ', '   Completed']
+                action: ' add ',
+                labels: [' label 1  ', ' label 2 ', '       label 3 ']
               }
             ]
           }
         ]
       }
     ]
+  }),
+
+  columnMinimal: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: minimalColumns
+  }),
+  columnOnlyInvalidValues: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: allInvalidColumns
+  }),
+  columnPartiallyInvalid: append(allInvalidColumns, {
+    name: 'valid column',
+    labelingActions: append(allInvalidLabelingActions, minimalLabelingActions[0])
+  }),
+
+  invalidJSON: `
+    {
+      keyWithoutQuotes: "value"
+    }`,
+
+  projectConfigWithSiblingsAndHighEntropyValues: JSON.stringify({
+    accessToken: '3uKoGF^fkn&=rrP+lJ',
+    repo: {
+      name: '9\'JAt<KOd2r!b|r=t}',
+      ownerName: 'BSZLsS+J9nDC~/(`qu'
+    },
+    projects: [
+      {
+        ownerLogin: '"yJN3*vG?fH="Bk5jn',
+        number: 6890140931,
+        columns: [
+          {
+            name: 'r[/G}&\'tV3*ZK\'!TUv',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['^g9)"kS%xm8e{`kp@K']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: '3b@dvLyBr*j<-&R23=',
+        number: 1471946274,
+        columns: [
+          {
+            name: 'l57ZO;F$@#64/t^Q"^',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['}Vk}3#7!*&dW-WLz|+', 'krI#)7Zm-`G0U$sCU5']
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectDuplicatesWithDuplicateChildren: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: [
+      {
+        ownerLogin: 'duplicate project with number',
+        number: 1,
+        columns: [
+          {
+            name: 'symmetric duplicate column A',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['grouped label A', 'grouped label C']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: 'duplicate project with number',
+        number: 1,
+        columns: [
+          {
+            name: 'symmetric duplicate column A',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['grouped label D', 'grouped label B']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column A',
+            labelingActions: [
+              {
+                action: 'remove',
+                labels: ['ungrouped label A', 'conflicting label']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column A',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['ungrouped label B', 'conflicting label']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: 'duplicate project without number',
+        columns: [
+          {
+            name: 'symmetric duplicate column B',
+            labelingActions: [
+              {
+                action: 'remove',
+                labels: ['overridden label A']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: 'duplicate project without number',
+        columns: [
+          {
+            name: 'symmetric duplicate column B',
+            labelingActions: [
+              {
+                action: 'set',
+                labels: ['overriding label A']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column B',
+            labelingActions: [
+              {
+                action: 'remove',
+                labels: ['grouped label G']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column B',
+            labelingActions: [
+              {
+                action: 'remove',
+                labels: ['grouped label F', 'grouped label E']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column C',
+            labelingActions: [
+              {
+                action: 'set',
+                labels: ['overriden label B']
+              }
+            ]
+          },
+          {
+            name: 'asymmetric duplicate column C',
+            labelingActions: [
+              {
+                action: 'set',
+                labels: ['overriding label B']
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectOnlyInvalidValues: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: allInvalidProjects
+  }),
+  projectMinimal: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: minimalProjects
+  }),
+  projectNearDuplicates: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: [
+      {
+        ownerLogin: 'duplicateOwnerName',
+        number: 1,
+        columns: [
+          {
+            name: 'column name 1',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['label1B', 'label1A', 'label1C']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: 'duplicateOwnerName',
+        number: 2,
+        columns: [
+          {
+            name: 'column name 2',
+            labelingActions: [
+              {
+                action: 'remove',
+                labels: ['label2A', 'Label2B', 'lAbel2C']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: 'nonDuplicateOwnerName',
+        number: 1,
+        columns: [
+          {
+            name: 'column name 3',
+            labelingActions: [
+              {
+                action: 'set',
+                labels: ['label3C', 'label3B', 'label3D', 'label3A']
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }),
+  projectOverridingColumn: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: minimalColumns,
+    projects: minimalProjects
   }),
 
   repoWrongTypeName: JSON.stringify({
@@ -194,444 +572,6 @@ export default {
       ownerName: '         '
     },
     columns: [
-    ]
-  }),
-
-  projectArrayValuesWrongType: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      3,
-      [],
-      null
-    ]
-  }),
-  projectDuplicatesNameOnly: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'duplicate project name',
-        columns: [
-          {
-            name: 'duplicate column name',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      },
-      {
-        ownerLogin: 'duplicate project name',
-        columns: [
-          {
-            name: 'duplicate column name',
-            labelingRules: [
-              {
-                action: 'add',
-                labels: ['label 2', 'label 3']
-              }
-            ]
-          },
-          {
-            name: 'non duplicate column name',
-            labelingRules: [
-              {
-                action: 'add',
-                labels: ['label']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-  projectDuplicatesNameAndNumber: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'duplicate project name',
-        number: 1,
-        columns: [
-          {
-            name: 'column 1',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      },
-      {
-        ownerLogin: 'duplicate project name',
-        number: 1,
-        columns: [
-          {
-            name: 'column 2',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-  projectDuplicatesNameButNotNumber: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'duplicate project name',
-        number: 1,
-        columns: [
-          {
-            name: 'column 2',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      },
-      {
-        ownerLogin: 'duplicate project name',
-        number: 2,
-        columns: [
-          {
-            name: 'column 2',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-  projectDuplicatesNumberButNotName: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'project name',
-        number: 1,
-        columns: [
-          {
-            name: 'column 2',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      },
-      {
-        ownerLogin: 'different project name',
-        number: 1,
-        columns: [
-          {
-            name: 'column 2',
-            labelingRules: [
-              {
-                action: ' add ',
-                labels: ['label 1']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-  projectInvalidValues: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        columns: 3,
-        ownerLogin: 'Name'
-      },
-      {
-        columns: [],
-        number: 'not a number',
-        ownerLogin: 'owner name'
-      },
-      {
-        columns: [],
-        number: -1,
-        ownerLogin: 'owner name'
-      },
-      {
-        columns: [],
-        number: 1.01,
-        ownerLogin: 'owner name'
-      },
-      {
-        columns: [],
-        ownerLogin: 3
-      },
-      {
-        columns: [],
-        ownerLogin: '                 '
-      },
-      {
-        columns: [],
-        ownerLogin: ''
-      }
-    ]
-  }),
-  projectMissingRequiredKey: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    projects: [
-      {
-        ownerLogin: 'String'
-      },
-      {
-        columns: []
-      }
-    ]
-  }),
-
-  columnAllInvalidLabelingRules: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-          },
-          {
-            action: 'ADD'
-          },
-          {
-            labels: ['a', 'b', 'c']
-          },
-          {
-            action: 3,
-            labels: ['a', 'b', 'c']
-          },
-          {
-            action: 'ADD',
-            labels: {
-              a: 'a'
-            }
-          },
-          {
-            action: 'Unsupported Action',
-            labels: ['a', 'b', 'c']
-          }
-        ]
-      }
-    ]
-  }),
-  columnArrayValuesWrongType: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      3,
-      [],
-      null
-    ]
-  }),
-  columnDuplicateNames: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'duplicate name',
-        labelingRules: [
-          {
-            action: 'ADD',
-            labels: ['Label1']
-          }
-        ]
-      },
-      {
-        name: 'duplicate name',
-        labelingRules: [
-          {
-            action: 'REMOVE',
-            labels: ['Label2']
-          }
-        ]
-      }
-    ]
-  }),
-  columnInvalidValues: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 3,
-        labelingRules: []
-      },
-      {
-        name: 'Name',
-        labelingRules: 3
-      },
-      {
-        name: '                 ',
-        labelingRules: []
-      },
-      {
-        name: '',
-        labelingRules: []
-      }
-    ]
-  }),
-  columnLabelDuplicationAndUnsortedAddRemoveActions: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'AdD',
-            labels: ['Duplicate Label', 'New', 'Duplicate Label']
-          },
-          {
-            action: 'ADD ',
-            labels: ['DuplIcate LaBeL    ', 'Help Wanted']
-          },
-          {
-            action: 'ReMovE',
-            labels: ['Duplicate emoji 🐌 ', '   Completed']
-          },
-          {
-            action: 'ReMOVE',
-            labels: ['DupliCAte Emoji 🐌', 'Completed 1']
-          }
-        ]
-      }
-    ]
-  }),
-  columnMissingRequiredKey: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'String'
-      },
-      {
-        labelingRules: []
-      }
-    ]
-  }),
-
-  labelingRulesActionOrderPrecedence: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'Set',
-            labels: ['This should not appear']
-          },
-          {
-            action: 'Set',
-            labels: ['This should not appear']
-          },
-          {
-            action: 'Set',
-            labels: ['This should appear', '🛩', 'alphabetically first']
-          }
-        ]
-      }
-    ]
-  }),
-  lableingRulesActionTypePrecedence: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'Remove',
-            labels: ['This should not appear']
-          },
-          {
-            action: 'Set',
-            labels: ['This should appear', '🛩', 'alphabetically first']
-          },
-          {
-            action: 'Add',
-            labels: ['This should not appear']
-          }
-        ]
-      }
-    ]
-  }),
-  labelingRulesConflict: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'Remove',
-            labels: ['ambiguous label conflict', 'Label 1']
-          },
-          {
-            action: 'Add',
-            labels: ['ambiguous label conflict', 'Label 2']
-          }
-        ]
-      }
-    ]
-  }),
-  labelingRulesInvalidLabels: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'ADD',
-            labels: ['', '    ', 3]
-          },
-          {
-            action: 'REMOVE',
-            labels: ['normal rule']
-          }
-        ]
-      }
-    ]
-  }),
-  labelingRulesSetActionAndDuplicateLabels: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepoValue,
-    columns: [
-      {
-        name: 'column name',
-        labelingRules: [
-          {
-            action: 'SET ',
-            labels: ['DuplIcate LaBeL    ', 'Help Wanted', 'Duplicate Label', 'New', 'Duplicate Label']
-          }
-        ]
-      }
     ]
   })
 }

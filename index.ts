@@ -2,7 +2,7 @@ import { GithubAPIClient } from './src/githubAPIClient'
 import { GithubGraphQLPageAssembler } from './src/githubGraphQLPageAssembler'
 import { Logger } from './src/logger'
 import { readFile } from 'node:fs/promises'
-import ConfigValidator from './src/validateConfig'
+import { Config } from './src/config'
 import Labeler from './src/labeler'
 
 async function loadConfig (): Promise<string> {
@@ -27,8 +27,7 @@ async function main () {
     return
   }
 
-  const configValidator = new ConfigValidator(logger)
-  const config = configValidator.validateConfig(configFileContents)
+  const config = new Config(configFileContents, logger)
 
   if (config === null) {
     process.exitCode = 1
@@ -52,7 +51,7 @@ async function main () {
 
   logger.info('Initialized github API client')
 
-  const labeler = new Labeler(githubAPIClient, logger)
+  const labeler = new Labeler(githubAPIClient, logger, (config.columns ?? config.projects)!)
 
   labeler.labelIssues()
 }
