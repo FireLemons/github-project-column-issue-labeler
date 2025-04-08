@@ -145,21 +145,18 @@ describe('nestedMapsToObject()', () => {
 })
 
 describe('removeCaseInsensitiveDuplicatesFromSortedArray()', () => {
-  it('removes duplicate words from an array, ignoring their case', () => {
+  it('returns an array with duplicate words removed, ignoring their case', () => {
     const originalWords = ['AaAa', 'bAnM', 'RtIl', 'GmSl']
-    const words = originalWords.slice()
+    const wordsWithDuplicates = originalWords.slice()
 
     for (let i = 0; i < 5; i++) {
       const selectedIndex = Math.floor(Math.random() * 4)
-      const randomWord = words[selectedIndex]
+      const randomWord = wordsWithDuplicates[selectedIndex]
 
-      words.splice(selectedIndex + 1, 0, Math.floor(Math.random() * 2) ? randomWord.toLowerCase() : randomWord.toUpperCase())
+      wordsWithDuplicates.splice(selectedIndex + 1, 0, Math.floor(Math.random() * 2) ? randomWord.toLowerCase() : randomWord.toUpperCase())
     }
 
-    expect(words.length).toBeGreaterThan(4)
-
-    removeCaseInsensitiveDuplicatesFromSortedArray(words)
-
-    expect(words).toEqual(originalWords)
+    expect(wordsWithDuplicates.length).toBeGreaterThan(4)
+    expect(removeCaseInsensitiveDuplicatesFromSortedArray(wordsWithDuplicates)).toEqual(originalWords)
   })
 })

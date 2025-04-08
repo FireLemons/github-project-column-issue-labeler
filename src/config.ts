@@ -320,7 +320,7 @@ export class Config {
         }
       } else {
         for (const [labelingAction, labels] of labelingActionMap) {
-          removeCaseInsensitiveDuplicatesFromSortedArray(labels)
+          labelingActionMap.set(labelingAction, removeCaseInsensitiveDuplicatesFromSortedArray(labels))
         }
       }
     }

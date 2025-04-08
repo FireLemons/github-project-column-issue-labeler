@@ -66,14 +66,16 @@ export function nestedMapsToObject (rootMap: Map<any, any>) {
 }
 
 export function removeCaseInsensitiveDuplicatesFromSortedArray (sortedArray: string[]): string[] {
+  const sortedArrayCopy = sortedArray.slice()
+
   let i = 0
-  while (i < sortedArray.length - 1) {
-    if (caseInsensitiveCompare(sortedArray[i], sortedArray[i + 1]) === 0) {
-      sortedArray.splice(i + 1, 1)
+  while (i < sortedArrayCopy.length - 1) {
+    if (caseInsensitiveCompare(sortedArrayCopy[i], sortedArrayCopy[i + 1]) === 0) {
+      sortedArrayCopy.splice(i + 1, 1)
     } else {
       i++
     }
   }
 
-  return sortedArray
+  return sortedArrayCopy
 }
