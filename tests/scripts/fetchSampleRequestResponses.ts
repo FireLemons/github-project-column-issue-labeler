@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { GithubAPIClient, IssuePageResponse } from '../../src/githubAPIClient'
 import { Logger } from '../../src/logger'
-import ConfigValidator from '../../src/validateConfig'
+import { Config } from '../../src/config'
 
 const logger = new Logger()
 const requestResponseDir = '../temp/request_responses'
@@ -9,11 +9,11 @@ const requestResponseDir = '../temp/request_responses'
 async function loadConfig (): Promise<string> {
   const configContents = await readFile('./config.json')
 
-  return '' + configContents
+  return configContents.toString()
 }
 
 async function ensureResponseDirectoryExists (): Promise<void> {
-  mkdir(requestResponseDir, { recursive: true })
+  await mkdir(requestResponseDir, { recursive: true })
 }
 
 async function writeStringToFile (fileContents: object, fileName: string) {
@@ -38,7 +38,7 @@ async function main () {
     return
   }
 
-  const config = new ConfigValidator(logger).validateConfig(configFileContents)
+  const config = new Config(configFileContents, logger)
 
   if (config === null) {
     return
@@ -49,7 +49,7 @@ async function main () {
   try {
     logger.info('Initializing github API client')
 
-    githubAPIClient = new GithubAPIClient(config.accessToken, config.repo.name, config.repo.ownerName)
+    githubAPIClient = new GithubAPIClient(config.getAPIToken(), config.getRepoName(), config.getRepoOwnerName())
 
     logger.info('Initialized github API client')
   } catch (error) {
@@ -68,7 +68,7 @@ async function main () {
     logger.info('Fetching issue page')
     issuePage = await githubAPIClient.fetchIssuePage()
 
-    writeStringToFile(issuePage, 'issue_page')
+    await writeStringToFile(issuePage, 'issue_page')
     const issue = issuePage.repository.issues.edges[0]?.node
     issueId = issue.id
     issueNumber = issue.number
@@ -86,7 +86,7 @@ async function main () {
     logger.info('Fetching expanded column name search space for issue')
     const issueWithExpandedColumnNameSearchSpace = await githubAPIClient.fetchExpandedColumnNameSearchSpace(issueId)
 
-    writeStringToFile(issueWithExpandedColumnNameSearchSpace, 'issue_with_expanded_column_name_search_space')
+    await writeStringToFile(issueWithExpandedColumnNameSearchSpace, 'issue_with_expanded_column_name_search_space')
 
     logger.info('Fetched expanded column name search space for issue', 2)
   } catch (error) {
@@ -98,7 +98,7 @@ async function main () {
     logger.info(`Fetching project item page of issue #${issueNumber}`)
     const projectItemPageOfIssue = await githubAPIClient.fetchProjectItemPage(issueId)
 
-    writeStringToFile(projectItemPageOfIssue, 'project_item_page')
+    await writeStringToFile(projectItemPageOfIssue, 'project_item_page')
 
     logger.info('Fetched project item page', 2)
   } catch (error) {
@@ -107,7 +107,7 @@ async function main () {
   }
 
   logger.info('Searching for project item id')
-  let projectItemId = issuePage.repository.issues.edges.find((issueEdge) => {
+  const projectItemId = issuePage.repository.issues.edges.find((issueEdge) => {
     return issueEdge.node.projectItems.edges.length >= 1
   })?.node.projectItems.edges[0].node.id
 
@@ -121,7 +121,7 @@ async function main () {
       logger.info('Fetching field value page')
       fieldValuePage = await githubAPIClient.fetchFieldValuePage(projectItemId)
 
-      writeStringToFile(fieldValuePage, 'field_value_page')
+      await writeStringToFile(fieldValuePage, 'field_value_page')
 
       logger.info('Fetched field value page', 2)
     } catch (error) {
@@ -138,7 +138,7 @@ async function main () {
     logger.info(`Fetching label page of issue #${issueNumber}`)
     const labelPageOfIssue = await githubAPIClient.fetchLabelPage(issueId)
 
-    writeStringToFile(labelPageOfIssue, 'label_page')
+    await writeStringToFile(labelPageOfIssue, 'label_page')
 
     logger.info('Fetched label page', 2)
   } catch (error) {

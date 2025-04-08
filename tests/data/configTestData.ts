@@ -15,7 +15,7 @@ const defaultRepo = {
   ownerName: 'repo owner'
 }
 
-const minimalLabels = [ 'label' ]
+const minimalLabels = ['label']
 
 const labelingActionEmptyLabels = {
   action: 'add',
@@ -23,7 +23,7 @@ const labelingActionEmptyLabels = {
 }
 const labelingActionInvalidLabels = {
   action: 'add',
-  labels: [ '  ', 3 ]
+  labels: ['  ', 3]
 }
 const labelingActionMissingAction = {
   labels: minimalLabels
@@ -33,11 +33,11 @@ const labelingActionMissingLabels = {
 }
 const labelingActionConflictAdd = {
   action: 'add',
-  labels: [ 'conflicting label' ]
+  labels: ['conflicting label']
 }
 const labelingActionConflictRemove = {
   action: 'remove',
-  labels: [ 'conflicting label' ]
+  labels: ['conflicting label']
 }
 const labelingActionUnsupportedAction = {
   action: 'erase',

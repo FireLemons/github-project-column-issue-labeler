@@ -626,7 +626,7 @@ export default { // all test data returns a unique copy to avoid complications f
         },
         {
           node: {
-            name: '+=Xh(TZCqK}e\@]O1s[@'
+            name: '+=Xh(TZCqK}e\\@]O1s[@'
           }
         }
       ],

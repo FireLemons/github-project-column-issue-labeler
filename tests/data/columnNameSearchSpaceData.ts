@@ -1,4 +1,4 @@
-import { ExtendedColumnNameSearchSpaceResponse, FieldValuePageResponse, GraphQLPagePOJO, IssuePOJO, LabelPOJO, ProjectItemPageResponse } from "../../src/githubAPIClient"
+import { ExtendedColumnNameSearchSpaceResponse, FieldValuePageResponse, GraphQLPagePOJO, IssuePOJO, LabelPOJO, ProjectItemPageResponse } from '../../src/githubAPIClient'
 
 const defaultFieldValuePageEndCursor = 'JcYjI~m.<HQ%j}hv1%'
 const defaultIssueId = 'njp\\.B#27utGAE~,k^'

@@ -1,7 +1,7 @@
-import ColumnNameFinder, { RemoteSearchSpaceType } from "../src/columnNameFinder"
-import ColumnNameSearchSpaceData from "./data/columnNameSearchSpaceData"
-import { Issue, ProjectPrimaryKeyHumanReadable } from "../src/githubObjects"
-import { GithubAPIClient } from "../src/githubAPIClient"
+import ColumnNameFinder, { RemoteSearchSpaceType } from '../src/columnNameFinder'
+import ColumnNameSearchSpaceData from './data/columnNameSearchSpaceData'
+import { Issue, ProjectPrimaryKeyHumanReadable } from '../src/githubObjects'
+import { GithubAPIClient } from '../src/githubAPIClient'
 
 jest.mock('../src/githubAPIClient')
 

@@ -4,7 +4,7 @@ import { Config } from '../../src/config'
 const ConfigTestData: { [key: string]: any } = require('../data/configTestData').default
 const logger = new Logger()
 
-function main() {
+function main () {
   let configFileContents: string
 
   for (const configDataDescription in ConfigTestData) {

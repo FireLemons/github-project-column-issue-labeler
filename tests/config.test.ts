@@ -32,14 +32,6 @@ interface ConfigPOJO {
 
 const logger = new Logger()
 
-function countSpaceIndentationOfLoggerMessage (text: string): number {
-  return text.slice(11).search(/\S/)
-}
-
-function hasGreaterIndentation (expectedLesserIndentationMessage: string, expectedGreaterIndentationMessage: string): boolean {
-  return countSpaceIndentationOfLoggerMessage(expectedGreaterIndentationMessage) - countSpaceIndentationOfLoggerMessage(expectedLesserIndentationMessage) === 2
-}
-
 function stringArrayToLowercase (strings: string[]) {
   const lowercaseStrings = []
 
@@ -50,7 +42,7 @@ function stringArrayToLowercase (strings: string[]) {
   return lowercaseStrings
 }
 
-const consoleLoggingFunctionSpies: {[name: string]: jest.SpiedFunction<typeof console.warn>} = {
+const consoleLoggingFunctionSpies: { [name: string]: jest.SpiedFunction<typeof console.warn> } = {
   info: jest.spyOn(console, 'info'),
   warn: jest.spyOn(console, 'warn'),
   error: jest.spyOn(console, 'error')
@@ -81,7 +73,7 @@ describe('Config', () => {
           const initConfig = () => {
             new Config(ConfigTestData.configMissingKey, logger)
           }
-  
+
           expect(initConfig).toThrow(ReferenceError)
           expect(initConfig).toThrow('key "accessToken" was not found in the object')
         })
@@ -92,7 +84,7 @@ describe('Config', () => {
           const initConfig = () => {
             new Config(ConfigTestData.configWrongTypeAccessToken, logger)
           }
-  
+
           expect(initConfig).toThrow(TypeError)
           expect(initConfig).toThrow('Member "accessToken" was found not to be a string')
         })
@@ -115,7 +107,7 @@ describe('Config', () => {
             const initConfig = () => {
               new Config(ConfigTestData.configWrongTypeProjects, logger)
             }
-    
+
             expect(initConfig).toThrow(TypeError)
             expect(initConfig).toThrow('Member "projects" was found not to be an array')
           })
@@ -126,7 +118,7 @@ describe('Config', () => {
             const initConfig = () => {
               new Config(ConfigTestData.projectOnlyInvalidValues, logger)
             }
-    
+
             expect(initConfig).toThrow(Error)
             expect(initConfig).toThrow('The labeling rule container did not contain any valid rules')
           })
@@ -139,7 +131,7 @@ describe('Config', () => {
             const initConfig = () => {
               new Config(ConfigTestData.configWrongTypeColumns, logger)
             }
-    
+
             expect(initConfig).toThrow(TypeError)
             expect(initConfig).toThrow('Member "columns" was found not to be an array')
           })
@@ -150,7 +142,7 @@ describe('Config', () => {
             const initConfig = () => {
               new Config(ConfigTestData.columnOnlyInvalidValues, logger)
             }
-    
+
             expect(initConfig).toThrow(Error)
             expect(initConfig).toThrow('The labeling rule container did not contain any valid rules')
           })
@@ -240,12 +232,12 @@ describe('Config', () => {
           })
         })
 
-        it ('prints a warning explaining why the column is invalid and what will be done about it', () => {
+        it('prints a warning explaining why the column is invalid and what will be done about it', () => {
           expect(validityExplanationWarningIndex!).not.toBe(-1)
           expect(consoleWarnCalls[validityExplanationWarningIndex! - 1][0]).toMatch(/Could not make valid column\. Skipping column\./)
         })
 
-        it ('prints the warnings under the correct header', () => {
+        it('prints the warnings under the correct header', () => {
           const headerCallIndex = consoleInfoCalls.findIndex((infoCall) => {
             return new RegExp(`Validating column at index ${headerIndex}`).test(infoCall[0])
           })
@@ -281,15 +273,15 @@ describe('Config', () => {
           })?.at(0)
         })
 
-        it ('prints a warning explaining why the column is invalid', () => {
+        it('prints a warning explaining why the column is invalid', () => {
           expect(validityExplanationWarning!).not.toBe(undefined)
         })
 
-        it ('includes what will be done about the invalid column in the warning', () => {
+        it('includes what will be done about the invalid column in the warning', () => {
           expect(validityExplanationWarning!).toContain('Removing column')
         })
 
-        it ('includes identifying information about the column in the warning', () => {
+        it('includes identifying information about the column in the warning', () => {
           expect(validityExplanationWarning!).toContain('name:"column name"')
         })
       })
@@ -310,7 +302,7 @@ describe('Config', () => {
         testInvalidColumnEliminationWarningsFromFirstValidationPass(/Member "name" was found not to be a string/, 6, true)
       })
 
-      it ('keeps only the valid column', () => {
+      it('keeps only the valid column', () => {
         const validatedLabelingRules: ProjectLabelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
 
         // Prove the labeling rule container has only one column
@@ -335,12 +327,12 @@ describe('Config', () => {
           })
         })
 
-        it ('prints a warning explaining why the labeling action is invalid and what will be done about it', () => {
+        it('prints a warning explaining why the labeling action is invalid and what will be done about it', () => {
           expect(validityExplanationWarningIndex!).not.toBe(-1)
           expect(consoleWarnCalls[validityExplanationWarningIndex! - 1][0]).toMatch(/Could not make valid labeling action\. Skipping action\./)
         })
 
-        it ('prints the warnings under the correct header', () => {
+        it('prints the warnings under the correct header', () => {
           const headerCallIndex = consoleInfoCalls.findIndex((infoCall) => {
             return new RegExp(`Validating labeling action at index ${headerIndex}`).test(infoCall[0])
           })
@@ -372,16 +364,16 @@ describe('Config', () => {
           })
         })
 
-        it ('prints a warning explaining why the labeling action is invalid and what will be done about it', () => {
+        it('prints a warning explaining why the labeling action is invalid and what will be done about it', () => {
           expect(validityExplanationWarningIndex!).not.toBe(-1)
         })
 
-        it ('prints the warning under the correct header', () => {
+        it('prints the warning under the correct header', () => {
           const headerCallIndex = consoleInfoCalls.findIndex((infoCall) => {
-            return new RegExp('Validating labeling action at index 1').test(infoCall[0])
+            return /Validating labeling action at index 1/.test(infoCall[0])
           })
           const nextHeaderCallIndex = consoleInfoCalls.findIndex((infoCall) => {
-            return new RegExp('Validating labeling action at index 2').test(infoCall[0])
+            return /Validating labeling action at index 2/.test(infoCall[0])
           })
           const loggerInfoInvocationOrderRecords = consoleLoggingFunctionSpies.info.mock.invocationCallOrder
           const loggerWarnInvocationOrderRecords = consoleLoggingFunctionSpies.warn.mock.invocationCallOrder
@@ -414,17 +406,17 @@ describe('Config', () => {
           })?.at(0)
         })
 
-        it ('prints a warning explaining why the labeling action is invalid', () => {
+        it('prints a warning explaining why the labeling action is invalid', () => {
           expect(validityExplanationWarningA!).not.toBe(undefined)
           expect(validityExplanationWarningB!).not.toBe(undefined)
         })
 
-        it ('includes what will be done about the invalid labeling action in the warning', () => {
+        it('includes what will be done about the invalid labeling action in the warning', () => {
           expect(validityExplanationWarningA!).toContain('Removing action')
           expect(validityExplanationWarningB!).toContain('Removing action')
         })
 
-        it ('includes identifying information about the parent column in the warning', () => {
+        it('includes identifying information about the parent column in the warning', () => {
           expect(validityExplanationWarningA!).toContain('from column with name:"column name"')
           expect(validityExplanationWarningA!).toContain('from column with name:"column name"')
         })
@@ -454,19 +446,19 @@ describe('Config', () => {
           })
         })
 
-        it ('prints a warning explaining why the label is invalid', () => {
+        it('prints a warning explaining why the label is invalid', () => {
           expect(validityExplanationWarningIndex!).not.toBe(-1)
         })
 
-        it ('includes the index of the invalid label', () => {
+        it('includes the index of the invalid label', () => {
           expect(consoleWarnCalls[validityExplanationWarningIndex][0]!).toContain(`at index: ${labelIndex}`)
         })
 
-        it ('includes what will be done about the invalid label in the warning', () => {
+        it('includes what will be done about the invalid label in the warning', () => {
           expect(consoleWarnCalls[validityExplanationWarningIndex][0]!).toContain('Removing label.')
         })
 
-        it ('prints the warnings under the correct header', () => {
+        it('prints the warnings under the correct header', () => {
           const headerCallIndex = consoleInfoCalls.findIndex((infoCall) => {
             return new RegExp(`Validating labeling action at index ${parentLabelingActionIndex}`).test(infoCall[0])
           })
@@ -491,7 +483,7 @@ describe('Config', () => {
       })
     })
 
-    describe ('projects', () => {
+    describe('projects', () => {
       const testInvalidProjectEliminationWarningsFromFirstValidationPass = (warning: RegExp, headerIndex: number) => {
         let validityExplanationWarningIndex: number
 
@@ -501,12 +493,12 @@ describe('Config', () => {
           })
         })
 
-        it ('prints a warning explaining why the project is invalid and what will be done about it', () => {
+        it('prints a warning explaining why the project is invalid and what will be done about it', () => {
           expect(validityExplanationWarningIndex!).not.toBe(-1)
           expect(consoleWarnCalls[validityExplanationWarningIndex! - 1][0]).toMatch(/Could not make valid project\. Skipping project\./)
         })
 
-        it ('prints the warnings under the correct header', () => {
+        it('prints the warnings under the correct header', () => {
           const headerCallIndex = consoleInfoCalls.findIndex((infoCall) => {
             return new RegExp(`Validating project at index ${headerIndex}`).test(infoCall[0])
           })
@@ -540,15 +532,15 @@ describe('Config', () => {
           })?.at(0)
         })
 
-        it ('prints a warning explaining why the project is invalid', () => {
+        it('prints a warning explaining why the project is invalid', () => {
           expect(validityExplanationWarning!).not.toBe(undefined)
         })
 
-        it ('includes what will be done about the invalid project in the warning', () => {
+        it('includes what will be done about the invalid project in the warning', () => {
           expect(validityExplanationWarning!).toContain('Removing project')
         })
 
-        it ('includes identifying information about the project in the warning', () => {
+        it('includes identifying information about the project in the warning', () => {
           expect(validityExplanationWarning!).toContain('name:"owner name"')
           expect(validityExplanationWarning!).toContain('number:1')
         })
@@ -578,7 +570,7 @@ describe('Config', () => {
         testInvalidProjectEliminationWarningsFromFirstValidationPass(/Member "ownerLogin" was found not to be a string/, 8)
       })
 
-      it ('keeps only the valid project', () => {
+      it('keeps only the valid project', () => {
         const validatedLabelingRules: ProjectLabelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
 
         expect(validatedLabelingRules.size).toBe(1)
@@ -592,14 +584,14 @@ describe('Config', () => {
       it('is a column name map with child labeling action maps with label array values when the config initialized with a json using columns', () => {
         const config = new Config(ConfigTestData.columnMinimal, logger)
         const labelingRules = config.getLabelingRules()
-  
+
         expect(labelingRules).toBeInstanceOf(Map)
-  
-        for(const [key, value] of labelingRules.entries()) {
+
+        for (const [key, value] of labelingRules.entries()) {
           expect(TypeChecker.isString(key)).toBe(true)
           expect(value).toBeInstanceOf(Map)
 
-          for(const [childMapKey, childMapValue] of value) {
+          for (const [childMapKey, childMapValue] of value) {
             expect(childMapKey in LabelingAction).toBe(true)
             expect(Array.isArray(childMapValue)).toBe(true)
           }
@@ -609,22 +601,22 @@ describe('Config', () => {
       it('is a project owner name map with child project number maps with child column maps(see above) when the config initialized with a json using projects', () => {
         const config = new Config(ConfigTestData.projectMinimal, logger)
         const labelingRules = config.getLabelingRules()
-  
+
         expect(labelingRules).toBeInstanceOf(Map)
-  
-        for(const [key, value] of labelingRules.entries()) {// Project owner name map
+
+        for (const [key, value] of labelingRules.entries()) { // Project owner name map
           expect(TypeChecker.isString(key)).toBe(true)
           expect(value).toBeInstanceOf(Map)
 
-          for(const [childMapKeyDepth1, childMapValueDepth1] of value) {// Project number map
+          for (const [childMapKeyDepth1, childMapValueDepth1] of value) { // Project number map
             expect(typeof childMapKeyDepth1).toBe('number')
             expect(childMapValueDepth1 instanceof Map).toBe(true)
 
-            for(const [childMapKeyDepth2, childMapValueDepth2] of childMapValueDepth1) {// Columns map
+            for (const [childMapKeyDepth2, childMapValueDepth2] of childMapValueDepth1) { // Columns map
               expect(TypeChecker.isString(childMapKeyDepth2)).toBe(true)
               expect(childMapValueDepth2).toBeInstanceOf(Map)
 
-              for(const [childMapKeyDepth3, childMapValueDepth3] of childMapValueDepth2) {// Labeling actions map
+              for (const [childMapKeyDepth3, childMapValueDepth3] of childMapValueDepth2) { // Labeling actions map
                 expect(childMapKeyDepth3 as string in LabelingAction).toBe(true)
                 expect(Array.isArray(childMapValueDepth3)).toBe(true)
               }
@@ -651,7 +643,7 @@ describe('Config', () => {
           projectDuplicateNameAndNumberName = configInputJSON.projects![0].ownerLogin.toLocaleLowerCase()
           projectDuplicateNameAndNumberNumber = configInputJSON.projects![0].number
           projectDuplicateNameOnlyName = configInputJSON.projects![2].ownerLogin.toLocaleLowerCase()
-  
+
           const config = new Config(configInputJSONString, logger)
           labelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
         })
@@ -759,7 +751,7 @@ describe('Config', () => {
 
             describe('multiple add actions', () => {
               let mergedLabels: string[] | undefined
-              
+
               beforeAll(() => {
                 mergedLabels = labelingRuleContainer.get(projectDuplicateNameAndNumberName)?.get(projectDuplicateNameAndNumberNumber)?.get(columnASymmetricName)?.get(LabelingAction.ADD)
               })
@@ -803,13 +795,13 @@ describe('Config', () => {
                 const precedenceWarning = consoleWarnCalls.findIndex((consoleArgs) => {
                   return /Found duplicate labeling action: SET\. Selecting labels: \[.*\] because it appears lower in the config/.test(consoleArgs[0])
                 })
-      
+
                 expect(precedenceWarning).not.toBe(-1)
               })
             })
 
             describe('child label duplicates', () => {
-              it ('removes the duplicate labels', () => {
+              it('removes the duplicate labels', () => {
                 expect(labelForColumnBAsymmetricRemoveActionDuplicateA).not.toBe(undefined)
                 expect(labelForColumnBAsymmetricRemoveActionDuplicateA).toBe(labelForColumnBAsymmetricRemoveActionDuplicateB)
                 expect(labelingRuleContainer.get(projectDuplicateNameOnlyName)?.get(0)?.get(columnBAsymmetricName)?.get(LabelingAction.REMOVE)?.filter((label) => {
@@ -838,7 +830,7 @@ describe('Config', () => {
           projectDuplicateNameALowercase = configInputJSON.projects![1].ownerLogin
           projectDuplicateNameBUppercase = configInputJSON.projects![2].ownerLogin
           projectDuplicateNameBLowercase = configInputJSON.projects![3].ownerLogin
-  
+
           labelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
         })
 
@@ -900,7 +892,6 @@ describe('Config', () => {
               const projectB = labelingRuleContainer.get(projectDuplicateNameBLowercase)?.get(0)
               expect(projectB?.size).toBe(1)
               expect(projectB?.has(columnDuplicateNameCLowercase)).toBe(true)
-
             })
 
             describe('the case differences of labeling actions', () => {
@@ -1129,19 +1120,19 @@ describe('Config', () => {
   })
 
   describe('isProjectMode()', () => {
-    it ('returns true if the input json is using the projects key', () => {
+    it('returns true if the input json is using the projects key', () => {
       const config = new Config(ConfigTestData.projectMinimal, logger)
 
       expect(config.isProjectMode()).toBe(true)
     })
 
-    it ('returns true if the input json is using the projects key and the columns key', () => {
+    it('returns true if the input json is using the projects key and the columns key', () => {
       const config = new Config(ConfigTestData.projectOverridingColumn, logger)
 
       expect(config.isProjectMode()).toBe(true)
     })
 
-    it ('returns false if the input json is using the columns key and not the projects key', () => {
+    it('returns false if the input json is using the columns key and not the projects key', () => {
       const config = new Config(ConfigTestData.columnMinimal, logger)
 
       expect(config.isProjectMode()).toBe(false)
@@ -1393,8 +1384,9 @@ describe('Config', () => {
           )?.value // Labeling Action Map
         )?.value // Labels
           .find((label: string) => {
-          return label === conflictingLabelTrimmed
-        })).toBe(undefined)
+            return label === conflictingLabelTrimmed
+          })
+        ).toBe(undefined)
       })
     })
   })

@@ -1,4 +1,4 @@
-import { 
+import {
   caseInsensitiveAlphabetization,
   caseInsensitiveCompare,
   firstKeyValuePairOfMap,
@@ -9,13 +9,13 @@ import {
 } from '../src/util'
 
 describe('caseInsensitiveAlphabetization()', () => {
-  it ('alphabetizes an array of stings', () => {
-    function makeShuffledArray(arr: any[]) { // https://en.wikipedia.org/wiki/Fisher-Yates_shuffle#The_modern_algorithm
+  it('alphabetizes an array of stings', () => {
+    function makeShuffledArray (arr: any[]): any[] { // https://en.wikipedia.org/wiki/Fisher-Yates_shuffle#The_modern_algorithm
       const arrCopy = arr.slice()
 
       for (let i = arrCopy.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1))
-        let temp = arrCopy[i]
+        const j = Math.floor(Math.random() * (i + 1))
+        const temp = arrCopy[i]
         arrCopy[i] = arrCopy[j]
         arrCopy[j] = temp
       }
@@ -46,7 +46,7 @@ describe('caseInsensitiveCompare()', () => {
 })
 
 describe('firstTupleOfMap()', () => {
-  it ('returns the first key value pair of the map', () => {
+  it('returns the first key value pair of the map', () => {
     const firstTuple: [unknown, unknown] = ['4\'(/gs,I|88YAXqkR%', '@UDnZYG+>B-cSb/>Eo']
     const secondTuple: [unknown, unknown] = ['O4-00!5htf9VYl%GPh', '1adi^du`z3Zv"^BwGx']
     const map = new Map([firstTuple, secondTuple])
@@ -57,7 +57,7 @@ describe('firstTupleOfMap()', () => {
     })
   })
 
-  it ('returns undefined when the map is empty', () => {
+  it('returns undefined when the map is empty', () => {
     const map = new Map()
 
     expect(firstKeyValuePairOfMap(map)).toEqual(undefined)
@@ -65,11 +65,11 @@ describe('firstTupleOfMap()', () => {
 })
 
 describe('hasTrailingWhitespace()', () => {
-  it ('returns true when passed a string with trailing whitespace', () => {
+  it('returns true when passed a string with trailing whitespace', () => {
     expect(hasTrailingWhitespace(' whitespace ')).toBe(true)
   })
 
-  it ('returns false when passed a string without trailing whitespace', () => {
+  it('returns false when passed a string without trailing whitespace', () => {
     expect(hasTrailingWhitespace('no whitespace')).toBe(false)
   })
 })
@@ -97,7 +97,7 @@ describe('nestedMapsToObject()', () => {
             ['depth4', true]
           ])]
         ])]
-      ])],
+      ])]
     ])
 
     const nestedMapsObjectAnalog = {
