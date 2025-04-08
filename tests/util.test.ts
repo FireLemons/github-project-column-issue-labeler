@@ -47,10 +47,14 @@ describe('caseInsensitiveCompare()', () => {
 
 describe('firstTupleOfMap()', () => {
   it ('returns the first key value pair of the map', () => {
-    const tuple: [unknown, unknown] = ['4\'(/gs,I|88YAXqkR%', '@UDnZYG+>B-cSb/>Eo']
-    const map = new Map([tuple])
+    const firstTuple: [unknown, unknown] = ['4\'(/gs,I|88YAXqkR%', '@UDnZYG+>B-cSb/>Eo']
+    const secondTuple: [unknown, unknown] = ['O4-00!5htf9VYl%GPh', '1adi^du`z3Zv"^BwGx']
+    const map = new Map([firstTuple, secondTuple])
 
-    expect(firstKeyValuePairOfMap(map)).toEqual(tuple)
+    expect(firstKeyValuePairOfMap(map)).toEqual({
+      key: firstTuple[0],
+      value: firstTuple[1]
+    })
   })
 
   it ('returns undefined when the map is empty', () => {
