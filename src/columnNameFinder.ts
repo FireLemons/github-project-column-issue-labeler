@@ -8,6 +8,9 @@ export enum RemoteSearchSpaceType {
   UNDEFINED = 'UNDEFINED'
 }
 
+type ProjectColumnNameMap = Map<string, Map<number, ColumnNameMap>>
+type ColumnNameMap = Map<string, null>
+
 interface RemoteRecordPageQueryParameters {
   localPage: GraphQLPage<FieldValue> | GraphQLPageMergeable<ProjectItem>
   parentId: string
@@ -19,90 +22,73 @@ interface RemoteSearchSpaceAccessErrorWithSpaceType {
 }
 
 export default class ColumnNameFinder {
-  #cachedSearchResults: Map<string, Map<number, string>>
+  #cacheSearchResult: (columnName: string, projectOwnerName?: string, number?: number) => void
+  #cachedSearchResults: ColumnNameMap | ProjectColumnNameMap
   #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
   #githubAPIClient: GithubAPIClient
   #hasExpandedSearchSpace: boolean
+  #isProjectMode: boolean
   #issue: Issue
   #remoteSearchSpaceParameterQueue: RemoteRecordPageQueryParameters[]
 
-  constructor (githubAPIClient: GithubAPIClient, issue: Issue) {
+  constructor (githubAPIClient: GithubAPIClient, isProjectMode: boolean, issue: Issue) {
     this.#cachedSearchResults = new Map()
     this.#remoteSearchSpaceAccessErrors = []
     this.#hasExpandedSearchSpace = false
     this.#githubAPIClient = githubAPIClient
+    this.#isProjectMode = isProjectMode
     this.#issue = issue
     this.#remoteSearchSpaceParameterQueue = []
+
+    if (isProjectMode) {
+      this.#cacheSearchResult = this.#cacheSearchResultProjectMode
+    } else {
+      this.#cacheSearchResult = this.#cacheSearchResultColumnMode
+    }
   }
 
   getRemoteSearchSpaceAccessErrors () {
     return this.#remoteSearchSpaceAccessErrors
   }
 
-  async findColumnNames (projectKey?: ProjectPrimaryKeyHumanReadable): Promise<string[]> {
-    if (projectKey !== undefined && projectKey.hasNumber()) {
-      const cacheCheckResult = this.#findCachedResult(projectKey)
-
-      if (cacheCheckResult.length > 0) {
-        return cacheCheckResult
-      }
-    } else if (this.#isSearchComplete()) {
-      return this.#findCachedResult(projectKey)
-    }
-
-    this.#searchLocallyForColumnName(projectKey)
+  async findColumnNames (): Promise<ColumnNameMap | ProjectColumnNameMap> {
+    this.#searchLocallyForColumnName()
 
     while (this.#hasAdditionalRemoteSearchSpace()) {
       await this.#tryAddRemoteSearchSpace()
-      this.#searchLocallyForColumnName(projectKey)
+      this.#searchLocallyForColumnName()
     }
 
-    return this.#findCachedResult(projectKey)
+    return this.#cachedSearchResults
   }
 
   hasDisabledRemoteSearchSpace () {
     return this.#remoteSearchSpaceAccessErrors.length > 0
   }
 
-  #cacheSearchResult (projectKey: ProjectPrimaryKeyHumanReadable, columnName: string) {
-    const cachedSearchResults = this.#cachedSearchResults
-    let projectNumberMap = cachedSearchResults.get(projectKey.getName())
+  #cacheSearchResultColumnMode (columnName: string) {
+    const cachedSearchResults: ColumnNameMap = this.#cachedSearchResults as ColumnNameMap
+
+    cachedSearchResults.set(columnName.toLocaleLowerCase(), null)
+  }
+
+  #cacheSearchResultProjectMode (columnName: string, projectOwnerName: string = '', projectNumber: number = 0) {
+    const cachedSearchResults = this.#cachedSearchResults as ProjectColumnNameMap
+    let projectNumberMap = cachedSearchResults.get(projectOwnerName)
 
     if (projectNumberMap === undefined) {
       projectNumberMap = new Map()
-      cachedSearchResults.set(projectKey.getName(), projectNumberMap)
+      cachedSearchResults.set(projectOwnerName, projectNumberMap)
     }
 
-    projectNumberMap.set(projectKey.getNumber(), columnName)
-  }
+    let columnNameMap = projectNumberMap.get(projectNumber)
 
-  #findCachedResult (projectKey?: ProjectPrimaryKeyHumanReadable): string[] {
-    if (projectKey !== undefined) {
-      if (!(projectKey.hasNumber())) {
-        const columnNamesMatchingProjectOwnerName = this.#cachedSearchResults.get(projectKey.getName())
-
-        return columnNamesMatchingProjectOwnerName === undefined ? [] : Array.from(columnNamesMatchingProjectOwnerName.values())
-      } else {
-        const projectKeyCachedResult = this.#cachedSearchResults.get(projectKey.getName())?.get(projectKey.getNumber())
-        return projectKeyCachedResult === undefined ? [] : [ projectKeyCachedResult ]
-      }
-    } else if (this.#cachedSearchResults.size !== 0) {
-      return this.#getAllFoundColumnNames()
-    } else {
-      return []
-    }
-  }
-
-  #getAllFoundColumnNames (): string[] {
-    const columnNames = []
-
-    for (const [projectOwnerName, projectNumberColumnNameMap] of this.#cachedSearchResults) {
-      for (const [projectNumber, columnName] of projectNumberColumnNameMap) {
-        columnNames.push(columnName)
-      }
+    if (columnNameMap === undefined) {
+      columnNameMap = new Map()
+      projectNumberMap.set(projectNumber, columnNameMap)
     }
 
-    return columnNames
+    columnNameMap.set(columnName.toLocaleLowerCase(), null)
   }
 
   #hasAdditionalRemoteSearchSpace (): boolean {
@@ -131,7 +117,7 @@ export default class ColumnNameFinder {
     }
   }
 
-  #searchLocallyForColumnName (projectKey?: ProjectPrimaryKeyHumanReadable): void {
+  #searchLocallyForColumnName (): void {
     const projectItemPage = this.#issue.getProjectItemPage()
     const projectItems = projectItemPage.getNodeArray()
 
@@ -155,7 +141,9 @@ export default class ColumnNameFinder {
       } else {
         projectItemPage.delete(i)
 
-        this.#cacheSearchResult(projectItem.getProjectHumanReadablePrimaryKey(), columnNameSearchResult)
+        const projectKey = projectItem.getProjectHumanReadablePrimaryKey()
+
+        this.#cacheSearchResult(columnNameSearchResult, projectKey.getName(), projectKey.getNumber())
       }
 
       i--
