@@ -40,7 +40,6 @@ export class GithubGraphQLPageAssembler {
 
           return issues
         }
-
       }
     } while (issues?.hasNextPage())
 

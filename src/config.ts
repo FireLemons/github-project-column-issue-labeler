@@ -56,7 +56,7 @@ export class Config {
     this.#logger.addBaseIndentation(2)
 
     try {
-      let configPOJO = this.#parseConfig(configPOJOString)
+      const configPOJO = this.#parseConfig(configPOJOString)
 
       if (!(TypeChecker.isObject(configPOJO))) {
         throw new TypeError('The config must be an object')
@@ -90,7 +90,6 @@ export class Config {
 
       //logger.info('Validated Config:')
       //this.#logger.info(this.toString(true))
-      
     } catch (error) {
       this.#logger.addBaseIndentation(-2)
       throw error
@@ -162,7 +161,7 @@ export class Config {
         rules.delete(LabelingAction.ADD)
       }
 
-      if(rules.has(LabelingAction.REMOVE)) {
+      if (rules.has(LabelingAction.REMOVE)) {
         rules.delete(LabelingAction.REMOVE)
       }
     }

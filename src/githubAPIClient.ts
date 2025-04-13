@@ -3,7 +3,7 @@ import { Octokit, App } from 'octokit'
 
 export interface ExtendedColumnNameSearchSpaceResponse {
   node: {
-    number: number,
+    number: number
     projectItems: GraphQLPagePOJO<ProjectItemPOJO>
   }
 }
@@ -29,8 +29,8 @@ export interface GraphQLPagePOJO<T> {
 }
 
 export interface IssuePOJO {
-  id: string,
-  number: number,
+  id: string
+  number: number
   labels: GraphQLPagePOJO<LabelPOJO>
   projectItems: GraphQLPagePOJO<ProjectItemPOJO>
 }
@@ -59,9 +59,9 @@ export interface ProjectItemPageResponse {
 
 export interface ProjectItemPOJO {
   id: string
-  fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>,
+  fieldValues: GraphQLPagePOJO<FieldValuePageNodePOJO>
   project: {
-    number: number,
+    number: number
     owner: {
       login: string
     }

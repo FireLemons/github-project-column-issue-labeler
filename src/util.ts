@@ -1,4 +1,4 @@
-export type GenericObjectWithStringKeys = {
+export interface GenericObjectWithStringKeys {
   [key: string]: any
 }
 
@@ -34,7 +34,7 @@ export function isCaseInsensitiveEqual (str1: string, str2: string): boolean {
   return caseInsensitiveCompare(str1, str2) === 0
 }
 
-export function nestedMapsToObject (rootMap: Map<any, any>) {
+export function nestedMapsToObject (rootMap: Map<any, any>): GenericObjectWithStringKeys {
   const rootContainer: GenericObjectWithStringKeys = {}
 
   const mapProcessStack = [{
@@ -43,8 +43,8 @@ export function nestedMapsToObject (rootMap: Map<any, any>) {
     parentObject: rootContainer
   }]
 
-  while(mapProcessStack.length > 0) {
-    const { map, key, parentObject} = mapProcessStack.pop()!
+  while (mapProcessStack.length > 0) {
+    const { map, key, parentObject } = mapProcessStack.pop()!
     const mapAsObject = Object.fromEntries(map.entries())
 
     for (const newObjectKey in mapAsObject) {

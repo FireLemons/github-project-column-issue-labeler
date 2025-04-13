@@ -1,4 +1,4 @@
-import { GenericObjectWithStringKeys } from "./util"
+import { GenericObjectWithStringKeys } from './util'
 
 export enum Type {
   array = 'array',
@@ -13,7 +13,7 @@ export function isObject (obj: any): boolean {
   return typeof obj === 'object' && !Array.isArray(obj) && obj !== null
 }
 
-export function isPositiveRealInteger (obj: any) {
+export function isPositiveRealInteger (obj: any): boolean {
   return Number.isInteger(obj) && obj > 0
 }
 

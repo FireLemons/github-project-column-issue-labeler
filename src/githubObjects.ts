@@ -158,7 +158,7 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
 
       if (this.activeNodeFastAccessMap.has(nodeId)) {
         this.activeNodeFastAccessMap.get(nodeId)!.node = node
-      } else if (!(this.deletedNodeIds.has(nodeId))){
+      } else if (!(this.deletedNodeIds.has(nodeId))) {
         this.activeNodeFastAccessMap.set(nodeId, edge)
         this.page.edges.push(edge)
       }
@@ -202,21 +202,21 @@ export class Issue {
     this.#columnNameMap = new Map()
   }
 
-  disableColumnNameRemoteSearchSpace ():void {
+  disableColumnNameRemoteSearchSpace (): void {
     const { projectItems } = this
 
-    for(const projectItem of projectItems.getNodeArray()) {
+    for (const projectItem of projectItems.getNodeArray()) {
       projectItem.getFieldValuePage().disableRemoteDataFetching()
     }
 
     projectItems.disableRemoteDataFetching()
   }
 
-  getId ():string {
+  getId (): string {
     return this.#id
   }
 
-  getLabels ():string[] | null {
+  getLabels (): string[] | null {
     if (this.labels !== undefined) {
       return this.labels.getNodeArray().map((label: Label) => {
         return label.getName()
@@ -226,11 +226,11 @@ export class Issue {
     return null
   }
 
-  getNumber ():number {
+  getNumber (): number {
     return this.#number
   }
 
-  getProjectItemPage ():GraphQLPageMergeable<ProjectItem> {
+  getProjectItemPage (): GraphQLPageMergeable<ProjectItem> {
     return this.projectItems
   }
 }
