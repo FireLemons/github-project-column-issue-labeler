@@ -1,12 +1,6 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, ProjectItem, ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import { GithubAPIClient } from './githubAPIClient'
-
-export enum RemoteSearchSpaceType {
-  EXPANDED_SEARCH_SPACE = 'EXPANDED_SEARCH_SPACE',
-  FIELD_VALUE_PAGE = 'FIELD_VALUE_PAGE',
-  PROJECT_ITEM_PAGE = 'PROJECT_ITEM_PAGE',
-  UNDEFINED = 'UNDEFINED'
-}
+import { GraphQLPageAccessError, GraphQLPageType } from './remoteSearchSpaceAccessError'
 
 type ProjectColumnNameMap = Map<string, Map<number, ColumnNameMap>>
 type ColumnNameMap = Map<string, null>
@@ -16,15 +10,10 @@ interface RemoteRecordPageQueryParameters {
   parentId: string
 }
 
-interface RemoteSearchSpaceAccessErrorWithSpaceType {
-  error: Error
-  type: RemoteSearchSpaceType
-}
-
 export default class ColumnNameFinder {
   #cacheSearchResult: (columnName: string, projectOwnerName?: string, number?: number) => void
   #cachedSearchResults: ColumnNameMap | ProjectColumnNameMap
-  #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
+  #remoteSearchSpaceAccessErrors: GraphQLPageAccessError[]
   #githubAPIClient: GithubAPIClient
   #hasExpandedSearchSpace: boolean
   #issue: Issue
@@ -98,12 +87,9 @@ export default class ColumnNameFinder {
     return projectItemPage.hasNextPage() || projectItemContainingIncompleteFieldValuePage !== undefined
   }
 
-  #storeIfError (error: any, type: RemoteSearchSpaceType) {
+  #storeIfError (error: any, type: GraphQLPageType) {
     if (error instanceof Error) {
-      this.#remoteSearchSpaceAccessErrors.push({
-        error,
-        type
-      })
+      this.#remoteSearchSpaceAccessErrors.push(new GraphQLPageAccessError(type, error.message))
     }
   }
 
@@ -147,7 +133,7 @@ export default class ColumnNameFinder {
       this.#issue.getProjectItemPage().merge(new GraphQLPageMergeable<ProjectItem>(expandedColumnNameSearchSpacePOJO.node.projectItems, ProjectItem))
       this.#hasExpandedSearchSpace = true
     } catch (error) {
-      this.#storeIfError(error, RemoteSearchSpaceType.EXPANDED_SEARCH_SPACE)
+      this.#storeIfError(error, GraphQLPageType.EXPANDED_SEARCH_SPACE)
       this.#issue.disableColumnNameRemoteSearchSpace()
     }
   }
@@ -173,13 +159,13 @@ export default class ColumnNameFinder {
 
       switch (PageNodeClass) {
         case FieldValue:
-          remoteSearchSpaceType = RemoteSearchSpaceType.FIELD_VALUE_PAGE
+          remoteSearchSpaceType = GraphQLPageType.FIELD_VALUE_PAGE
           break
         case ProjectItem:
-          remoteSearchSpaceType = RemoteSearchSpaceType.PROJECT_ITEM_PAGE
+          remoteSearchSpaceType = GraphQLPageType.PROJECT_ITEM_PAGE
           break
         default:
-          remoteSearchSpaceType = RemoteSearchSpaceType.UNDEFINED
+          remoteSearchSpaceType = GraphQLPageType.UNDEFINED
       }
 
       this.#storeIfError(error, remoteSearchSpaceType)
