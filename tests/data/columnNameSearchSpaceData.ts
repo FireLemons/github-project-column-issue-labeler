@@ -267,6 +267,69 @@ export default {
       }
     }
   },
+  getIssuePOJOWithCompleteSearchSpaceContainingDuplicateColumnNamesWithDifferentCase (): IssuePOJO {
+    return {
+      id: defaultIssueId,
+      number: defaultIssueNumber,
+      labels: getEmptyLabelPage(),
+      projectItems: {
+        edges: [
+          {
+            node: {
+              id: '-P34.$e(JN/%!Ld"-o',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'Duplicate Name'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'b"z-7(8eF~M8w8\\x5P',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 1,
+                owner: {
+                  login: 'zM0x?^FWWI^P=(Orjz'
+                }
+              }
+            }
+          },
+          {
+            node: {
+              id: 'FnC9mzt(Olx00c266i',
+              fieldValues: {
+                edges: [
+                  {
+                    node: {
+                      name: 'duplicate name'
+                    }
+                  }
+                ],
+                pageInfo: {
+                  endCursor: 'zZ)+.`>s1]frU(nh2t',
+                  hasNextPage: false
+                }
+              },
+              project: {
+                number: 2,
+                owner: {
+                  login: 'v0Yc&C[yg;@OjR+5:='
+                }
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          endCursor: defaultProjectItemPageEndCursor,
+          hasNextPage: false
+        }
+      }
+    }
+  },
   getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems (): IssuePOJO {
     return {
       id: defaultIssueId,

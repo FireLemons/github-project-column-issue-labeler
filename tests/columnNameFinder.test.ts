@@ -101,12 +101,26 @@ describe('findColumnNames()', () => {
   })
 
   describe('when ColumnNameFinder is not in project mode', () => {
-    it('returns a map where the keys are the column names', () => {
-      throw new Error('undefined')
+    it('returns a map where the keys are the column names', async () => {
+      const columnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
+      const columnNameA = columnNameSearchSpacePOJO.projectItems.edges[0].node.fieldValues.edges[0].node.name
+      const columnNameB = columnNameSearchSpacePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+      const columnNameC = columnNameSearchSpacePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name
+
+      const finder = new ColumnNameFinder(githubAPIClient, false, new Issue(columnNameSearchSpacePOJO))
+      const foundColumnNames = await finder.findColumnNames()
+      expect(foundColumnNames.has(columnNameA!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.has(columnNameB!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.has(columnNameC!.toLocaleLowerCase())).toBe(true)
     })
 
-    it('duplicate column names with different cases are ', () => {
-      throw new Error('undefined')
+    it('duplicate column names with different cases are reduced to a single column name', () => {
+      const columnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingDuplicateColumnNamesWithDifferentCase()
+      const columnNameA = columnNameSearchSpacePOJO.projectItems.edges[0].node.fieldValues.edges[0].node.name
+      const columnNameB = columnNameSearchSpacePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+
+      expect(columnNameA).not.toBe(columnNameB)
+      expect(columnNameA?.toLocaleLowerCase()).toBe(columnNameB?.toLocaleLowerCase())
     })
   })
 })
