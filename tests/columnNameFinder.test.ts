@@ -2,6 +2,7 @@ import ColumnNameFinder, { RemoteSearchSpaceType } from '../src/columnNameFinder
 import ColumnNameSearchSpaceData from './data/columnNameSearchSpaceData'
 import { Issue } from '../src/githubObjects'
 import { GithubAPIClient } from '../src/githubAPIClient'
+import { firstKeyValuePairOfMap } from '../src/util'
 
 jest.mock('../src/githubAPIClient')
 
@@ -72,7 +73,16 @@ describe('findColumnNames()', () => {
   })
 
   describe('when ColumnNameFinder is in project mode', () => {
-    it('returns a nested map with outer keys starting at the project owner name then the project number and finally a map containing the column names of the project\'s child column(s)', () => {
+    it('returns a nested map with outer keys starting at the project owner name then the project number and finally a map containing the column names of the project\'s child column(s)', async () => {
+      const finder = new ColumnNameFinder(githubAPIClient, true, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()))
+      const columnNames = await finder.findColumnNames()
+
+      expect(typeof firstKeyValuePairOfMap(columnNames)?.key).toBe('string')
+      expect(typeof firstKeyValuePairOfMap(firstKeyValuePairOfMap(columnNames)?.value)?.key).toBe('number')
+      expect(typeof firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(columnNames)?.value)?.value)?.key).toBe('string')
+    })
+
+    it('places each column name under the correct project owner name and project number', () => {
       throw new Error('undefined')
     })
   })
