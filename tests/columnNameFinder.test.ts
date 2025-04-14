@@ -82,8 +82,21 @@ describe('findColumnNames()', () => {
       expect(typeof firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(columnNames)?.value)?.value)?.key).toBe('string')
     })
 
-    it('places each column name under the correct project owner name and project number', () => {
-      throw new Error('undefined')
+    it('places each column name under the correct project owner name and project number', async () => {
+      const columnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
+      const columnNameA = columnNameSearchSpacePOJO.projectItems.edges[0].node.fieldValues.edges[0].node.name
+      const columnNameAProjectParent = columnNameSearchSpacePOJO.projectItems.edges[0].node.project
+      const columnNameB = columnNameSearchSpacePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name
+      const columnNameBProjectParent = columnNameSearchSpacePOJO.projectItems.edges[1].node.project
+      const columnNameC = columnNameSearchSpacePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name
+      const columnNameCProjectParent = columnNameSearchSpacePOJO.projectItems.edges[2].node.project
+
+      const finder = new ColumnNameFinder(githubAPIClient, true, new Issue(columnNameSearchSpacePOJO))
+      const foundColumnNames = await finder.findColumnNames()
+
+      expect(foundColumnNames.get(columnNameAProjectParent.owner.login)?.get(columnNameAProjectParent.number)?.has(columnNameA!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.get(columnNameBProjectParent.owner.login)?.get(columnNameBProjectParent.number)?.has(columnNameB!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.get(columnNameCProjectParent.owner.login)?.get(columnNameCProjectParent.number)?.has(columnNameC!.toLocaleLowerCase())).toBe(true)
     })
   })
 
