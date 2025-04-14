@@ -27,7 +27,6 @@ export default class ColumnNameFinder {
   #remoteSearchSpaceAccessErrors: RemoteSearchSpaceAccessErrorWithSpaceType[]
   #githubAPIClient: GithubAPIClient
   #hasExpandedSearchSpace: boolean
-  #isProjectMode: boolean
   #issue: Issue
   #remoteSearchSpaceParameterQueue: RemoteRecordPageQueryParameters[]
 
@@ -36,7 +35,6 @@ export default class ColumnNameFinder {
     this.#remoteSearchSpaceAccessErrors = []
     this.#hasExpandedSearchSpace = false
     this.#githubAPIClient = githubAPIClient
-    this.#isProjectMode = isProjectMode
     this.#issue = issue
     this.#remoteSearchSpaceParameterQueue = []
 
@@ -100,14 +98,6 @@ export default class ColumnNameFinder {
     return projectItemPage.hasNextPage() || projectItemContainingIncompleteFieldValuePage !== undefined
   }
 
-  #hasLocalUnsearchedSpace (): boolean {
-    return !(this.#issue.getProjectItemPage().isEmpty())
-  }
-
-  #isSearchComplete (): boolean {
-    return !(this.#hasAdditionalRemoteSearchSpace() || this.#hasLocalUnsearchedSpace())
-  }
-
   #storeIfError (error: any, type: RemoteSearchSpaceType) {
     if (error instanceof Error) {
       this.#remoteSearchSpaceAccessErrors.push({
@@ -130,13 +120,13 @@ export default class ColumnNameFinder {
       if (columnNameSearchResult === null) {
         const fieldValuePage = projectItem.getFieldValuePage()
 
-        if (fieldValuePage.hasNextPage() && this.#hasExpandedSearchSpace) {
+        if (!(fieldValuePage.hasNextPage())) {
+          projectItemPage.delete(i)
+        } else if (this.#hasExpandedSearchSpace) {
           this.#remoteSearchSpaceParameterQueue.push({
             parentId: projectItem.getId(),
             localPage: fieldValuePage
           })
-        } else if (!(fieldValuePage.hasNextPage())) {
-          projectItemPage.delete(i)
         }
       } else {
         projectItemPage.delete(i)
