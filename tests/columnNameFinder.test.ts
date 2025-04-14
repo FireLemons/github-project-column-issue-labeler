@@ -13,11 +13,39 @@ beforeEach(() => {
 })
 
 describe('findColumnNames()', () => {
-  it('searches the entire search space for all column names', async () => {
+  it('searches the entire local search space for all column names', async () => {
     const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
     const issue = new Issue(issuePOJO)
 
     const finder = new ColumnNameFinder(githubAPIClient, false, issue)
+    await finder.findColumnNames()
+
+    expect(issue.getProjectItemPage().getEdges().length).toBe(0)
+  })
+
+  it('searches the entire remote search space for all column names', async () => {
+    const expandedColumnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAColumnNameAndIncompletePages()
+    jest.spyOn(githubAPIClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(expandedColumnNameSearchSpacePOJO)
+    jest.spyOn(githubAPIClient, 'fetchFieldValuePage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getFieldValuePageResponseContainingAColumnNameAndNoAdditionalPagesIndicated())
+    jest.spyOn(githubAPIClient, 'fetchProjectItemPage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getProjectItemPageResponseContainingTwoColumnNamesAndNoAdditionalPagesIndicated())
+
+    const issue = new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace())
+    const finder = new ColumnNameFinder(githubAPIClient, false, issue)
+
+    await finder.findColumnNames()
+
+    expect(issue.getProjectItemPage().getEdges().length).toBe(0)
+  })
+
+  it('searches the entire available remote search space for all column names', async () => {
+    const expandedColumnNameSearchSpacePOJO = ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAColumnNameAndIncompletePages()
+    jest.spyOn(githubAPIClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(expandedColumnNameSearchSpacePOJO)
+    jest.spyOn(githubAPIClient, 'fetchFieldValuePage').mockRejectedValueOnce(new Error('fetch failure'))
+    jest.spyOn(githubAPIClient, 'fetchProjectItemPage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getProjectItemPageResponseContainingTwoColumnNamesAndNoAdditionalPagesIndicated())
+
+    const issue = new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace())
+    const finder = new ColumnNameFinder(githubAPIClient, false, issue)
+
     await finder.findColumnNames()
 
     expect(issue.getProjectItemPage().getEdges().length).toBe(0)
@@ -30,30 +58,6 @@ describe('findColumnNames()', () => {
     const projectItemPageFetchSpy = jest.spyOn(githubAPIClient, 'fetchProjectItemPage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getProjectItemPageResponseContainingTwoColumnNamesAndNoAdditionalPagesIndicated())
 
     const finder = new ColumnNameFinder(githubAPIClient, false, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace()))
-
-    expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(0)
-    expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(0)
-    expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(0)
-
-    await finder.findColumnNames()
-
-    expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
-    expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
-    expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
-
-    await finder.findColumnNames()
-
-    expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(1)
-    expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(1)
-    expect(projectItemPageFetchSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('caches the search result so it does not fetch the remote search space again', async () => {
-    const finder = new ColumnNameFinder(githubAPIClient, false, new Issue(ColumnNameSearchSpaceData.getIssuePOJOWithIncompleteEmptySearchSpace()))
-
-    const expandedSpaceFetchSpy = jest.spyOn(githubAPIClient, 'fetchExpandedColumnNameSearchSpace').mockResolvedValueOnce(ColumnNameSearchSpaceData.getExtendedColumnNameResponseContainingAnIncompleteProjectItemPageAndAnIncompleteFieldValuePage())
-    const fieldValuePageFetchSpy = jest.spyOn(githubAPIClient, 'fetchFieldValuePage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getFieldValuePageResponseContainingAColumnNameAndNoAdditionalPagesIndicated())
-    const projectItemPageFetchSpy = jest.spyOn(githubAPIClient, 'fetchProjectItemPage').mockResolvedValueOnce(ColumnNameSearchSpaceData.getProjectItemPageResponseContainingTwoColumnNamesAndNoAdditionalPagesIndicated())
 
     expect(expandedSpaceFetchSpy).toHaveBeenCalledTimes(0)
     expect(fieldValuePageFetchSpy).toHaveBeenCalledTimes(0)
