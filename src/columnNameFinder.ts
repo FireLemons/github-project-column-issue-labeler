@@ -49,10 +49,6 @@ export default class ColumnNameFinder {
     return this.#cachedSearchResults
   }
 
-  hasDisabledRemoteSearchSpace () {
-    return this.#remoteSearchSpaceAccessErrors.length > 0
-  }
-
   #cacheSearchResultColumnMode (columnName: string) {
     const cachedSearchResults: ColumnNameMap = this.#cachedSearchResults as ColumnNameMap
 
