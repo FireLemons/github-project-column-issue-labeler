@@ -3,8 +3,8 @@ import { GithubAPIClient, GraphQLPagePOJO, IssuePOJO } from './githubAPIClient'
 import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
 import { GraphQLPage, Issue, ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import { Logger } from './logger'
-import ColumnNameFinder from './columnNameFinder'
-import { Column, LabelingAction, LabelingRulePOJO, Project } from './configObjects'
+import { Config, LabelingAction, LabelingRuleContainer } from './config'
+import LabelResolver from './labelResolver'
 
 interface Stats {
   issueCount: number
@@ -13,25 +13,20 @@ interface Stats {
   issuesWithFailedLabelings: number
 }
 
-interface LabelDiff {
-  ADD? : string[]
-  REMOVE? : string[]
-}
-
-type LabelingActionsMappedToLabels = Map<LabelingAction, string[]>
-
 export default class Labeler {
   #githubAPIClient: GithubAPIClient
   #githubGraphQLPageAssembler: GithubGraphQLPageAssembler
   #logger: Logger
-  #labelingRulesQuickLookupMap: Map<string, LabelingActionsMappedToLabels> | Map<ProjectPrimaryKeyHumanReadable, Map<string, LabelingActionsMappedToLabels>>
+  #labelingRules: LabelingRuleContainer
+  #labelResolver: LabelResolver
   #stats: Stats
 
-  constructor (githubAPIClient: GithubAPIClient, logger: Logger, validatedLabelingRules: Column[] | Project[] ) {
+  constructor (githubAPIClient: GithubAPIClient, logger: Logger, config: Config) {
     this.#githubAPIClient = githubAPIClient
     this.#githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
     this.#logger = logger
-    this.#labelingRulesQuickLookupMap = this.#formatLabelingRulesForFastAccess(validatedLabelingRules)
+    this.#labelingRules = config.getLabelingRules()
+    this.#labelResolver = new LabelResolver(githubAPIClient, config)
     this.#stats = {
       issueCount: 0,
       issuesWithColumnNamesCount: 0,
@@ -57,23 +52,6 @@ export default class Labeler {
     }
 
     this.processIssuePage(issuePage)
-  }
-
-  async #determineLabelDiff (columnNameFinder: ColumnNameFinder): Promise<LabelDiff> {
-    const labelingRulesQuickLookupMap = this.#labelingRulesQuickLookupMap
-    const [ firstKey ] = labelingRulesQuickLookupMap.keys()
-
-    if (firstKey instanceof ProjectPrimaryKeyHumanReadable) {
-      for (const [projectKey, columnNamesMappedToLabelingActions] of labelingRulesQuickLookupMap) {
-        const columnNameSearchResult = await columnNameFinder.findColumnNames(projectKey as ProjectPrimaryKeyHumanReadable)
-      }
-    } else {
-      const columnNames = await columnNameFinder.findColumnNames()
-
-      for (const columnName of columnNames) {
-
-      }
-    }
   }
 
   async #fetchThenProcessIssuePages (githubAPIClient: GithubAPIClient) {
@@ -118,62 +96,9 @@ export default class Labeler {
     githubAPIClient.fetchIssuePage()
   }
 
-  #formatLabelingRulesForFastAccess (labelingRules: Column[] | Project[]): Map<string, LabelingActionsMappedToLabels> | Map<ProjectPrimaryKeyHumanReadable, Map<string, LabelingActionsMappedToLabels>> {
-    const labelingRuleFastAccessMap = new Map()
-    const firstLabelingRuleContainer = labelingRules[0]
-
-    if ('projectKey' in firstLabelingRuleContainer) {
-      for (const project of labelingRules as Project[]) {
-        const columnNamesMappedToLabelingActionMap = new Map()
-
-        for (const column of project.columns) {
-          columnNamesMappedToLabelingActionMap.set(column.name, column.labelingRules)
-        }
-
-        labelingRuleFastAccessMap.set(project.projectKey, columnNamesMappedToLabelingActionMap)
-      }
-    } else {
-      for (const column of labelingRules as Column[]) {
-        labelingRuleFastAccessMap.set(column.name, column.labelingRules)
-      }
-    }
-
-    return labelingRuleFastAccessMap
-  }
-
-  isAlreadyLabeled (issue: Issue, labelingRule: LabelingRulePOJO) {
-    throw new Error('unimplimented')
-
-    const labels = issue.getLabels()
-    return true
-  }
-
-  async labelIssue (issue: Issue, labels: string[]) {
-
-  }
-
   async processIssue (issue: Issue) {
     try {
-      const columnNameFinder = new ColumnNameFinder(this.#githubAPIClient, issue)
-      const columnNameSearchResult = await columnNameFinder.findColumnNames()
-      console.log(issue.getNumber(), columnNameSearchResult)
-
-      if (columnNameSearchResult.length <= 0) {
-        if (columnNameFinder.hasDisabledRemoteSearchSpace()) {
-          this.#logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
-          this.#logger.error('Unable to conduct complete search for column name')
-          this.#stats.issuesWithFailedLabelings++
-        } else {
-          this.#stats.issuesNotRequiringLabeling++
-        }
-      } else {
-        console.log(`Found column name for issue #${issue.getNumber()}`)
-        /* const labelingRule = this.findLabelingRule(columnNameSearchResult)
-
-        if (labelingRule !== undefined && !(this.isAlreadyLabeled(issue, labelingRule))) {
-          this.labelIssue(issue, labelingRule)
-        }*/
-      }
+      this.#labelResolver.getLabelDiff(issue)
     } catch (error) {
       this.#logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
       this.#logger.tryErrorLogErrorObject(error, 2)

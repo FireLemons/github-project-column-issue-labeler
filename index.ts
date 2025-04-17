@@ -36,8 +36,8 @@ async function main () {
     logger.info('Validated Config:')
     logger.info(config.toString(true))
   } catch (error) {
-    this.logger.error('Failed to validate config', 2)
-    this.logger.tryErrorLogErrorObject(error, 4)
+    logger.error('Failed to validate config', 2)
+    logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
     return
