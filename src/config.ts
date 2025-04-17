@@ -87,18 +87,9 @@ export class Config {
 
       this.#labelingRuleContainer = this.#validateLabelingRuleContainer(labelingRuleContainerPOJO)
       this.#logger.addBaseIndentation(-2)
-
-      //logger.info('Validated Config:')
-      //this.#logger.info(this.toString(true))
     } catch (error) {
       this.#logger.addBaseIndentation(-2)
       throw error
-      /*this.logger.addBaseIndentation(-4)
-
-      this.logger.error('Failed to validate config')
-      this.logger.tryErrorLogErrorObject(error, 2)
-
-      return null*/
     }
   }
 

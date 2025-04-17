@@ -27,9 +27,18 @@ async function main () {
     return
   }
 
-  const config = new Config(configFileContents, logger)
+  let config: Config
 
-  if (config === null) {
+  try {
+    logger.info('Validating Config')
+    config = new Config(configFileContents, logger)
+
+    logger.info('Validated Config:')
+    logger.info(config.toString(true))
+  } catch (error) {
+    this.logger.error('Failed to validate config', 2)
+    this.logger.tryErrorLogErrorObject(error, 4)
+
     process.exitCode = 1
     return
   }
@@ -39,7 +48,7 @@ async function main () {
 
   try {
     logger.info('Initializing github API objects')
-    githubAPIClient = new GithubAPIClient(config.accessToken, config.repo.name, config.repo.ownerName)
+    githubAPIClient = new GithubAPIClient(config.getAPIToken(), config.getRepoName(), config.getRepoOwnerName())
     githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
     logger.error('Failed to initialize github API objects', 2)
@@ -51,7 +60,7 @@ async function main () {
 
   logger.info('Initialized github API client')
 
-  const labeler = new Labeler(githubAPIClient, logger, (config.columns ?? config.projects)!)
+  const labeler = new Labeler(githubAPIClient, logger, config)
 
   labeler.labelIssues()
 }
