@@ -50,7 +50,7 @@ export function nestedMapsToObject (rootMap: Map<any, any>): GenericObjectWithSt
     for (const newObjectKey in mapAsObject) {
       const value = mapAsObject[newObjectKey]
 
-      if (value.constructor.name === 'Map') {
+      if (value?.constructor.name === 'Map') {
         mapProcessStack.push({
           key: newObjectKey,
           map: value,
