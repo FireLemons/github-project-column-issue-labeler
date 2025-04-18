@@ -9,6 +9,10 @@ export enum Type {
   string = 'string'
 }
 
+export function isBoolean (obj: any): boolean {
+  return typeof obj === 'boolean'
+}
+
 export function isObject (obj: any): boolean {
   return typeof obj === 'object' && !Array.isArray(obj) && obj !== null
 }

@@ -1,5 +1,4 @@
 import { GithubAPIClient } from './src/githubAPIClient'
-import { GithubGraphQLPageAssembler } from './src/githubGraphQLPageAssembler'
 import { Logger } from './src/logger'
 import { readFile } from 'node:fs/promises'
 import { Config } from './src/config'
@@ -44,14 +43,12 @@ async function main () {
   }
 
   let githubAPIClient
-  let githubGraphQLPageAssembler
 
   try {
-    logger.info('Initializing github API objects')
+    logger.info('Initializing github API client')
     githubAPIClient = new GithubAPIClient(config.getAPIToken(), config.getRepoName(), config.getRepoOwnerName())
-    githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
   } catch (error) {
-    logger.error('Failed to initialize github API objects', 2)
+    logger.error('Failed to initialize github API client', 2)
     logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1

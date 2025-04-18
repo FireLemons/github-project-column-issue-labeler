@@ -1,10 +1,10 @@
 // Javascript destructuring assignment
 import { GithubAPIClient, GraphQLPagePOJO, IssuePOJO } from './githubAPIClient'
-import { GithubGraphQLPageAssembler } from './githubGraphQLPageAssembler'
-import { GraphQLPage, Issue, ProjectPrimaryKeyHumanReadable } from './githubObjects'
+import { GraphQLPage, Issue } from './githubObjects'
 import { Logger } from './logger'
-import { Config, LabelingAction, LabelingRuleContainer } from './config'
+import { Config, LabelingRuleContainer } from './config'
 import LabelResolver from './labelResolver'
+import * as TypeChecker from './typeChecker'
 
 interface Stats {
   issueCount: number
@@ -15,7 +15,6 @@ interface Stats {
 
 export default class Labeler {
   #githubAPIClient: GithubAPIClient
-  #githubGraphQLPageAssembler: GithubGraphQLPageAssembler
   #logger: Logger
   #labelingRules: LabelingRuleContainer
   #labelResolver: LabelResolver
@@ -23,7 +22,6 @@ export default class Labeler {
 
   constructor (githubAPIClient: GithubAPIClient, logger: Logger, config: Config) {
     this.#githubAPIClient = githubAPIClient
-    this.#githubGraphQLPageAssembler = new GithubGraphQLPageAssembler(githubAPIClient)
     this.#logger = logger
     this.#labelingRules = config.getLabelingRules()
     this.#labelResolver = new LabelResolver(githubAPIClient, config)
@@ -36,67 +34,67 @@ export default class Labeler {
   }
 
   async labelIssues () {
-    let issuePage: GraphQLPage<Issue>
-
-    try {
-      this.#logger.info('Fetching issues with labels and column data...')
-      issuePage = await this.#githubGraphQLPageAssembler.fetchAllIssues()
-
-      this.#logger.info(`Fetched ${issuePage.getEdges().length} issues`, 2)
-    } catch (error) {
-      this.#logger.error('Failed to fetch issues with labels and column data', 2)
-      this.#logger.tryErrorLogErrorObject(error, 4)
-
-      process.exitCode = 1
-      return
-    }
-
-    this.processIssuePage(issuePage)
+    await this.#processIssuePages()
   }
 
-  async #fetchThenProcessIssuePages (githubAPIClient: GithubAPIClient) {
+  async #fetchIssuePage (cursor?: string | null): Promise<GraphQLPagePOJO<IssuePOJO> | null> {
+    try {
+      return (await this.#githubAPIClient.fetchIssuePage(cursor)).repository.issues
+    } catch (error) {
+      this.#logger.warn('Failed to fetch an issue page. No more issue pages will be fetched.')
+      this.#logger.tryWarnLogErrorObject(error, 2)
+      return null
+    }
+  }
+
+  #instantiateIssuePage (issuePagePOJO: GraphQLPagePOJO<IssuePOJO>): GraphQLPage<Issue> | null {
+    try {
+      const issuePage = new GraphQLPage<Issue>(issuePagePOJO, Issue)
+
+      return issuePage
+    } catch (error) {
+      this.#logger.warn('Failed to instantiate a graphQL issue page. This page of issues will be skipped.')
+      this.#logger.tryWarnLogErrorObject(error, 2)
+
+      return null
+    }
+  }
+
+  async #processIssuePages () {
     let cursor
     let hasNextPage
 
-      do {
-        let issuePage: GraphQLPage<Issue>
-        let issuePagePOJO: GraphQLPagePOJO<IssuePOJO>
+    do {
+      this.#logger.info('Fetching issue page...')
+      const issuePagePOJO = await this.#fetchIssuePage(cursor)
 
-        try {
-          issuePagePOJO = (await githubAPIClient.fetchIssuePage(cursor)).repository.issues
-        } catch (error) {
-          this.#logger.warn('Failed to fetch an issue page. No more issue pages will be fetched.')
-          this.#logger.tryWarnLogErrorObject(error, 2)
+      if (issuePagePOJO === null) {
+        return
+      }
+
+      const issuePage = this.#instantiateIssuePage(issuePagePOJO)
+
+      if (issuePage instanceof GraphQLPage) {
+        this.#logger.info(`Fetched page containing ${issuePage.getEdges().length} issues`, 2)
+        cursor = issuePage.getEndCursor()
+        hasNextPage = issuePage.hasNextPage()
+
+        this.#processIssuePage(issuePage)
+      } else {
+        const pageInfo = this.#recoverPaginationDataFromPOJO(issuePagePOJO)
+
+        if (pageInfo === null) {
+          this.#logger.warn('Failed to find parameters needed to fetch next page in issue page data. No more issue pages will be fetched.')
           return
         }
 
-        try {
-          issuePage = new GraphQLPage<Issue>(issuePagePOJO, Issue)
-
-          cursor = issuePage.getEndCursor()
-          hasNextPage = issuePage.hasNextPage()
-
-          this.processIssuePage(issuePage)
-        } catch (error) {
-          this.#logger.warn('Failed to instantiate a graphQL issue page. This page of issues will be skipped.')
-          this.#logger.tryWarnLogErrorObject(error, 2)
-
-          try {
-            const { pageInfo } = issuePagePOJO
-            cursor = pageInfo.endCursor
-            hasNextPage = pageInfo.hasNextPage
-          } catch (error) {
-            this.#logger.warn('Failed to find parameters needed to fetch next page in issue page data. No more issue pages will be fetched.')
-            this.#logger.tryWarnLogErrorObject(error, 2)
-
-            return
-          }
-        }
-      } while (hasNextPage)
-    githubAPIClient.fetchIssuePage()
+        cursor = pageInfo.cursor
+        hasNextPage = pageInfo.hasNextPage
+      }
+    } while (hasNextPage)
   }
 
-  async processIssue (issue: Issue) {
+  async #processIssue (issue: Issue) {
     try {
       this.#labelResolver.getLabelDiff(issue)
     } catch (error) {
@@ -108,11 +106,29 @@ export default class Labeler {
     }
   }
 
-  processIssuePage (issuePage: GraphQLPage<Issue>) {
+  #processIssuePage (issuePage: GraphQLPage<Issue>) {
+    this.#logger.addBaseIndentation(2)
+    this.#logger.info('Processing issue page')
     const issues = issuePage.getNodeArray()
 
     for(const issue of issues) {
-      this.processIssue(issue)
+      this.#processIssue(issue)
     }
+    this.#logger.addBaseIndentation(-2)
+  }
+
+  #recoverPaginationDataFromPOJO (issuePOJO: any): { cursor: string, hasNextPage: boolean } | null  {
+    if (issuePOJO?.pageInfo !== undefined) {
+      const { pageInfo } = issuePOJO
+
+      if (TypeChecker.isString(pageInfo.endCursor) && TypeChecker.isBoolean(pageInfo.hasNextPage)) {
+        return {
+          cursor: pageInfo.endCursor,
+          hasNextPage: pageInfo.hasNextPage
+        }
+      }
+    }
+
+    return null
   }
 }
