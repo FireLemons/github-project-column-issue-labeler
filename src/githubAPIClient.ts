@@ -157,8 +157,8 @@ export class GithubAPIClient {
       ${fragmentProjectItemPage}
     `, {
       issueId,
-      pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
-      pageSizeProjectItem: MIN_PAGE_SIZE //MAX_PAGE_SIZE
+      pageSizeFieldValue: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
+      pageSizeProjectItem: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE
     })
   }
 
@@ -177,7 +177,7 @@ export class GithubAPIClient {
       ${fragmentFieldValuePage}
       `, {
         cursor,
-        pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
+        pageSizeFieldValue: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
         projectItemId
       }
     )
@@ -217,10 +217,10 @@ export class GithubAPIClient {
       ${fragmentProjectItemPage}
       `, {
         cursor,
-        pageSizeIssue: MAX_PAGE_SIZE,
-        pageSizeLabel: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
-        pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
-        pageSizeProjectItem: MIN_PAGE_SIZE, //SMALL_PAGE_SIZE,
+        pageSizeIssue: false ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
+        pageSizeLabel: true ? SMALL_PAGE_SIZE : MIN_PAGE_SIZE,
+        pageSizeFieldValue: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
+        pageSizeProjectItem: true ? SMALL_PAGE_SIZE : MIN_PAGE_SIZE,
         repoName: this.#repoName,
         repoOwnerName: this.#repoOwnerName
       }
@@ -243,7 +243,7 @@ export class GithubAPIClient {
       `, {
         cursor,
         issueId,
-        pageSize: MIN_PAGE_SIZE //MAX_PAGE_SIZE
+        pageSize: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE
       }
     )
   }
@@ -265,8 +265,8 @@ export class GithubAPIClient {
       `, {
         cursor,
         issueId,
-        pageSizeFieldValue: MIN_PAGE_SIZE, //MAX_PAGE_SIZE,
-        pageSizeProjectItem: MIN_PAGE_SIZE //MAX_PAGE_SIZE
+        pageSizeFieldValue: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
+        pageSizeProjectItem: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE
       })
   }
 }
