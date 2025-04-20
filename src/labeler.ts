@@ -60,7 +60,7 @@ export default class Labeler {
     }
   }
 
-  async #processIssuePages () {
+  async #processIssuePages (): Promise<void> {
     let cursor
     let hasNextPage
 
@@ -94,7 +94,7 @@ export default class Labeler {
     } while (hasNextPage)
   }
 
-  async #processIssue (issue: Issue) {
+  async #processIssue (issue: Issue): Promise<void> {
     try {
       this.#labelResolver.getLabelDiff(issue)
     } catch (error) {
@@ -106,7 +106,7 @@ export default class Labeler {
     }
   }
 
-  #processIssuePage (issuePage: GraphQLPage<Issue>) {
+  #processIssuePage (issuePage: GraphQLPage<Issue>): void {
     this.#logger.addBaseIndentation(2)
     this.#logger.info('Processing issue page')
     const issues = issuePage.getNodeArray()
