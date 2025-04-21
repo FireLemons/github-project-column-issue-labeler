@@ -1,34 +1,8 @@
-import ConfigTestData from './data/configTestData'
+import { configTestData, ConfigPOJO } from './data/configTestInputJSONs'
 import { Config, LabelingAction, ProjectLabelingRuleContainer } from '../src/config'
 import { Logger } from '../src/logger'
 import * as TypeChecker from '../src/typeChecker'
 import { caseInsensitiveCompare, firstKeyValuePairOfMap } from '../src/util'
-
-interface ConfigPOJO {
-  accessToken: string
-  repo: {
-    name: string
-    ownerName: string
-  }
-  columns?: {
-    name: string
-    labelingActions: {
-      action: string
-      labels: string[]
-    }[]
-  }[]
-  projects?: {
-    columns: {
-      name: string
-      labelingActions: {
-        action: string
-        labels: string[]
-      }[]
-    }[]
-    number: number
-    ownerLogin: string
-  }[]
-}
 
 const logger = new Logger()
 
@@ -63,7 +37,7 @@ describe('Config', () => {
       describe('when config contains invalid json', () => {
         it('throws an error', () => {
           expect(() => {
-            new Config(ConfigTestData.invalidJSON, logger)
+            new Config(configTestData.invalidJSON, logger)
           }).toThrow(SyntaxError)
         })
       })
@@ -71,7 +45,7 @@ describe('Config', () => {
       describe('when config is missing a required key', () => {
         it('throws a reference error with a message describing which key is missing', () => {
           const initConfig = () => {
-            new Config(ConfigTestData.configMissingKey, logger)
+            new Config(configTestData.invalidMissingKey, logger)
           }
 
           expect(initConfig).toThrow(ReferenceError)
@@ -82,7 +56,7 @@ describe('Config', () => {
       describe('when the github access token is of the wrong type', () => {
         it('throws an error with a message describing the problem', () => {
           const initConfig = () => {
-            new Config(ConfigTestData.configWrongTypeAccessToken, logger)
+            new Config(configTestData.invalidWrongTypeAccessToken, logger)
           }
 
           expect(initConfig).toThrow(TypeError)
@@ -93,7 +67,7 @@ describe('Config', () => {
       describe('when the github access token contains only whitespace', () => {
         it('throws an error with a message describing the problem', () => {
           const initConfig = () => {
-            new Config(ConfigTestData.configWhiteSpaceOnlyAccessToken, logger)
+            new Config(configTestData.invalidWhiteSpaceOnlyAccessToken, logger)
           }
 
           expect(initConfig).toThrow(RangeError)
@@ -105,7 +79,7 @@ describe('Config', () => {
         describe('when projects is not an array', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.configWrongTypeProjects, logger)
+              new Config(configTestData.invalidWrongTypeProjects, logger)
             }
 
             expect(initConfig).toThrow(TypeError)
@@ -116,7 +90,7 @@ describe('Config', () => {
         describe('when all projects are invalid', () => {
           it('throws an error with a message describing that there are no valid projects', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.projectOnlyInvalidValues, logger)
+              new Config(configTestData.projectModeOnlyInvalidValues, logger)
             }
 
             expect(initConfig).toThrow(Error)
@@ -129,7 +103,7 @@ describe('Config', () => {
         describe('when columns is not an array', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.configWrongTypeColumns, logger)
+              new Config(configTestData.invalidWrongTypeColumns, logger)
             }
 
             expect(initConfig).toThrow(TypeError)
@@ -140,7 +114,7 @@ describe('Config', () => {
         describe('when all columns are invalid', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.columnOnlyInvalidValues, logger)
+              new Config(configTestData.columnModeOnlyInvalidValues, logger)
             }
 
             expect(initConfig).toThrow(Error)
@@ -153,7 +127,7 @@ describe('Config', () => {
         describe('when the repo is of the wrong type', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.configWrongTypeRepo, logger)
+              new Config(configTestData.invalidWrongTypeRepo, logger)
             }
 
             expect(initConfig).toThrow(TypeError)
@@ -164,7 +138,7 @@ describe('Config', () => {
         describe('when the repo owner is not a string', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.repoWrongTypeOwnerName, logger)
+              new Config(configTestData.invalidRepoWrongTypeOwnerName, logger)
             }
 
             expect(initConfig).toThrow(TypeError)
@@ -175,7 +149,7 @@ describe('Config', () => {
         describe('when the repo owner contains only whitespace', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.repoWhitespaceOnlyOwnerName, logger)
+              new Config(configTestData.invalidRepoWhitespaceOnlyOwnerName, logger)
             }
 
             expect(initConfig).toThrow(RangeError)
@@ -186,7 +160,7 @@ describe('Config', () => {
         describe('when the repo name is not a string', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.repoWrongTypeName, logger)
+              new Config(configTestData.invalidRepoWrongTypeName, logger)
             }
 
             expect(initConfig).toThrow(TypeError)
@@ -197,7 +171,7 @@ describe('Config', () => {
         describe('when the repo name contains only whitespace', () => {
           it('throws an error with a message describing the problem', () => {
             const initConfig = () => {
-              new Config(ConfigTestData.repoWhitespaceOnlyName, logger)
+              new Config(configTestData.invalidRepoWhitespaceOnlyName, logger)
             }
 
             expect(initConfig).toThrow(RangeError)
@@ -216,7 +190,7 @@ describe('Config', () => {
     beforeAll(() => {
       resetSpies()
 
-      config = new Config(ConfigTestData.configInvalidNonEssentialSections, logger)
+      config = new Config(configTestData.projectModeInvalidNonEssentialSections, logger)
 
       consoleInfoCalls = consoleLoggingFunctionSpies.info.mock.calls
       consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
@@ -580,9 +554,9 @@ describe('Config', () => {
   })
 
   describe('getLabelingRules()', () => {
-    describe('the container structure', () => {
+    describe('the labeling rules container structure', () => {
       it('is a column name map with child labeling action maps with label array values when the config initialized with a json using columns', () => {
-        const config = new Config(ConfigTestData.columnMinimal, logger)
+        const config = new Config(configTestData.columnModeMinimal, logger)
         const labelingRules = config.getLabelingRules()
 
         expect(labelingRules).toBeInstanceOf(Map)
@@ -599,7 +573,7 @@ describe('Config', () => {
       })
 
       it('is a project owner name map with child project number maps with child column maps(see above) when the config initialized with a json using projects', () => {
-        const config = new Config(ConfigTestData.projectMinimal, logger)
+        const config = new Config(configTestData.projectModeMinimal, logger)
         const labelingRules = config.getLabelingRules()
 
         expect(labelingRules).toBeInstanceOf(Map)
@@ -626,6 +600,36 @@ describe('Config', () => {
       })
     })
 
+    describe('the capitalization of strings in the labeling rules container', () => {
+      let configInputJSON: ConfigPOJO
+      let labelingRuleContainer: ProjectLabelingRuleContainer
+      let projectDuplicateNameAndNumberName: string
+      let projectDuplicateNameAndNumberNumber: number
+      let projectDuplicateNameOnlyName: string
+
+      beforeAll(() => {
+        const configInputJSONString = configTestData.projectModeDuplicates
+        configInputJSON = JSON.parse(configInputJSONString)
+        projectDuplicateNameAndNumberName = configInputJSON.projects![0].ownerLogin.toLocaleLowerCase()
+        projectDuplicateNameAndNumberNumber = configInputJSON.projects![0].number
+        projectDuplicateNameOnlyName = configInputJSON.projects![2].ownerLogin.toLocaleLowerCase()
+
+        const config = new Config(configInputJSONString, logger)
+        labelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
+      })
+      it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
+        throw new Error('unimplimented')
+      })
+
+      it("converts column names to lowercase to match the structure of an issue's column name container", () => {
+        throw new Error('unimplimented')
+      })
+
+      it('preserves the original case of the labels for writing', () => {
+        throw new Error('unimplimented')
+      })
+    })
+
     describe('when the config has duplicates among its labeling rules', () => {
       describe('duplicate project merging', () => {
         let configInputJSON: ConfigPOJO
@@ -637,7 +641,7 @@ describe('Config', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configInputJSONString = ConfigTestData.configDuplicates
+          const configInputJSONString = configTestData.projectModeDuplicates
           configInputJSON = JSON.parse(configInputJSONString)
           consoleWarnCalls = consoleLoggingFunctionSpies.warn.mock.calls
           projectDuplicateNameAndNumberName = configInputJSON.projects![0].ownerLogin.toLocaleLowerCase()
@@ -823,7 +827,7 @@ describe('Config', () => {
 
         beforeAll(() => {
           resetSpies()
-          const configInputJSONString = ConfigTestData.configDuplicatesWithCaseMismatch
+          const configInputJSONString = configTestData.projectModeDuplicatesWithCaseMismatch
           const config = new Config(configInputJSONString, logger)
           configInputJSON = JSON.parse(configInputJSONString)
           projectDuplicateNameAUppercase = configInputJSON.projects![0].ownerLogin
@@ -990,7 +994,7 @@ describe('Config', () => {
       let projectNumberUnique: number
 
       beforeAll(() => {
-        const configInputJSONString = ConfigTestData.projectNearDuplicates
+        const configInputJSONString = configTestData.projectModeNearDuplicateProjects
         const configInputJSON = JSON.parse(configInputJSONString)
 
         columnName1 = configInputJSON.projects[0].columns[0].name.toLocaleLowerCase()
@@ -1121,19 +1125,19 @@ describe('Config', () => {
 
   describe('isProjectMode()', () => {
     it('returns true if the input json is using the projects key', () => {
-      const config = new Config(ConfigTestData.projectMinimal, logger)
+      const config = new Config(configTestData.projectModeMinimal, logger)
 
       expect(config.isProjectMode()).toBe(true)
     })
 
     it('returns true if the input json is using the projects key and the columns key', () => {
-      const config = new Config(ConfigTestData.projectOverridingColumn, logger)
+      const config = new Config(configTestData.projectModeOverridingColumnMode, logger)
 
       expect(config.isProjectMode()).toBe(true)
     })
 
     it('returns false if the input json is using the columns key and not the projects key', () => {
-      const config = new Config(ConfigTestData.columnMinimal, logger)
+      const config = new Config(configTestData.columnModeMinimal, logger)
 
       expect(config.isProjectMode()).toBe(false)
     })
@@ -1155,7 +1159,7 @@ describe('Config', () => {
     let repoOwnerName: string
 
     beforeAll(() => {
-      const configInputJSONString = ConfigTestData.projectConfigWithSiblingsAndHighEntropyValues
+      const configInputJSONString = configTestData.projectModeMultipleProjectsWithHighEntropyValues
       const configInputJSON = JSON.parse(configInputJSONString)
       apiToken = configInputJSON.accessToken
       columnNameA = configInputJSON.projects[0].columns[0].name
@@ -1213,7 +1217,7 @@ describe('Config', () => {
     let configAsJSON: any
 
     beforeAll(() => {
-      const configString = ConfigTestData.configTrailingWhitespaceValues
+      const configString = configTestData.projectModeTrailingWhitespaceValues
       configAsJSON = JSON.parse(configString)
       config = new Config(configString, logger)
     })

@@ -1,3 +1,29 @@
+export interface ConfigPOJO {
+  accessToken: string
+  repo: {
+    name: string
+    ownerName: string
+  }
+  columns?: {
+    name: string
+    labelingActions: {
+      action: string
+      labels: string[]
+    }[]
+  }[]
+  projects?: {
+    columns: {
+      name: string
+      labelingActions: {
+        action: string
+        labels: string[]
+      }[]
+    }[]
+    number: number
+    ownerLogin: string
+  }[]
+}
+
 /**
  * Used primarily as an expression to represent an array
  * @returns a new array combining the original array and the new element
@@ -17,10 +43,6 @@ const defaultRepo = {
 
 const minimalLabels = ['label']
 
-const labelingActionEmptyLabels = {
-  action: 'add',
-  labels: []
-}
 const labelingActionInvalidLabels = {
   action: 'add',
   labels: ['  ', 3]
@@ -163,8 +185,90 @@ const minimalProjects = [
   }
 ]
 
-export default {
-  configDuplicates: JSON.stringify({
+export const configTestData = {
+  columnModeMinimal: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: minimalColumns
+  }),
+  columnModeOnlyInvalidValues: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: allInvalidColumns
+  }),
+
+  invalidJSON: `
+    {
+      keyWithoutQuotes: "value"
+  }`,
+  invalidMissingKey: JSON.stringify({
+    'wrong-name-for-github-token': 'token',
+    repo: defaultRepo,
+    columns: minimalColumns
+  }),
+  invalidRepoWhitespaceOnlyName: JSON.stringify({
+    accessToken: 'token',
+    repo: {
+      name: '    ',
+      ownerName: 'repo owner'
+    },
+    columns: [
+    ]
+  }),
+  invalidRepoWhitespaceOnlyOwnerName: JSON.stringify({
+    accessToken: 'token',
+    repo: {
+      name: 'repo name',
+      ownerName: '         '
+    },
+    columns: [
+    ]
+  }),
+  invalidRepoWrongTypeName: JSON.stringify({
+    accessToken: 'token',
+    repo: {
+      name: {},
+      ownerName: 'repo owner'
+    },
+    columns: [
+    ]
+  }),
+  invalidRepoWrongTypeOwnerName: JSON.stringify({
+    accessToken: 'token',
+    repo: {
+      name: 'repo name',
+      ownerName: []
+    },
+    columns: [
+    ]
+  }),
+  invalidWhiteSpaceOnlyAccessToken: JSON.stringify({
+    accessToken: ' ',
+    repo: defaultRepo,
+    columns: minimalColumns
+  }),
+  invalidWrongTypeAccessToken: JSON.stringify({
+    accessToken: 3,
+    repo: defaultRepo,
+    columns: minimalColumns
+  }),
+  invalidWrongTypeColumns: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    columns: 'not supposed to be a string'
+  }),
+  invalidWrongTypeProjects: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: 'not supposed to be a string'
+  }),
+  invalidWrongTypeRepo: JSON.stringify({
+    accessToken: 'token',
+    repo: [],
+    columns: minimalColumns
+  }),
+
+  projectModeDuplicates: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
     projects: [
@@ -282,7 +386,7 @@ export default {
       }
     ]
   }),
-  configDuplicatesWithCaseMismatch: JSON.stringify({
+  projectModeDuplicatesWithCaseMismatch: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
     projects: [
@@ -364,7 +468,7 @@ export default {
       }
     ]
   }),
-  configInvalidNonEssentialSections: JSON.stringify({
+  projectModeInvalidNonEssentialSections: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
     projects: append(allInvalidProjects, {
@@ -382,141 +486,12 @@ export default {
       ]
     })
   }),
-  configMissingKey: JSON.stringify({
-    'wrong-name-for-github-token': 'token',
-    repo: defaultRepo,
-    columns: minimalColumns
-  }),
-  configTrailingWhitespaceValues: JSON.stringify({
-    accessToken: ' access token ',
-    repo: {
-      ownerName: ' repo owner ',
-      name: ' repo name '
-    },
-    projects: [
-      {
-        ownerLogin: 'owner name ',
-        columns: [
-          {
-            name: 'column name ',
-            labelingActions: [
-              {
-                action: ' add ',
-                labels: ['label 1 ', ' label 2', ' label 2 ', 'conflicing label']
-              }
-            ]
-          }
-        ]
-      },
-      {
-        ownerLogin: ' owner name',
-        columns: [
-          {
-            name: ' column name',
-            labelingActions: [
-              {
-                action: ' add ',
-                labels: [' label 1  ']
-              },
-              {
-                action: ' remove ',
-                labels: [' conflicing label ']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-  configWhiteSpaceOnlyAccessToken: JSON.stringify({
-    accessToken: ' ',
-    repo: defaultRepo,
-    columns: minimalColumns
-  }),
-  configWrongTypeAccessToken: JSON.stringify({
-    accessToken: 3,
-    repo: defaultRepo,
-    columns: minimalColumns
-  }),
-  configWrongTypeColumns: JSON.stringify({
+  projectModeMinimal: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
-    columns: 'not supposed to be a string'
+    projects: minimalProjects
   }),
-  configWrongTypeProjects: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepo,
-    projects: 'not supposed to be a string'
-  }),
-  configWrongTypeRepo: JSON.stringify({
-    accessToken: 'token',
-    repo: [],
-    columns: minimalColumns
-  }),
-  configNormal: JSON.stringify({
-    accessToken: 'access token',
-    repo: defaultRepo,
-    projects: [
-      {
-        ownerLogin: 'githubOrganizationName',
-        number: 2,
-        columns: [
-          {
-            name: 'to do',
-            labelingActions: [
-              {
-                action: 'add',
-                labels: ['hacktoberfest']
-              },
-              {
-                action: 'add',
-                labels: ['todo', 'help wanted']
-              },
-              {
-                action: 'remove',
-                labels: ['🐌', 'Completed']
-              }
-            ]
-          },
-          {
-            name: 'completed',
-            labelingActions: [
-              {
-                action: 'remove',
-                labels: ['hacktoberfest']
-              },
-              {
-                action: 'remove',
-                labels: ['todo', 'help wanted']
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }),
-
-  columnMinimal: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepo,
-    columns: minimalColumns
-  }),
-  columnOnlyInvalidValues: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepo,
-    columns: allInvalidColumns
-  }),
-  columnPartiallyInvalid: append(allInvalidColumns, {
-    name: 'valid column',
-    labelingActions: append(allInvalidLabelingActions, minimalLabelingActions[0])
-  }),
-
-  invalidJSON: `
-    {
-      keyWithoutQuotes: "value"
-    }`,
-
-  projectConfigWithSiblingsAndHighEntropyValues: JSON.stringify({
+  projectModeMultipleProjectsWithHighEntropyValues: JSON.stringify({
     accessToken: '3uKoGF^fkn&=rrP+lJ',
     repo: {
       name: '9\'JAt<KOd2r!b|r=t}',
@@ -555,17 +530,7 @@ export default {
       }
     ]
   }),
-  projectOnlyInvalidValues: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepo,
-    projects: allInvalidProjects
-  }),
-  projectMinimal: JSON.stringify({
-    accessToken: 'token',
-    repo: defaultRepo,
-    projects: minimalProjects
-  }),
-  projectNearDuplicates: JSON.stringify({
+  projectModeNearDuplicateProjects: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
     projects: [
@@ -616,47 +581,70 @@ export default {
       }
     ]
   }),
-  projectOverridingColumn: JSON.stringify({
+  projectModeOnlyInvalidValues: JSON.stringify({
+    accessToken: 'token',
+    repo: defaultRepo,
+    projects: allInvalidProjects
+  }),
+  projectModeOverridingColumnMode: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
     columns: minimalColumns,
     projects: minimalProjects
   }),
-
-  repoWrongTypeName: JSON.stringify({
-    accessToken: 'token',
+  projectModeTrailingWhitespaceValues: JSON.stringify({
+    accessToken: ' access token ',
     repo: {
-      name: {},
-      ownerName: 'repo owner'
+      ownerName: ' repo owner ',
+      name: ' repo name '
     },
-    columns: [
+    projects: [
+      {
+        ownerLogin: 'owner name ',
+        columns: [
+          {
+            name: 'column name ',
+            labelingActions: [
+              {
+                action: ' add ',
+                labels: ['label 1 ', ' label 2', ' label 2 ', 'conflicing label']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        ownerLogin: ' owner name',
+        columns: [
+          {
+            name: ' column name',
+            labelingActions: [
+              {
+                action: ' add ',
+                labels: [' label 1  ']
+              },
+              {
+                action: ' remove ',
+                labels: [' conflicing label ']
+              }
+            ]
+          }
+        ]
+      }
     ]
   }),
-  repoWrongTypeOwnerName: JSON.stringify({
+  projectModeVaryingCaseValues: JSON.stringify({
     accessToken: 'token',
-    repo: {
-      name: 'repo name',
-      ownerName: []
-    },
-    columns: [
-    ]
-  }),
-  repoWhitespaceOnlyName: JSON.stringify({
-    accessToken: 'token',
-    repo: {
-      name: '    ',
-      ownerName: 'repo owner'
-    },
-    columns: [
-    ]
-  }),
-  repoWhitespaceOnlyOwnerName: JSON.stringify({
-    accessToken: 'token',
-    repo: {
-      name: 'repo name',
-      ownerName: '         '
-    },
-    columns: [
-    ]
+    repo: defaultRepo,
+    projects: {
+      columns: {
+        name: 'Column Name',
+        labelingActions: {
+          action: 'add',
+          labels: ['Label']
+        }
+      },
+      ownerLogin: 'Owner Name'
+    }
   })
 }
