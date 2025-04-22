@@ -553,6 +553,16 @@ describe('Config', () => {
     })
   })
 
+  describe('getAPIToken()', () => {
+    it('trims whitespace', () => {
+      throw new Error('unimplimented')
+    })
+
+    it('returns the input api token', () => {
+      throw new Error('unimplimented')
+    })
+  })
+
   describe('getLabelingRules()', () => {
     describe('the labeling rules container structure', () => {
       it('is a column name map with child labeling action maps with label array values when the config initialized with a json using columns', () => {
@@ -1120,6 +1130,26 @@ describe('Config', () => {
           })
         })
       })
+    })
+  })
+
+  describe('getRepoName()', () => {
+    it('trims whitespace', () => {
+      throw new Error('unimplimented')
+    })
+
+    it('returns the input repo name', () => {
+      throw new Error('unimplimented')
+    })
+  })
+
+  describe('getRepoOwnerName()', () => {
+    it('trims whitespace', () => {
+      throw new Error('unimplimented')
+    })
+
+    it('returns the input repo owner name', () => {
+      throw new Error('unimplimented')
     })
   })
 

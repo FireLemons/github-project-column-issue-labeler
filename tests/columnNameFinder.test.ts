@@ -128,6 +128,16 @@ describe('findColumnNames()', () => {
       expect(columnNameA?.toLocaleLowerCase()).toBe(columnNameB?.toLocaleLowerCase())
     })
   })
+
+  describe('the capitalization of the resulting data structure', () => {
+    it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
+      throw new Error('unimplimented')
+    })
+
+    it("converts column names to lowercase to match the structure of an issue's column name container", () => {
+      throw new Error('unimplimented')
+    })
+  })
 })
 
 describe('getRemoteSearchSpaceAccessErrors()', () => {
