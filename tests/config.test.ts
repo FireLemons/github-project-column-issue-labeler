@@ -555,11 +555,22 @@ describe('Config', () => {
 
   describe('getAPIToken()', () => {
     it('trims whitespace', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.projectModeTrailingWhitespaceValues
+      const inputToken = JSON.parse(configString).accessToken
+
+      expect(inputToken.trim()).not.toBe(inputToken)
+
+      const config = new Config(configString, logger)
+
+      expect(config.getAPIToken()).toBe(inputToken.trim())
     })
 
     it('returns the input api token', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.columnModeMinimal
+      const inputToken = JSON.parse(configString).accessToken
+      const config = new Config(configString, logger)
+
+      expect(config.getAPIToken()).toBe(inputToken)
     })
   })
 
@@ -611,32 +622,192 @@ describe('Config', () => {
     })
 
     describe('the capitalization of strings in the labeling rules container', () => {
-      let configInputJSON: ConfigPOJO
       let labelingRuleContainer: ProjectLabelingRuleContainer
-      let projectDuplicateNameAndNumberName: string
-      let projectDuplicateNameAndNumberNumber: number
-      let projectDuplicateNameOnlyName: string
+      let columnName: string
+      let label: string
+      let projectName: string
 
       beforeAll(() => {
-        const configInputJSONString = configTestData.projectModeDuplicates
-        configInputJSON = JSON.parse(configInputJSONString)
-        projectDuplicateNameAndNumberName = configInputJSON.projects![0].ownerLogin.toLocaleLowerCase()
-        projectDuplicateNameAndNumberNumber = configInputJSON.projects![0].number
-        projectDuplicateNameOnlyName = configInputJSON.projects![2].ownerLogin.toLocaleLowerCase()
+        const configInputString = configTestData.projectModeVaryingCaseValues
+        const configInputJSON = JSON.parse(configInputString)
+        columnName = configInputJSON.projects[0].columns[0].name
+        label = configInputJSON.projects[0].columns[0].labelingActions[0].labels[0]
+        projectName = configInputJSON.projects[0].ownerLogin
 
-        const config = new Config(configInputJSONString, logger)
+        const config = new Config(configInputString, logger)
         labelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
       })
+
       it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
-        throw new Error('unimplimented')
+        expect(projectName).not.toBe(projectName.toLocaleLowerCase())
+
+        expect(firstKeyValuePairOfMap(labelingRuleContainer)?.key).toBe(projectName.toLocaleLowerCase())
       })
 
       it("converts column names to lowercase to match the structure of an issue's column name container", () => {
-        throw new Error('unimplimented')
+        expect(columnName).not.toBe(columnName.toLocaleLowerCase())
+
+        expect(firstKeyValuePairOfMap(labelingRuleContainer.get(projectName.toLocaleLowerCase())?.get(0)!)?.key).toBe(columnName.toLocaleLowerCase())
       })
 
       it('preserves the original case of the labels for writing', () => {
-        throw new Error('unimplimented')
+        expect(label).not.toBe(label.toLocaleLowerCase())
+        expect(label).not.toBe(label.toLocaleUpperCase())
+
+        expect(labelingRuleContainer.get(projectName.toLocaleLowerCase())?.get(0)?.get(columnName.toLocaleLowerCase())?.get(LabelingAction.ADD)?.at(0)).toBe(label)
+      })
+    })
+
+    describe('trailing whitespace values', () => {
+      let config: Config
+      let configAsJSON: any
+
+      beforeAll(() => {
+        const configString = configTestData.projectModeTrailingWhitespaceValues
+        configAsJSON = JSON.parse(configString)
+        config = new Config(configString, logger)
+      })
+
+      describe('project owner names', () => {
+        it('trims trailing whitespace', () => {
+          const projectOwnerNames = config.getLabelingRules().keys()
+
+          for (const projectOwnerName of projectOwnerNames) {
+            expect(projectOwnerName.length).not.toBe(0)
+            expect(projectOwnerName).toBe(projectOwnerName.trim())
+          }
+        })
+
+        it('considers whether the project name is a duplicate after trimming', () => {
+          expect(configAsJSON.projects.length).toBe(2)
+
+          const inputProjectNameA = configAsJSON.projects[0].ownerLogin
+          const inputProjectNameB = configAsJSON.projects[1].ownerLogin
+
+          expect(caseInsensitiveCompare(inputProjectNameA.trim(), inputProjectNameB.trim())).toBe(0)
+          expect(config.getLabelingRules().size).toBe(1)
+        })
+      })
+
+      describe('column names', () => {
+        it('trims trailing whitespace', () => {
+          const inputColumnName = configAsJSON.projects[0].columns[0].name
+          const labelingRules: ProjectLabelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
+          const validatedColumnName = firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)!.value)!.key
+
+          expect(inputColumnName.length).not.toBe(0)
+          expect(validatedColumnName).toBe(inputColumnName.trim())
+        })
+
+        it('considers whether the column names are duplicates after trimming', () => {
+          // Proves the input column names are from the only 2 columns
+          expect(configAsJSON.projects.length).toBe(2)
+          expect(configAsJSON.projects[0].columns.length).toBe(1)
+          expect(configAsJSON.projects[1].columns.length).toBe(1)
+
+          const inputColumnNameA = configAsJSON.projects[0].columns[0].name
+          const inputColumnNameB = configAsJSON.projects[1].columns[0].name
+          const labelingRules = config.getLabelingRules()
+
+          expect(caseInsensitiveCompare(inputColumnNameA.trim(), inputColumnNameB.trim())).toBe(0)
+          expect(labelingRules.size).toBe(1)
+          expect(labelingRules.get(firstKeyValuePairOfMap(labelingRules)!.key)?.size).toBe(1)
+        })
+      })
+
+      describe('labels', () => {
+        it('trims trailing whitespace', () => {
+          const inputLabelSetA = configAsJSON.projects[0].columns[0].labelingActions[0].labels
+          const inputLabelSetB = configAsJSON.projects[1].columns[0].labelingActions[0].labels
+          const validatedLabels = firstKeyValuePairOfMap(
+            firstKeyValuePairOfMap(
+              firstKeyValuePairOfMap(
+                firstKeyValuePairOfMap(
+                  config.getLabelingRules() // Project Name Map
+                )!.value // Project Number Map
+              )!.value // Column Name Map
+            )!.value // Labeling Action Map
+          )!.value // Labels
+
+          expect(inputLabelSetA.length).not.toBe(0)
+
+          for (const label in inputLabelSetA) {
+            expect(label.length).not.toBe(0)
+            expect(validatedLabels.find((validatedLabel: string) => {
+              return caseInsensitiveCompare(validatedLabel, label.trim())
+            })).not.toBeUndefined()
+          }
+
+          expect(inputLabelSetB.length).not.toBe(0)
+
+          for (const label in inputLabelSetB) {
+            expect(label.length).not.toBe(0)
+            expect(validatedLabels.find((validatedLabel: string) => {
+              return caseInsensitiveCompare(validatedLabel, label.trim())
+            })).not.toBeUndefined()
+          }
+        })
+
+        it('considers whether the labels are duplicates after trimming', () => {
+          const inputLabel1DuplicateA = configAsJSON.projects[0].columns[0].labelingActions[0].labels[0]
+          const inputLabel1DuplicateB = configAsJSON.projects[1].columns[0].labelingActions[0].labels[0]
+          const inputLabel2DuplicateA = configAsJSON.projects[0].columns[0].labelingActions[0].labels[1]
+          const inputLabel2DuplicateB = configAsJSON.projects[0].columns[0].labelingActions[0].labels[2]
+
+          expect(inputLabel1DuplicateA.trim()).toBe(inputLabel1DuplicateB.trim())
+          expect(inputLabel2DuplicateA.trim()).toBe(inputLabel2DuplicateB.trim())
+
+          const labelingRules = config.getLabelingRules()
+
+          expect(labelingRules.size).toBe(1)
+          expect(firstKeyValuePairOfMap(labelingRules)!.value.size).toBe(1)
+          expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value.size).toBe(1)
+          expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value)?.value.size).toBe(1)
+
+          const validatedLabels = firstKeyValuePairOfMap(
+            firstKeyValuePairOfMap(
+              firstKeyValuePairOfMap(
+                firstKeyValuePairOfMap(
+                  labelingRules // Project Name Map
+                )!.value // Project Number Map
+              )!.value // Column Name Map
+            )!.value // Labeling Action Map
+          )!.value // Labels
+
+          expect(validatedLabels.filter((labelFromSetA: string) => {
+            return caseInsensitiveCompare(labelFromSetA.trim(), inputLabel1DuplicateA.trim()) === 0
+          }).length).toBe(1)
+          expect(validatedLabels.filter((labelFromSetB: string) => {
+            return caseInsensitiveCompare(labelFromSetB.trim(), inputLabel2DuplicateA.trim()) === 0
+          }).length).toBe(1)
+        })
+
+        it('considers whether the labels are conflicts after trimming', () => {
+          const conflictingLabelTrimmed = configAsJSON.projects[0].columns[0].labelingActions[0].labels[3]
+          const conflictingLabelWhitespace = configAsJSON.projects[1].columns[0].labelingActions[1].labels[0]
+
+          expect(conflictingLabelTrimmed).toBe(conflictingLabelWhitespace.trim())
+
+          const labelingRules = config.getLabelingRules()
+
+          expect(labelingRules.size).toBe(1)
+          expect(firstKeyValuePairOfMap(labelingRules)!.value.size).toBe(1)
+          expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value.size).toBe(1)
+          expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value)?.value.size).toBe(1)
+          expect(firstKeyValuePairOfMap(
+            firstKeyValuePairOfMap(
+              firstKeyValuePairOfMap(
+                firstKeyValuePairOfMap(
+                  labelingRules // Project Name Map
+                )!.value // Project Number Map
+              )?.value // Column Map
+            )?.value // Labeling Action Map
+          )?.value // Labels
+            .find((label: string) => {
+              return label === conflictingLabelTrimmed
+            })
+          ).toBe(undefined)
+        })
       })
     })
 
@@ -1135,21 +1306,43 @@ describe('Config', () => {
 
   describe('getRepoName()', () => {
     it('trims whitespace', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.projectModeTrailingWhitespaceValues
+      const inputRepoName = JSON.parse(configString).repo.name
+
+      expect(inputRepoName.trim()).not.toBe(inputRepoName)
+
+      const config = new Config(configString, logger)
+
+      expect(config.getRepoName()).toBe(inputRepoName.trim())
     })
 
     it('returns the input repo name', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.columnModeMinimal
+      const inputRepoName = JSON.parse(configString).repo.name
+      const config = new Config(configString, logger)
+
+      expect(config.getRepoName()).toBe(inputRepoName)
     })
   })
 
   describe('getRepoOwnerName()', () => {
     it('trims whitespace', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.projectModeTrailingWhitespaceValues
+      const inputRepoOwnerName = JSON.parse(configString).repo.ownerName
+
+      expect(inputRepoOwnerName.trim()).not.toBe(inputRepoOwnerName)
+
+      const config = new Config(configString, logger)
+
+      expect(config.getRepoOwnerName()).toBe(inputRepoOwnerName.trim())
     })
 
     it('returns the input repo owner name', () => {
-      throw new Error('unimplimented')
+      const configString = configTestData.columnModeMinimal
+      const inputRepoOwnerName = JSON.parse(configString).repo.ownerName
+      const config = new Config(configString, logger)
+
+      expect(config.getRepoOwnerName()).toBe(inputRepoOwnerName)
     })
   })
 
@@ -1239,189 +1432,6 @@ describe('Config', () => {
       expect(configToString).toContain(JSON.stringify(labelA))
       expect(configToString).toContain(JSON.stringify(labelB))
       expect(configToString).toContain(JSON.stringify(labelC))
-    })
-  })
-
-  describe('trailing whitespace values', () => {
-    let config: Config
-    let configAsJSON: any
-
-    beforeAll(() => {
-      const configString = configTestData.projectModeTrailingWhitespaceValues
-      configAsJSON = JSON.parse(configString)
-      config = new Config(configString, logger)
-    })
-
-    describe('the github access token', () => {
-      it('trims trailing whitespace', () => {
-        const inputAPIToken = configAsJSON.accessToken
-        const validatedAPIToken = config.getAPIToken()
-
-        expect(inputAPIToken.length).not.toBe(0)
-        expect(validatedAPIToken).toBe(inputAPIToken.trim())
-      })
-    })
-
-    describe('the repo owner', () => {
-      it('trims trailing whitespace', () => {
-        const inputRepoOwnerName = configAsJSON.repo.ownerName
-        const validatedRepoOwnerName = config.getRepoOwnerName()
-
-        expect(inputRepoOwnerName.length).not.toBe(0)
-        expect(validatedRepoOwnerName).toBe(inputRepoOwnerName.trim())
-      })
-    })
-
-    describe('the repo name', () => {
-      it('trims trailing whitespace', () => {
-        const inputRepoName = configAsJSON.repo.name
-        const validatedRepoName = config.getRepoName()
-
-        expect(inputRepoName.length).not.toBe(0)
-        expect(validatedRepoName).toBe(inputRepoName.trim())
-      })
-    })
-
-    describe('project owner names', () => {
-      it('trims trailing whitespace', () => {
-        const projectOwnerNames = config.getLabelingRules().keys()
-
-        for (const projectOwnerName of projectOwnerNames) {
-          expect(projectOwnerName.length).not.toBe(0)
-          expect(projectOwnerName).toBe(projectOwnerName.trim())
-        }
-      })
-
-      it('considers whether the project name is a duplicate after trimming', () => {
-        expect(configAsJSON.projects.length).toBe(2)
-
-        const inputProjectNameA = configAsJSON.projects[0].ownerLogin
-        const inputProjectNameB = configAsJSON.projects[1].ownerLogin
-
-        expect(caseInsensitiveCompare(inputProjectNameA.trim(), inputProjectNameB.trim())).toBe(0)
-        expect(config.getLabelingRules().size).toBe(1)
-      })
-    })
-
-    describe('column names', () => {
-      it('trims trailing whitespace', () => {
-        const inputColumnName = configAsJSON.projects[0].columns[0].name
-        const labelingRules: ProjectLabelingRuleContainer = config.getLabelingRules() as ProjectLabelingRuleContainer
-        const validatedColumnName = firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)!.value)!.key
-
-        expect(inputColumnName.length).not.toBe(0)
-        expect(validatedColumnName).toBe(inputColumnName.trim())
-      })
-
-      it('considers whether the column names are duplicates after trimming', () => {
-        // Proves the input column names are from the only 2 columns
-        expect(configAsJSON.projects.length).toBe(2)
-        expect(configAsJSON.projects[0].columns.length).toBe(1)
-        expect(configAsJSON.projects[1].columns.length).toBe(1)
-
-        const inputColumnNameA = configAsJSON.projects[0].columns[0].name
-        const inputColumnNameB = configAsJSON.projects[1].columns[0].name
-        const labelingRules = config.getLabelingRules()
-
-        expect(caseInsensitiveCompare(inputColumnNameA.trim(), inputColumnNameB.trim())).toBe(0)
-        expect(labelingRules.size).toBe(1)
-        expect(labelingRules.get(firstKeyValuePairOfMap(labelingRules)!.key)?.size).toBe(1)
-      })
-    })
-
-    describe('labels', () => {
-      it('trims trailing whitespace', () => {
-        const inputLabelSetA = configAsJSON.projects[0].columns[0].labelingActions[0].labels
-        const inputLabelSetB = configAsJSON.projects[1].columns[0].labelingActions[0].labels
-        const validatedLabels = firstKeyValuePairOfMap(
-          firstKeyValuePairOfMap(
-            firstKeyValuePairOfMap(
-              firstKeyValuePairOfMap(
-                config.getLabelingRules() // Project Name Map
-              )!.value // Project Number Map
-            )!.value // Column Name Map
-          )!.value // Labeling Action Map
-        )!.value // Labels
-
-        expect(inputLabelSetA.length).not.toBe(0)
-
-        for (const label in inputLabelSetA) {
-          expect(label.length).not.toBe(0)
-          expect(validatedLabels.find((validatedLabel: string) => {
-            return caseInsensitiveCompare(validatedLabel, label.trim())
-          })).not.toBeUndefined()
-        }
-
-        expect(inputLabelSetB.length).not.toBe(0)
-
-        for (const label in inputLabelSetB) {
-          expect(label.length).not.toBe(0)
-          expect(validatedLabels.find((validatedLabel: string) => {
-            return caseInsensitiveCompare(validatedLabel, label.trim())
-          })).not.toBeUndefined()
-        }
-      })
-
-      it('considers whether the labels are duplicates after trimming', () => {
-        const inputLabel1DuplicateA = configAsJSON.projects[0].columns[0].labelingActions[0].labels[0]
-        const inputLabel1DuplicateB = configAsJSON.projects[1].columns[0].labelingActions[0].labels[0]
-        const inputLabel2DuplicateA = configAsJSON.projects[0].columns[0].labelingActions[0].labels[1]
-        const inputLabel2DuplicateB = configAsJSON.projects[0].columns[0].labelingActions[0].labels[2]
-
-        expect(inputLabel1DuplicateA.trim()).toBe(inputLabel1DuplicateB.trim())
-        expect(inputLabel2DuplicateA.trim()).toBe(inputLabel2DuplicateB.trim())
-
-        const labelingRules = config.getLabelingRules()
-
-        expect(labelingRules.size).toBe(1)
-        expect(firstKeyValuePairOfMap(labelingRules)!.value.size).toBe(1)
-        expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value.size).toBe(1)
-        expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value)?.value.size).toBe(1)
-
-        const validatedLabels = firstKeyValuePairOfMap(
-          firstKeyValuePairOfMap(
-            firstKeyValuePairOfMap(
-              firstKeyValuePairOfMap(
-                labelingRules // Project Name Map
-              )!.value // Project Number Map
-            )!.value // Column Name Map
-          )!.value // Labeling Action Map
-        )!.value // Labels
-
-        expect(validatedLabels.filter((labelFromSetA: string) => {
-          return caseInsensitiveCompare(labelFromSetA.trim(), inputLabel1DuplicateA.trim()) === 0
-        }).length).toBe(1)
-        expect(validatedLabels.filter((labelFromSetB: string) => {
-          return caseInsensitiveCompare(labelFromSetB.trim(), inputLabel2DuplicateA.trim()) === 0
-        }).length).toBe(1)
-      })
-
-      it('considers whether the labels are conflicts after trimming', () => {
-        const conflictingLabelTrimmed = configAsJSON.projects[0].columns[0].labelingActions[0].labels[3]
-        const conflictingLabelWhitespace = configAsJSON.projects[1].columns[0].labelingActions[1].labels[0]
-
-        expect(conflictingLabelTrimmed).toBe(conflictingLabelWhitespace.trim())
-
-        const labelingRules = config.getLabelingRules()
-
-        expect(labelingRules.size).toBe(1)
-        expect(firstKeyValuePairOfMap(labelingRules)!.value.size).toBe(1)
-        expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value.size).toBe(1)
-        expect(firstKeyValuePairOfMap(firstKeyValuePairOfMap(firstKeyValuePairOfMap(labelingRules)!.value)?.value)?.value.size).toBe(1)
-        expect(firstKeyValuePairOfMap(
-          firstKeyValuePairOfMap(
-            firstKeyValuePairOfMap(
-              firstKeyValuePairOfMap(
-                labelingRules // Project Name Map
-              )!.value // Project Number Map
-            )?.value // Column Map
-          )?.value // Labeling Action Map
-        )?.value // Labels
-          .find((label: string) => {
-            return label === conflictingLabelTrimmed
-          })
-        ).toBe(undefined)
-      })
     })
   })
 })

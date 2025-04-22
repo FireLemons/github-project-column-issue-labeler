@@ -636,15 +636,21 @@ export const configTestData = {
   projectModeVaryingCaseValues: JSON.stringify({
     accessToken: 'token',
     repo: defaultRepo,
-    projects: {
-      columns: {
-        name: 'Column Name',
-        labelingActions: {
-          action: 'add',
-          labels: ['Label']
-        }
-      },
-      ownerLogin: 'Owner Name'
-    }
+    projects: [
+      {
+        columns: [
+          {
+            name: 'Column Name',
+            labelingActions: [
+              {
+                action: 'add',
+                labels: ['Label']
+              }
+            ]
+          }
+        ],
+        ownerLogin: 'Owner Name'
+      }
+    ]
   })
 }
