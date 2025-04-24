@@ -786,7 +786,7 @@ export default { // all test data returns a unique copy to avoid complications f
                 }
               ],
               pageInfo: {
-                endCursor: 'lxk*H+Ev*[0j~)L|Kv',
+                endCursor: 'nExb=MF5B]3nd@82W9',
                 hasNextPage: true
               }
             },
@@ -824,7 +824,7 @@ export default { // all test data returns a unique copy to avoid complications f
         }
       ],
       pageInfo: {
-        endCursor: '!tHp1v],T\\C/*:,eI',
+        endCursor: 'EyMmlC0;5i8jB?`}L&',
         hasNextPage: false
       }
     }

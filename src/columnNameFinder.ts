@@ -103,7 +103,7 @@ export default class ColumnNameFinder {
         const fieldValuePage = projectItem.getFieldValuePage()
 
         if (!(fieldValuePage.hasNextPage())) {
-          projectItemPage.delete(i)
+          projectItemPage.delete(projectItem.getId())
         } else if (this.#hasExpandedSearchSpace) {
           this.#remoteSearchSpaceParameterQueue.push({
             parentId: projectItem.getId(),
@@ -111,7 +111,7 @@ export default class ColumnNameFinder {
           })
         }
       } else {
-        projectItemPage.delete(i)
+        projectItemPage.delete(projectItem.getId())
 
         const projectKey = projectItem.getProjectHumanReadablePrimaryKey()
 

@@ -1,3 +1,4 @@
+import { FieldValuePOJO, GraphQLPagePOJO } from './githubAPIClient'
 import * as TypeChecker from './typeChecker'
 
 interface Constructable<T> {
@@ -38,28 +39,26 @@ export class RecordWithGraphQLID {
 }
 
 export class GraphQLPage<T> {
+  #endCursor: string | null
+  #hasNextPage: boolean
   nodeClass: Constructable<any> | undefined
-  page: {
-    edges: Array<{
-        node: T
-    }>
-
-    pageInfo: {
-      endCursor: string | null
-      hasNextPage: boolean
-    }
-  }
+  #nodeArray: T[]
 
   constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
     if (!(isGraphQLPage(pagePOJO))) {
       throw new TypeError('Param pagePOJO does not match a graphQL page')
     }
 
-    this.page = pagePOJO
+    this.#endCursor = pagePOJO.pageInfo.endCursor
+    this.#hasNextPage = pagePOJO.pageInfo.hasNextPage
     this.nodeClass = NodeClass
 
     if (NodeClass !== undefined) {
-      initializeNodes(NodeClass, this)
+      this.#nodeArray = initializeNodes<T>(NodeClass, pagePOJO.edges)
+    } else {
+      this.#nodeArray = pagePOJO.edges.map((edge) => {
+        return edge.node
+      })
     }
   }
 
@@ -68,81 +67,71 @@ export class GraphQLPage<T> {
       throw new TypeError('Node type mismatch between pages')
     }
 
-    this.page.edges.push(...page.getEdges())
-    this.page.pageInfo = page.getPageInfo()
-  }
-
-  delete (index: number): T {
-    if (0 > index || index >= this.page.edges.length) {
-      throw new RangeError('Param index out of range')
-    }
-
-    return this.page.edges.splice(index, 1)[0].node
+    this.#hasNextPage = page.hasNextPage()
+    this.#endCursor = page.getEndCursor()
+    this.#nodeArray.push(...page.getNodeArray())
   }
 
   disableRemoteDataFetching () {
-    this.page.pageInfo.hasNextPage = false
-  }
-
-  getEdges () {
-    return this.page.edges
+    this.#hasNextPage = false
   }
 
   getEndCursor () {
-    return this.page.pageInfo.endCursor
+    return this.#endCursor
   }
 
   getNodeArray () {
-    return this.page.edges.map(edge => edge.node)
-  }
-
-  getPageInfo () {
-    return this.page.pageInfo
+    return this.#nodeArray
   }
 
   hasNextPage () {
-    return this.page.pageInfo.hasNextPage
+    return this.#hasNextPage
   }
 
   isEmpty () {
-    return this.getEdges().length === 0
+    return this.getNodeArray().length === 0
   }
 
   lookupNodeClass () {
     return this.nodeClass
   }
+
+  updatePageInfo (endCursor: string | null, hasNextPage: boolean) {
+    this.#endCursor = endCursor
+    this.#hasNextPage = hasNextPage
+  }
 }
 
 export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQLPage<T> {
-  activeNodeFastAccessMap: Map<string | number, { node: T }>
+  activeNodeFastAccessMap: Map<string | number, T>
   deletedNodeIds: Map<string | number, null>
 
-  constructor (pagePOJO: any, NodeClass?: Constructable<any>) {
+  constructor (pagePOJO: any, NodeClass: Constructable<any>) {
     super(pagePOJO, NodeClass)
 
     this.activeNodeFastAccessMap = new Map()
-
-    for (const edge of this.page.edges) {
-      const { node } = edge
-
-      this.activeNodeFastAccessMap.set(node.getId(), edge)
-    }
-
     this.deletedNodeIds = new Map()
+
+    for (const node of initializeNodes<T>(NodeClass, pagePOJO.edges)) {
+      this.activeNodeFastAccessMap.set(node.getId(), node)
+    }
   }
 
-  delete (index: number): T {
-    if (0 > index || index >= this.page.edges.length) {
-      throw new RangeError('Param index out of range')
+  delete (id: number | string): T {
+    const deletedNode = this.activeNodeFastAccessMap.get(id)
+
+    if (deletedNode === undefined) {
+      throw new RangeError(`Node with id:"${id}" not found for deletion`)
     }
 
-    const deletedNode = this.page.edges.splice(index, 1)[0].node
-    const deletedNodeId = deletedNode.getId()
-
-    this.activeNodeFastAccessMap.delete(deletedNodeId)
-    this.deletedNodeIds.set(deletedNodeId, null)
+    this.activeNodeFastAccessMap.delete(id)
+    this.deletedNodeIds.set(id, null)
 
     return deletedNode
+  }
+
+  getNodeArray(): T[] {
+    return [...this.activeNodeFastAccessMap.values()]
   }
 
   merge (page: GraphQLPageMergeable<T>) {
@@ -152,26 +141,19 @@ export class GraphQLPageMergeable<T extends RecordWithGraphQLID> extends GraphQL
       throw new TypeError('Node type mismatch between pages')
     }
 
-    for (const edge of page.getEdges()) {
-      const { node } = edge
+    for (const node of page.getNodeArray()) {
       const nodeId = node.getId()
 
-      if (this.activeNodeFastAccessMap.has(nodeId)) {
-        this.activeNodeFastAccessMap.get(nodeId)!.node = node
-      } else if (!(this.deletedNodeIds.has(nodeId))) {
-        this.activeNodeFastAccessMap.set(nodeId, edge)
-        this.page.edges.push(edge)
+      if (!(this.deletedNodeIds.has(nodeId))) {
+        this.activeNodeFastAccessMap.set(nodeId, node)
       }
     }
 
-    this.page.pageInfo = page.getPageInfo()
+    this.updatePageInfo(page.getEndCursor(), page.hasNextPage())
   }
 }
 
 export class Issue {
-  #columnNameMap: Map<string, string>
-  #hasExpandedSearchSpace: boolean
-  #hasInaccessibleRemoteSearchSpace: boolean
   #id: string
   labels?: GraphQLPage<Label>
   #number: number
@@ -194,12 +176,8 @@ export class Issue {
       throw new ReferenceError(`The project item page for issue with number:${issuePOJO.number} could not be initialized`)
     }
 
-    this.#hasExpandedSearchSpace = false
-    this.#hasInaccessibleRemoteSearchSpace = false
     this.#number = issuePOJO.number
     this.#id = issuePOJO.id
-
-    this.#columnNameMap = new Map()
   }
 
   disableColumnNameRemoteSearchSpace (): void {
@@ -236,18 +214,18 @@ export class Issue {
 }
 
 export class Label {
-  name: string
+  #name: string
 
   constructor (labelPOJO: any) {
     if (!isLabel(labelPOJO)) {
       throw new TypeError('Param labelPOJO does not match a label object')
     }
 
-    this.name = labelPOJO.name
+    this.#name = labelPOJO.name
   }
 
   getName () {
-    return this.name
+    return this.#name
   }
 }
 
@@ -335,30 +313,31 @@ export class ProjectPrimaryKeyHumanReadable {
   }
 }
 
-function tryInitializeNode (GithubObjectClass: Constructable<any>, graphQLEdge: { node: any }) {
+function tryInitializeNode<T> (GithubObjectClass: Constructable<any>, nodePOJO: any): T | null {
   try {
-    graphQLEdge.node = new GithubObjectClass(graphQLEdge.node)
+    const initializedNode = new GithubObjectClass(nodePOJO)
 
-    return true
+    return initializedNode
   } catch (error) {
-    return false
+    return null
   }
 }
 
-export function initializeNodes (GithubObjectClass: Constructable<any>, graphQLPage: GraphQLPage<any>): void {
-  const edges = graphQLPage.getEdges()
-  let i = edges.length - 1
+export function initializeNodes<T> (GithubObjectClass: Constructable<any>, edges: { node: any }[]): T[] {
+  const initializedNodes = []
 
-  while (i >= 0) {
-    if (!tryInitializeNode(GithubObjectClass, edges[i])) {
-      edges.splice(i, 1)
+  for (const edge of edges) {
+    const nodeInitializationResult = tryInitializeNode<T>(GithubObjectClass, edge.node)
+
+    if (nodeInitializationResult !== null) {
+      initializedNodes.push(nodeInitializationResult)
     }
-
-    i--
   }
+
+  return initializedNodes
 }
 
-function isFieldValue (object: any): boolean {
+function isFieldValue (object: any): object is FieldValuePOJO {
   try {
     TypeChecker.validateObjectMember(object, 'name', TypeChecker.Type.string)
   } catch (error) {
@@ -368,7 +347,7 @@ function isFieldValue (object: any): boolean {
   return true
 }
 
-function isGraphQLPage (object: any): boolean {
+function isGraphQLPage (object: any): object is GraphQLPagePOJO<any> {
   if (!(TypeChecker.isObject(object))) {
     return false
   }

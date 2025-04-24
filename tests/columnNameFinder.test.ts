@@ -1,7 +1,7 @@
 import ColumnNameFinder from '../src/columnNameFinder'
 import ColumnNameSearchSpaceData from './data/columnNameSearchSpaceData'
 import { Issue } from '../src/githubObjects'
-import { GithubAPIClient } from '../src/githubAPIClient'
+import { GithubAPIClient, IssuePOJO } from '../src/githubAPIClient'
 import { GraphQLPageType } from '../src/remoteSearchSpaceAccessError'
 import { firstKeyValuePairOfMap } from '../src/util'
 
@@ -15,13 +15,13 @@ beforeEach(() => {
 
 describe('findColumnNames()', () => {
   it('searches the entire local search space for all column names', async () => {
-    const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingManyProjectItems()
+    const issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
     const issue = new Issue(issuePOJO)
 
     const finder = new ColumnNameFinder(githubAPIClient, false, issue)
     await finder.findColumnNames()
 
-    expect(issue.getProjectItemPage().getEdges().length).toBe(0)
+    expect(issue.getProjectItemPage().getNodeArray().length).toBe(0)
   })
 
   it('searches the entire remote search space for all column names', async () => {
@@ -35,7 +35,7 @@ describe('findColumnNames()', () => {
 
     await finder.findColumnNames()
 
-    expect(issue.getProjectItemPage().getEdges().length).toBe(0)
+    expect(issue.getProjectItemPage().getNodeArray().length).toBe(0)
   })
 
   it('searches the entire available remote search space for all column names', async () => {
@@ -49,7 +49,7 @@ describe('findColumnNames()', () => {
 
     await finder.findColumnNames()
 
-    expect(issue.getProjectItemPage().getEdges().length).toBe(0)
+    expect(issue.getProjectItemPage().getNodeArray().length).toBe(0)
   })
 
   it('caches the search result so it does not fetch the remote search space again', async () => {
@@ -130,12 +130,50 @@ describe('findColumnNames()', () => {
   })
 
   describe('the capitalization of the resulting data structure', () => {
-    it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
-      throw new Error('unimplimented')
+    let columnNameA: string
+    let columnNameB: string
+    let columnNameC: string
+    let issuePOJO: IssuePOJO
+    let issue: Issue
+
+    beforeAll(() => {
+      issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
+      issue = new Issue(issuePOJO)
+
+      console.log(JSON.stringify(issuePOJO.projectItems, null, 2))
+      columnNameA = issuePOJO.projectItems.edges[0].node.fieldValues.edges[0].node.name!
+      columnNameB = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name!
+      columnNameC = issuePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name!
     })
 
-    it("converts column names to lowercase to match the structure of an issue's column name container", () => {
-      throw new Error('unimplimented')
+    describe('column mode', () => {
+      it("converts column names to lowercase to match the structure of an issue's column name container", () => {
+        const finder = new ColumnNameFinder(githubAPIClient, false, issue)
+        throw new Error('unimplimented')
+      })
+    })
+
+    describe('project mode', () => {
+      let finder: ColumnNameFinder
+      let projectOwnerNameA: string
+      let projectOwnerNameB: string
+      let projectOwnerNameC: string
+
+      beforeAll(() => {
+        projectOwnerNameA = issuePOJO.projectItems.edges[0].node.project.owner.login
+        projectOwnerNameB = issuePOJO.projectItems.edges[1].node.project.owner.login
+        projectOwnerNameC = issuePOJO.projectItems.edges[2].node.project.owner.login
+
+        finder = new ColumnNameFinder(githubAPIClient, true, issue)
+      })
+
+      it("converts column names to lowercase to match the structure of an issue's column name container", () => {
+        throw new Error('unimplimented')
+      })
+
+      it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
+        throw new Error('unimplimented')
+      })
     })
   })
 })

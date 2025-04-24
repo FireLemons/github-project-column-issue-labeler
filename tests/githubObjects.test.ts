@@ -1,3 +1,4 @@
+import { FieldValuePOJO } from '../src/githubAPIClient'
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, Label, ProjectItem, ProjectPrimaryKeyHumanReadable, RecordWithGraphQLID } from '../src/githubObjects'
 import GithubObjectsTestData from './data/githubObjectsTestData'
 
@@ -70,7 +71,7 @@ describe('The GraphQLPage class', () => {
     let originalPageFieldValueName: string
     let appendedPageEndCursor: string
     let appendedPageHasNextPage: boolean
-    let combinedPage: GraphQLPage<FieldValue>
+    let combinedPage: GraphQLPage<FieldValuePOJO>
 
     beforeAll(() => {
       const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
@@ -81,68 +82,25 @@ describe('The GraphQLPage class', () => {
       appendedPageEndCursor = fieldValuePagePOJOAppended.pageInfo.endCursor
       appendedPageHasNextPage = fieldValuePagePOJOAppended.pageInfo.hasNextPage
 
-      combinedPage = new GraphQLPage<FieldValue>(fieldValuePagePOJO)
-      const pageToBeAppended = new GraphQLPage<FieldValue>(fieldValuePagePOJOAppended)
+      combinedPage = new GraphQLPage<FieldValuePOJO>(fieldValuePagePOJO)
+      const pageToBeAppended = new GraphQLPage<FieldValuePOJO>(fieldValuePagePOJOAppended)
 
       combinedPage.appendPage(pageToBeAppended)
     })
 
-    it('appends the edges from the page passed in', () => {
-      expect(combinedPage.getEdges().find((edge) => {
-        return edge.node.name === originalPageFieldValueName
+    it('appends the nodes from the page passed in', () => {
+      expect(combinedPage.getNodeArray().find((node) => {
+        return node.name === originalPageFieldValueName
       })).not.toBe(undefined)
 
-      expect(combinedPage.getEdges().find((edge) => {
-        return edge.node.name === appendedPageFieldValueName
+      expect(combinedPage.getNodeArray().find((node) => {
+        return node.name === appendedPageFieldValueName
       })).not.toBe(undefined)
     })
 
     it('updates the pageInfo for the page with the pageInfo from the passed page', () => {
-      const combinedPagePageInfo = combinedPage.getPageInfo()
-
-      expect(combinedPagePageInfo.endCursor).toBe(appendedPageEndCursor)
-      expect(combinedPagePageInfo.hasNextPage).toBe(appendedPageHasNextPage)
-    })
-  })
-
-  describe('delete()', () => {
-    it('removes the edge at the index passed from the graphQL page', () => {
-      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJOWithMultipleFieldValues()
-      const fieldValueName1 = fieldValuePagePOJO.edges[0].node.name
-      const fieldValueName2 = fieldValuePagePOJO.edges[1].node.name
-      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue)
-
-      page.delete(1)
-
-      const nodes = page.getNodeArray()
-
-      expect(nodes.find((fieldValue) => {
-        return fieldValue.name === fieldValueName1
-      })).not.toBe(undefined)
-
-      expect(nodes.find((fieldValue) => {
-        return fieldValue.name === fieldValueName2
-      })).toBe(undefined)
-
-      page.delete(0)
-
-      expect(page.isEmpty()).toBe(true)
-    })
-
-    it('returns the removed node', () => {
-      const fieldValuePagePOJO = GithubObjectsTestData.getFieldValuePagePOJO()
-      const onlyFieldValueName = fieldValuePagePOJO.edges[0].node.name
-      const page = new GraphQLPage<FieldValue>(fieldValuePagePOJO, FieldValue)
-
-      expect(page.delete(0).getName()).toBe(onlyFieldValueName)
-    })
-
-    it('throws an error when the index is out of bounds', () => {
-      const page = new GraphQLPage<FieldValue>(GithubObjectsTestData.getFieldValuePagePOJO(), FieldValue)
-
-      expect(() => {
-        page.delete(1)
-      }).toThrow(RangeError)
+      expect(combinedPage.getEndCursor()).toBe(appendedPageEndCursor)
+      expect(combinedPage.hasNextPage()).toBe(appendedPageHasNextPage)
     })
   })
 
@@ -155,15 +113,6 @@ describe('The GraphQLPage class', () => {
       page.disableRemoteDataFetching()
 
       expect(page.hasNextPage()).toBe(false)
-    })
-  })
-
-  describe('getEdges()', () => {
-    it('returns the edges of the graphQL page', () => {
-      const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
-      const page = new GraphQLPage(labelPagePOJO)
-
-      expect(page.getEdges()).toBe(labelPagePOJO.edges)
     })
   })
 
@@ -185,15 +134,6 @@ describe('The GraphQLPage class', () => {
       expect(page.getNodeArray()).toEqual([
         fieldValuePageOnlyNode
       ])
-    })
-  })
-
-  describe('getPageInfo()', () => {
-    it('returns the page info of the graphQL page', () => {
-      const labelPagePOJO = GithubObjectsTestData.getLabelPagePOJO()
-      const page = new GraphQLPage(labelPagePOJO)
-
-      expect(page.getPageInfo()).toBe(labelPagePOJO.pageInfo)
     })
   })
 
@@ -227,19 +167,15 @@ describe('The GraphQLPage class', () => {
 })
 
 describe('The GraphQLPageMergeable class', () => {
-  describe('constructor', () => {
-
-  })
-
   describe('delete()', () => {
-    it('removes the edge at the index passed from the graphQL page', () => {
+    it('removes the node with the specified id', () => {
       const projectItemPagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
       const firstProjectItemId = projectItemPagePOJO.edges[0].node.id
       const secondProjectItemId = projectItemPagePOJO.edges[1].node.id
 
       const page = new GraphQLPageMergeable<ProjectItem>(projectItemPagePOJO, ProjectItem)
 
-      page.delete(1)
+      page.delete(secondProjectItemId)
 
       const nodes = page.getNodeArray()
 
@@ -251,7 +187,7 @@ describe('The GraphQLPageMergeable class', () => {
         return projectItem.getId() === secondProjectItemId
       })).toBe(undefined)
 
-      page.delete(0)
+      page.delete(firstProjectItemId)
 
       expect(page.isEmpty()).toBe(true)
     })
@@ -261,19 +197,7 @@ describe('The GraphQLPageMergeable class', () => {
       const firstRecordId = pagePOJO.edges[0].node.id
       const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
 
-      expect(page.delete(0).getId()).toBe(firstRecordId)
-    })
-
-    it('stores the id of deleted nodes', () => {
-      const pagePOJO = GithubObjectsTestData.getMergeableProjectItemPagePOJO()
-      const firstRecordId = pagePOJO.edges[0].node.id
-      const page = new GraphQLPageMergeable<ProjectItem>(pagePOJO, ProjectItem)
-
-      expect(page.deletedNodeIds.has(firstRecordId)).toBe(false)
-
-      page.delete(0)
-
-      expect(page.deletedNodeIds.has(firstRecordId)).toBe(true)
+      expect(page.delete(firstRecordId).getId()).toBe(firstRecordId)
     })
   })
 
@@ -296,7 +220,7 @@ describe('The GraphQLPageMergeable class', () => {
       newProjectItemPOJO = newPagePOJO.edges[2].node
 
       page = new GraphQLPageMergeable<ProjectItem>(existingPagePOJO, ProjectItem)
-      page.delete(0)
+      page.delete(deletedProjectItemPOJO.id)
 
       pageToBeMerged = new GraphQLPageMergeable<ProjectItem>(newPagePOJO, ProjectItem)
     })
@@ -346,12 +270,20 @@ describe('The GraphQLPageMergeable class', () => {
       })).not.toBe(undefined)
     })
 
-    it('overwrites the pageInfo of the page with the pageInfo of the passed page', () => {
-      const oldPageInfo = page.getPageInfo()
+    it('overwrites the end cursor of the page with the pageInfo of the passed page', () => {
+      const oldEndCursor = page.getEndCursor()
 
       page.merge(pageToBeMerged)
 
-      expect(page.getPageInfo()).not.toEqual(oldPageInfo)
+      expect(page.getEndCursor()).not.toEqual(oldEndCursor)
+    })
+
+    it('overwrites the hasNextPage value of the page with the pageInfo of the passed page', () => {
+      const oldHasNextPageValue = page.hasNextPage()
+
+      page.merge(pageToBeMerged)
+
+      expect(page.hasNextPage()).not.toEqual(oldHasNextPageValue)
     })
 
     it('can merge a page with no nodes', () => {
@@ -372,7 +304,7 @@ describe('The GraphQLPageMergeable class', () => {
 
     it("throws an error when attempting to merge a page with nodes that aren't instances of any class", () => {
       expect(() => {
-        page.merge(new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getProjectItemPagePOJOToBeMerged()))
+        page.merge(new GraphQLPageMergeable<ProjectItem>(GithubObjectsTestData.getProjectItemPagePOJOToBeMerged(), ProjectItem))
       })
     })
   })

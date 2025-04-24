@@ -75,7 +75,7 @@ export default class Labeler {
       const issuePage = this.#instantiateIssuePage(issuePagePOJO)
 
       if (issuePage instanceof GraphQLPage) {
-        this.#logger.info(`Fetched page containing ${issuePage.getEdges().length} issues`, 2)
+        this.#logger.info(`Fetched page containing ${issuePage.getNodeArray().length} issues`, 2)
         cursor = issuePage.getEndCursor()
         hasNextPage = issuePage.hasNextPage()
 

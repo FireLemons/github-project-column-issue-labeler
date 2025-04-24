@@ -18,6 +18,10 @@ export interface FieldValuePageResponse {
   }
 }
 
+export interface FieldValuePOJO {
+  name: string
+}
+
 export interface GraphQLPagePOJO<T> {
   edges: {
     node: T
