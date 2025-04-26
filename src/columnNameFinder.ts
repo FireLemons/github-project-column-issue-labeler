@@ -61,7 +61,7 @@ export default class ColumnNameFinder {
 
     if (projectNumberMap === undefined) {
       projectNumberMap = new Map()
-      cachedSearchResults.set(projectOwnerName, projectNumberMap)
+      cachedSearchResults.set(projectOwnerName.toLocaleLowerCase(), projectNumberMap)
     }
 
     let columnNameMap = projectNumberMap.get(projectNumber)

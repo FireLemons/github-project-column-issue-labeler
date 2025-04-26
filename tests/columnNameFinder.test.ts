@@ -99,9 +99,15 @@ describe('findColumnNames()', () => {
       const finder = new ColumnNameFinder(githubAPIClient, true, new Issue(columnNameSearchSpacePOJO))
       const foundColumnNames = await finder.findColumnNames()
 
-      expect(foundColumnNames.get(columnNameAProjectParent.owner.login)?.get(columnNameAProjectParent.number)?.has(columnNameA!.toLocaleLowerCase())).toBe(true)
-      expect(foundColumnNames.get(columnNameBProjectParent.owner.login)?.get(columnNameBProjectParent.number)?.has(columnNameB!.toLocaleLowerCase())).toBe(true)
-      expect(foundColumnNames.get(columnNameCProjectParent.owner.login)?.get(columnNameCProjectParent.number)?.has(columnNameC!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.get(columnNameAProjectParent.owner.login.toLocaleLowerCase())?.
+        get(columnNameAProjectParent.number)?.
+          has(columnNameA!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.get(columnNameBProjectParent.owner.login.toLocaleLowerCase())?.
+        get(columnNameBProjectParent.number)?.
+          has(columnNameB!.toLocaleLowerCase())).toBe(true)
+      expect(foundColumnNames.get(columnNameCProjectParent.owner.login.toLocaleLowerCase())?.
+        get(columnNameCProjectParent.number)?.
+          has(columnNameC!.toLocaleLowerCase())).toBe(true)
     })
   })
 
@@ -134,22 +140,27 @@ describe('findColumnNames()', () => {
     let columnNameB: string
     let columnNameC: string
     let issuePOJO: IssuePOJO
-    let issue: Issue
 
     beforeAll(() => {
       issuePOJO = ColumnNameSearchSpaceData.getIssuePOJOWithCompleteSearchSpaceContainingMultipleColumnNames()
-      issue = new Issue(issuePOJO)
 
-      console.log(JSON.stringify(issuePOJO.projectItems, null, 2))
       columnNameA = issuePOJO.projectItems.edges[0].node.fieldValues.edges[0].node.name!
       columnNameB = issuePOJO.projectItems.edges[1].node.fieldValues.edges[0].node.name!
       columnNameC = issuePOJO.projectItems.edges[2].node.fieldValues.edges[0].node.name!
     })
 
     describe('column mode', () => {
-      it("converts column names to lowercase to match the structure of an issue's column name container", () => {
-        const finder = new ColumnNameFinder(githubAPIClient, false, issue)
-        throw new Error('unimplimented')
+      it("converts column names to lowercase to match the structure of an issue's column name container", async () => {
+        const finder = new ColumnNameFinder(githubAPIClient, false, new Issue(issuePOJO))
+        expect(columnNameA.toLocaleLowerCase()).not.toBe(columnNameA)
+        expect(columnNameB.toLocaleLowerCase()).not.toBe(columnNameB)
+        expect(columnNameC.toLocaleLowerCase()).not.toBe(columnNameC)
+
+        const columnNameMap = await finder.findColumnNames()
+
+        expect(columnNameMap.has(columnNameA.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.has(columnNameB.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.has(columnNameC.toLocaleLowerCase())).toBe(true)
       })
     })
 
@@ -158,21 +169,45 @@ describe('findColumnNames()', () => {
       let projectOwnerNameA: string
       let projectOwnerNameB: string
       let projectOwnerNameC: string
+      let projectNumberA: number
+      let projectNumberB: number
+      let projectNumberC: number
 
       beforeAll(() => {
+        projectNumberA = issuePOJO.projectItems.edges[0].node.project.number
+        projectNumberB = issuePOJO.projectItems.edges[1].node.project.number
+        projectNumberC = issuePOJO.projectItems.edges[2].node.project.number
         projectOwnerNameA = issuePOJO.projectItems.edges[0].node.project.owner.login
         projectOwnerNameB = issuePOJO.projectItems.edges[1].node.project.owner.login
         projectOwnerNameC = issuePOJO.projectItems.edges[2].node.project.owner.login
-
-        finder = new ColumnNameFinder(githubAPIClient, true, issue)
       })
 
-      it("converts column names to lowercase to match the structure of an issue's column name container", () => {
-        throw new Error('unimplimented')
+      beforeEach(() => {
+        finder = new ColumnNameFinder(githubAPIClient, true, new Issue(issuePOJO))
       })
 
-      it("converts project owner names to lowercase to match the structure of an issue's column name container", () => {
-        throw new Error('unimplimented')
+      it("converts column names to lowercase to match the structure of an issue's column name container", async () => {
+        const columnNameMap = await finder.findColumnNames()
+
+        expect(columnNameA.toLocaleLowerCase()).not.toBe(columnNameA)
+        expect(columnNameB.toLocaleLowerCase()).not.toBe(columnNameB)
+        expect(columnNameC.toLocaleLowerCase()).not.toBe(columnNameC)
+
+        expect(columnNameMap.get(projectOwnerNameA.toLocaleLowerCase())?.get(projectNumberA)?.has(columnNameA.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.get(projectOwnerNameB.toLocaleLowerCase())?.get(projectNumberB)?.has(columnNameB.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.get(projectOwnerNameC.toLocaleLowerCase())?.get(projectNumberC)?.has(columnNameC.toLocaleLowerCase())).toBe(true)
+      })
+
+      it("converts project owner names to lowercase to match the structure of an issue's column name container", async () => {
+        const columnNameMap = await finder.findColumnNames()
+
+        expect(projectOwnerNameA.toLocaleLowerCase()).not.toBe(projectOwnerNameA)
+        expect(projectOwnerNameB.toLocaleLowerCase()).not.toBe(projectOwnerNameB)
+        expect(projectOwnerNameC.toLocaleLowerCase()).not.toBe(projectOwnerNameC)
+
+        expect(columnNameMap.has(projectOwnerNameA.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.has(projectOwnerNameB.toLocaleLowerCase())).toBe(true)
+        expect(columnNameMap.has(projectOwnerNameC.toLocaleLowerCase())).toBe(true)
       })
     })
   })
