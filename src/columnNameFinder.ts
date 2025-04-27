@@ -1,9 +1,9 @@
 import { FieldValue, GraphQLPage, GraphQLPageMergeable, Issue, ProjectItem, ProjectPrimaryKeyHumanReadable } from './githubObjects'
 import { GithubAPIClient } from './githubAPIClient'
-import { GraphQLPageAccessError, GraphQLPageType } from './remoteSearchSpaceAccessError'
+import { GraphQLPageAccessError, GraphQLPageType } from './errors/remoteSearchSpaceAccessError'
 
-type ProjectColumnNameMap = Map<string, Map<number, ColumnNameMap>>
-type ColumnNameMap = Map<string, null>
+export type ProjectColumnNameMap = Map<string, Map<number, ColumnNameMap>>
+export type ColumnNameMap = Map<string, null>
 
 interface RemoteRecordPageQueryParameters {
   localPage: GraphQLPage<FieldValue> | GraphQLPageMergeable<ProjectItem>
