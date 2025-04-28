@@ -115,7 +115,7 @@ export class Config {
 
   toString (prettyPrint?: boolean): string {
     const configAsPOJO = {
-      accessToken: this.#githubAPIToken,
+      accessToken: 'redacted',
       labelingActions: nestedMapsToObject(this.#labelingRuleContainer),
       repo: this.#repo
     }

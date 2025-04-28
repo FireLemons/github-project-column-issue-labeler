@@ -1399,8 +1399,12 @@ describe('toString()', () => {
     configToString = new Config(configInputJSONString, logger).toString()
   })
 
-  it('includes the api token', () => {
-    expect(configToString).toContain(apiToken)
+  it('does not include the api token', () => {
+    expect(configToString).not.toContain(apiToken)
+  })
+
+  it('explains the api token is redacted', () => {
+    expect(configToString).not.toContain('"accessToken": "redacted"')
   })
 
   it('includes the repo name', () => {
