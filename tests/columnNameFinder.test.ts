@@ -2,7 +2,7 @@ import ColumnNameFinder from '../src/columnNameFinder'
 import ColumnNameSearchSpaceData from './data/columnNameSearchSpaceData'
 import { Issue } from '../src/githubObjects'
 import { GithubAPIClient, IssuePOJO } from '../src/githubAPIClient'
-import { GraphQLPageType } from '../src/remoteSearchSpaceAccessError'
+import { GraphQLPageType } from '../src/errors/remoteSearchSpaceAccessError'
 import { firstKeyValuePairOfMap } from '../src/util'
 
 jest.mock('../src/githubAPIClient')
