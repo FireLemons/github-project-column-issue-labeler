@@ -50,18 +50,23 @@ export default class ColumnNameFinder {
   }
 
   #cacheSearchResultColumnMode (columnName: string) {
+    columnName = columnName.toLocaleLowerCase()
+
     const cachedSearchResults: ColumnNameMap = this.#cachedSearchResults as ColumnNameMap
 
-    cachedSearchResults.set(columnName.toLocaleLowerCase(), null)
+    cachedSearchResults.set(columnName, null)
   }
 
   #cacheSearchResultProjectMode (columnName: string, projectOwnerName: string = '', projectNumber: number = 0) {
+    columnName = columnName.toLocaleLowerCase()
+    projectOwnerName = projectOwnerName.toLocaleLowerCase()
+
     const cachedSearchResults = this.#cachedSearchResults as ProjectColumnNameMap
     let projectNumberMap = cachedSearchResults.get(projectOwnerName)
 
     if (projectNumberMap === undefined) {
       projectNumberMap = new Map()
-      cachedSearchResults.set(projectOwnerName.toLocaleLowerCase(), projectNumberMap)
+      cachedSearchResults.set(projectOwnerName, projectNumberMap)
     }
 
     let columnNameMap = projectNumberMap.get(projectNumber)
@@ -71,7 +76,7 @@ export default class ColumnNameFinder {
       projectNumberMap.set(projectNumber, columnNameMap)
     }
 
-    columnNameMap.set(columnName.toLocaleLowerCase(), null)
+    columnNameMap.set(columnName, null)
   }
 
   #hasAdditionalRemoteSearchSpace (): boolean {
