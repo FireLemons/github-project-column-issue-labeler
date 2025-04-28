@@ -2,6 +2,7 @@ import {
   caseInsensitiveAlphabetization,
   caseInsensitiveCompare,
   firstKeyValuePairOfMap,
+  hasSameCaseInsensitiveElement,
   hasTrailingWhitespace,
   isCaseInsensitiveEqual,
   nestedMapsToObject,
@@ -61,6 +62,26 @@ describe('firstTupleOfMap()', () => {
     const map = new Map()
 
     expect(firstKeyValuePairOfMap(map)).toEqual(undefined)
+  })
+})
+
+describe('hasSameCaseInsensitiveElement()', () => {
+  it('returns true when both input arrays contain the same string(case insensitive)', () => {
+    const arrA = ['b']
+    const arrB = ['a', 'B']
+
+    expect(hasSameCaseInsensitiveElement(arrA, arrB)).toBe(true)
+    expect(hasSameCaseInsensitiveElement(arrB, arrA)).toBe(true)
+  })
+
+  it('returns false when both input arrays do not contain the same string(case insensitive)', () => {
+    const arrA = ['aA', ' b']
+    const arrB = ['a', 'B']
+    const arrC: string[] = []
+
+    expect(hasSameCaseInsensitiveElement(arrA, arrB)).toBe(false)
+    expect(hasSameCaseInsensitiveElement(arrB, arrA)).toBe(false)
+    expect(hasSameCaseInsensitiveElement(arrB, arrC)).toBe(false)
   })
 })
 

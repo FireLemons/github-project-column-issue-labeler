@@ -26,6 +26,25 @@ export function firstKeyValuePairOfMap (map: Map<any, any>) {
   }
 }
 
+export function hasSameCaseInsensitiveElement (sortedStrArr1: string[], sortedStrArr2: string[]): boolean {
+  let cursor1 = 0
+  let cursor2 = 0
+
+  while (cursor1 < sortedStrArr1.length && cursor2 < sortedStrArr2.length) {
+    const comparison = caseInsensitiveCompare(sortedStrArr1[cursor1], sortedStrArr2[cursor2])
+
+    if (comparison === 0) {
+      return true
+    } else if (comparison < 0) {
+      cursor1++
+    } else {
+      cursor2++
+    }
+  }
+
+  return false
+}
+
 export function hasTrailingWhitespace (str: string): boolean {
   return str.trim() !== str
 }
