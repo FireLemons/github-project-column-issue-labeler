@@ -56,7 +56,8 @@ export interface LabelPOJOWithID {
 }
 
 export interface LabelPageOfRepoResponse {
-  node: {
+  repository: {
+    id: string
     labels: GraphQLPagePOJO<LabelPOJOWithID>
   }
 }
@@ -280,7 +281,7 @@ export class GithubAPIClient {
     )
   }
 
-  fetchLabelPageOfRepo (cursor?: string | null): Promise<LabelPageOfIssueResponse> {
+  fetchLabelPageOfRepo (cursor?: string | null): Promise<LabelPageOfRepoResponse> {
     return this.#octokit.graphql(`
       query labelPageOfRepo($cursor: String, $repoName: String!, $repoOwnerName: String!, $pageSize: Int!){
         repository (name: $repoName, owner: $repoOwnerName) {
