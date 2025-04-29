@@ -41,6 +41,7 @@ export interface IssuePOJO {
 
 export interface IssuePageResponse {
   repository: {
+    id?: string
     issues: GraphQLPagePOJO<IssuePOJO>
   }
 }
@@ -49,7 +50,18 @@ export interface LabelPOJO {
   name: string
 }
 
-export interface LabelPageResponse {
+export interface LabelPOJOWithID {
+  id: string
+  name: string
+}
+
+export interface LabelPageOfRepoResponse {
+  node: {
+    labels: GraphQLPagePOJO<LabelPOJOWithID>
+  }
+}
+
+export interface LabelPageOfIssueResponse {
   node: {
     labels: GraphQLPagePOJO<LabelPOJO>
   }
@@ -91,10 +103,44 @@ fragment fieldValuePage on ProjectV2ItemFieldValueConnection {
   }
 }`
 
+const fragmentIssuePage = `
+fragment issuePage on IssueConnection {
+  edges {
+    node {
+      id
+      number
+      labels (first: $pageSizeLabel) {
+        ...labelPage
+      }
+      projectItems (first: $pageSizeProjectItem) {
+        ...projectItemPage
+      }
+    }
+  }
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+}`
+
 const fragmentLabelPage = `
 fragment labelPage on LabelConnection {
   edges{
     node{
+      name
+    }
+  }
+  pageInfo{
+    hasNextPage
+    endCursor
+  }
+}`
+
+const fragmentLabelPageWithIds = `
+fragment labelPage on LabelConnection {
+  edges{
+    node{
+      id
       name
     }
   }
@@ -197,25 +243,7 @@ export class GithubAPIClient {
         }
       }
 
-      fragment issuePage on IssueConnection {
-        edges {
-          node {
-            id
-            number
-            labels (first: $pageSizeLabel) {
-              ...labelPage
-            }
-            projectItems (first: $pageSizeProjectItem) {
-              ...projectItemPage
-            }
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-
+      ${fragmentIssuePage}
       ${fragmentLabelPage}
       ${fragmentFieldValuePage}
       ${fragmentProjectItemPage}
@@ -231,7 +259,7 @@ export class GithubAPIClient {
     )
   }
 
-  fetchLabelPage (issueId: string, cursor?: string | null): Promise<LabelPageResponse> {
+  fetchLabelPageOfIssue (issueId: string, cursor?: string | null): Promise<LabelPageOfIssueResponse> {
     return this.#octokit.graphql(`
       query pageOfLabelsOfIssue($cursor: String, $issueId: ID!, $pageSize: Int!) {
         node (id: $issueId) {
@@ -248,6 +276,27 @@ export class GithubAPIClient {
         cursor,
         issueId,
         pageSize: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE
+      }
+    )
+  }
+
+  fetchLabelPageOfRepo (cursor?: string | null): Promise<LabelPageOfIssueResponse> {
+    return this.#octokit.graphql(`
+      query labelPageOfRepo($cursor: String, $repoName: String!, $repoOwnerName: String!, $pageSize: Int!){
+        repository (name: $repoName, owner: $repoOwnerName) {
+          id
+          labels (after: $cursor, first: $pageSize) {
+            ...labelPage
+          }
+        }
+      }
+
+      ${fragmentLabelPageWithIds}
+      `, {
+        cursor,
+        pageSize: true ? MAX_PAGE_SIZE : MIN_PAGE_SIZE,
+        repoName: this.#repoName,
+        repoOwnerName: this.#repoOwnerName
       }
     )
   }

@@ -4,7 +4,7 @@ import { Logger } from '../../src/logger'
 import { Config } from '../../src/config'
 
 const logger = new Logger()
-const requestResponseDir = '../temp/request_responses'
+const requestResponseDir = `${__dirname}/../data/temp/request_responses`
 
 async function loadConfig (): Promise<string> {
   const configContents = await readFile('./config.json')
@@ -54,6 +54,21 @@ async function main () {
     logger.info('Initialized github API client')
   } catch (error) {
     logger.error('Failed to initialize github API client', 2)
+    logger.tryErrorLogErrorObject(error, 4)
+
+    process.exitCode = 1
+    return
+  }
+
+  try {
+    logger.info('Fetching labels page for repo')
+    const labelsPage = await githubAPIClient.fetchLabelPageOfRepo()
+    logger.info(JSON.stringify(labelsPage, null, 2))
+
+    await writeStringToFile(labelsPage, 'label_page_of_repo')
+    logger.info('Fetched labels page for repo', 2)
+  } catch (error) {
+    logger.error('Failed to fetch labels page for repo', 2)
     logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
@@ -136,9 +151,9 @@ async function main () {
 
   try {
     logger.info(`Fetching label page of issue #${issueNumber}`)
-    const labelPageOfIssue = await githubAPIClient.fetchLabelPage(issueId)
+    const labelPageOfIssue = await githubAPIClient.fetchLabelPageOfIssue(issueId)
 
-    await writeStringToFile(labelPageOfIssue, 'label_page')
+    await writeStringToFile(labelPageOfIssue, 'label_page_for_issue')
 
     logger.info('Fetched label page', 2)
   } catch (error) {
