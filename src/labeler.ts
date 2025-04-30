@@ -96,9 +96,9 @@ export default class Labeler {
 
   async #processIssue (issue: Issue): Promise<void> {
     try {
-      this.#labelResolver.getLabelDiff(issue)
+      await this.#labelResolver.getLabelDiff(issue)
     } catch (error) {
-      this.#logger.error(`Failed to find column name of issue #${issue.getNumber()}. Skipping issue.`)
+      this.#logger.error(`Failed to determine labels for issue #${issue.getNumber()}. Skipping issue.`)
       this.#logger.tryErrorLogErrorObject(error, 2)
 
       this.#stats.issuesWithFailedLabelings++
@@ -108,12 +108,14 @@ export default class Labeler {
 
   #processIssuePage (issuePage: GraphQLPage<Issue>): void {
     this.#logger.addBaseIndentation(2)
+
     this.#logger.info('Processing issue page')
     const issues = issuePage.getNodeArray()
 
     for(const issue of issues) {
       this.#processIssue(issue)
     }
+
     this.#logger.addBaseIndentation(-2)
   }
 
