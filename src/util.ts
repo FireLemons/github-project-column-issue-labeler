@@ -26,6 +26,17 @@ export function firstKeyValuePairOfMap (map: Map<any, any>) {
   }
 }
 
+export function getRandomString(length: number) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_ '
+  let result = ''
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length))
+  }
+
+  return result
+}
+
 export function hasSameCaseInsensitiveElement (sortedStrArr1: string[], sortedStrArr2: string[]): boolean {
   let cursor1 = 0
   let cursor2 = 0
@@ -82,6 +93,10 @@ export function nestedMapsToObject (rootMap: Map<any, any>): GenericObjectWithSt
   }
 
   return rootContainer['0']
+}
+
+export function pickRandom (arr: any[]) {
+  return arr[Math.floor(Math.random() * arr.length)]
 }
 
 export function removeCaseInsensitiveDuplicatesFromSortedArray (sortedArray: string[]): string[] {

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { GithubAPIClient, IssuePageResponse } from '../../src/githubAPIClient'
 import { Logger } from '../../src/logger'
 import { Config } from '../../src/config'
+import { getRandomString } from '../../src/util'
 
 const logger = new Logger()
 const requestResponseDir = `${__dirname}/../data/temp/request_responses`
@@ -60,15 +61,33 @@ async function main () {
     return
   }
 
+  let repoId: string
+
   try {
     logger.info('Fetching labels page for repo')
     const labelsPage = await githubAPIClient.fetchLabelPageOfRepo()
-    logger.info(JSON.stringify(labelsPage, null, 2))
+    repoId = labelsPage.repository.id
+    githubAPIClient.setRepoId(repoId)
 
     await writeStringToFile(labelsPage, 'label_page_of_repo')
     logger.info('Fetched labels page for repo', 2)
   } catch (error) {
     logger.error('Failed to fetch labels page for repo', 2)
+    logger.tryErrorLogErrorObject(error, 4)
+
+    process.exitCode = 1
+    return
+  }
+
+  try {
+    const randomLabel = getRandomString(12)
+    logger.info(`Creating random label "${randomLabel}"`)
+    const labelsPage = await githubAPIClient.createLabel(randomLabel)
+
+    await writeStringToFile(labelsPage, 'create_label_response')
+    logger.info('Created random label', 2)
+  } catch (error) {
+    logger.error('Failed to create random label', 2)
     logger.tryErrorLogErrorObject(error, 4)
 
     process.exitCode = 1
