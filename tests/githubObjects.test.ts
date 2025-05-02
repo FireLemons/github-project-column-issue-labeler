@@ -393,14 +393,23 @@ describe('The Issue class', () => {
   describe('getLabels()', () => {
     it('returns the labels of the Issue instance as an array', () => {
       const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithManyLabels())
+      const labels = issue.getLabelPage()?.getNodeArray()
 
-      expect(issue.getLabels()).toEqual(expect.arrayContaining(['jC8?&U0V`Cch4)II/10#', 'lA0$,&jb.>d<Hi3{*[B', '5~hg?<[kjHwGhUII-p:']))
+      expect(labels?.find((label) => {
+        return label.getName() === 'jC8?&U0V`Cch4)II/10#'
+      })).not.toBe(undefined)
+      expect(labels?.find((label) => {
+        return label.getName() === 'lA0$,&jb.>d<Hi3{*[B'
+      })).not.toBe(undefined)
+      expect(labels?.find((label) => {
+        return label.getName() === '5~hg?<[kjHwGhUII-p:'
+      })).not.toBe(undefined)
     })
 
     it('returns null when the label page cannot be initialized', () => {
       const issue = new Issue(GithubObjectsTestData.getIssuePOJOWithInvalidLabelPage())
 
-      expect(issue.getLabels()).toBe(null)
+      expect(issue.getLabelPage()).toBe(null)
     })
   })
 

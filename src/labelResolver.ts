@@ -2,8 +2,14 @@ import ColumnNameFinder, { ColumnNameMap, ProjectColumnNameMap } from './columnN
 import { ColumnnLabelingRuleContainer, Config, LabelingAction, LabelingActionsAsMap, LabelingRuleContainer, ProjectLabelingRuleContainer } from './config'
 import { ConflictError } from './errors/conflictError'
 import { GithubAPIClient } from './githubAPIClient'
-import { Issue } from './githubObjects'
+import { GraphQLPage, Issue, Label } from './githubObjects'
 import { hasSameCaseInsensitiveElement, nestedMapsToObject } from './util'
+
+function labelPageToLabels (labelPage: GraphQLPage<Label>) : string[] {
+  return labelPage.getNodeArray().map((labelNode) => {
+    return labelNode.getName()
+  })
+}
 
 export default class LabelResolver {
   #githubAPIClient: GithubAPIClient
@@ -26,6 +32,10 @@ export default class LabelResolver {
 
     console.log(`Successfully found matching labeling rules for issue #${issue.getNumber()}`)
     console.log(nestedMapsToObject(matchingLabelingRules))
+
+    if (matchingLabelingRules.has(LabelingAction.SET)) {
+      console.log(await this.#getAllIssueLabels(issue))
+    }
   }
 
   #addLabelingRuleToLabelingActionContainer (labelingAction: LabelingAction, labelingActionContainer: LabelingActionsAsMap, labels: string[]): void {
@@ -46,6 +56,20 @@ export default class LabelResolver {
     }
 
     labelingActionContainer.set(labelingAction, labels)
+  }
+
+  async #getAllIssueLabels (issue: Issue): Promise<string[]> {
+    let localLabels = issue.getLabelPage()
+
+    if (localLabels === null) {
+      localLabels = new GraphQLPage<Label>(await this.#githubAPIClient.fetchLabelPageOfIssue(issue.getId()), Label)
+    }
+
+    while (localLabels.hasNextPage()) {
+      localLabels.appendPage(new GraphQLPage<Label>(await this.#githubAPIClient.fetchLabelPageOfIssue(issue.getId(), localLabels.getEndCursor())))
+    }
+
+    return labelPageToLabels(localLabels)
   }
 
   async #getIssueColumnNames (issue: Issue): Promise<ColumnNameMap | ProjectColumnNameMap> {

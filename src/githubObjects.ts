@@ -194,14 +194,12 @@ export class Issue {
     return this.#id
   }
 
-  getLabels (): string[] | null {
-    if (this.labels !== undefined) {
-      return this.labels.getNodeArray().map((label: Label) => {
-        return label.getName()
-      })
+  getLabelPage (): GraphQLPage<Label> | null {
+    if (this.labels === undefined) {
+      return null
     }
 
-    return null
+    return this.labels
   }
 
   getNumber (): number {
